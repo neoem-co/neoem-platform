@@ -168,7 +168,7 @@ export default function FactoryDetail({ params }: { params: Promise<{ slug: stri
                                                                 borderRadius: "8px",
                                                                 fontSize: "12px"
                                                             }}
-                                                            formatter={(value: any) => [`฿${value}M`, "Revenue"]}
+                                                            formatter={(value: any) => [`฿${value}M`, "Revenue"] as [string, string]}
                                                         />
                                                         <Bar dataKey="revenue" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
                                                     </BarChart>
