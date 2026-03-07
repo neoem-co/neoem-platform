@@ -9,7 +9,7 @@ export function Footer() {
         ],
         features: [
             { label: "Chat Deal Room", href: "/factories" },
-            { label: "Brand Launchpad", href: "/launchpad" },
+            { label: "Brand Launchpad", href: "/brand-launchpad" },
             { label: "AI Contract Review", href: "/factories" },
         ],
         forFactories: [

@@ -1,10 +1,9 @@
 "use client";
 
 import { useState, useMemo, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
-import { Filter, SlidersHorizontal, X } from "lucide-react";
+import { useSearchParams, useRouter, usePathname } from "next/navigation";
+import { Filter, SlidersHorizontal, X, Search } from "lucide-react";
 import { Navbar } from "@/components/layout/Navbar";
-import { Footer } from "@/components/layout/Footer";
 import { FactoryCard } from "@/components/home/FactoryCard";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -16,11 +15,14 @@ const locations = ["Bangkok", "Samut Prakan", "Pathum Thani", "Chonburi", "Nonth
 const certifications = ["ISO 9001", "GMP", "FDA Approved", "Halal", "Organic", "OEKO-TEX"];
 const categories = ["Cosmetics", "Supplements", "Packaging", "Clothing", "Skincare"];
 
-function FactoryListContent() {
+const FactoriesContent = () => {
     const searchParams = useSearchParams();
+    const router = useRouter();
+    const pathname = usePathname();
     const query = searchParams.get("q") || "";
     const categoryParam = searchParams.get("category") || "";
 
+    const [searchInput, setSearchInput] = useState(query);
     const [selectedLocations, setSelectedLocations] = useState<string[]>([]);
     const [selectedCertifications, setSelectedCertifications] = useState<string[]>([]);
     const [selectedCategories, setSelectedCategories] = useState<string[]>(
@@ -28,6 +30,17 @@ function FactoryListContent() {
     );
     const [moqRange, setMoqRange] = useState([0, 5000]);
     const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+
+    const handleSearch = (e: React.FormEvent) => {
+        e.preventDefault();
+        const params = new URLSearchParams(searchParams.toString());
+        if (searchInput) {
+            params.set("q", searchInput);
+        } else {
+            params.delete("q");
+        }
+        router.push(pathname + "?" + params.toString());
+    };
 
     const filteredFactories = useMemo(() => {
         return factoriesData.factories.filter((factory) => {
@@ -178,55 +191,80 @@ function FactoryListContent() {
     );
 
     return (
-        <div className="container py-4 md:py-6 flex-1">
-            {/* Header */}
-            <div className="flex items-center justify-between mb-4 md:mb-6">
-                <div>
-                    <h1 className="text-xl md:text-2xl font-bold text-foreground">
-                        {query ? `Results for "${query}"` : "All Factories"}
-                    </h1>
-                    <p className="text-sm text-muted-foreground mt-1">
-                        {filteredFactories.length} factories found
-                    </p>
-                </div>
+        <div className="h-screen flex flex-col bg-secondary/20">
+            <Navbar />
 
-                {/* Mobile Filter Button */}
-                <Sheet open={mobileFiltersOpen} onOpenChange={setMobileFiltersOpen}>
-                    <SheetTrigger asChild className="lg:hidden">
-                        <Button variant="outline" size="sm">
-                            <SlidersHorizontal className="h-4 w-4 mr-2" />
-                            Filters
-                            {hasActiveFilters && (
-                                <span className="ml-1 w-5 h-5 rounded-full bg-primary text-primary-foreground text-xs flex items-center justify-center">
-                                    {selectedCategories.length + selectedLocations.length + selectedCertifications.length}
-                                </span>
-                            )}
-                        </Button>
-                    </SheetTrigger>
-                    <SheetContent side="left" className="w-[300px] overflow-y-auto">
-                        <SheetHeader>
-                            <SheetTitle>Filters</SheetTitle>
-                        </SheetHeader>
-                        <div className="mt-6">
-                            <FilterContent />
+            {/* Sticky Search Bar */}
+            <div className="sticky top-14 md:top-16 z-40 bg-background border-b shadow-sm">
+                <div className="container py-3">
+                    <form onSubmit={handleSearch} className="flex items-center gap-2">
+                        <div className="flex-1 flex items-center gap-2 bg-card border rounded-lg px-3">
+                            <Search className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                            <input
+                                type="text"
+                                value={searchInput}
+                                onChange={(e) => setSearchInput(e.target.value)}
+                                placeholder="Search factories, products, categories..."
+                                className="flex-1 h-10 bg-transparent text-foreground placeholder:text-muted-foreground focus:outline-none text-sm"
+                            />
                         </div>
-                    </SheetContent>
-                </Sheet>
+                        <Button type="submit" size="sm">Search</Button>
+                        {/* Mobile Filter Button */}
+                        <Sheet open={mobileFiltersOpen} onOpenChange={setMobileFiltersOpen}>
+                            <SheetTrigger asChild className="lg:hidden">
+                                <Button variant="outline" size="sm">
+                                    <SlidersHorizontal className="h-4 w-4" />
+                                    {hasActiveFilters && (
+                                        <span className="ml-1 w-5 h-5 rounded-full bg-primary text-primary-foreground text-xs flex items-center justify-center">
+                                            {selectedCategories.length + selectedLocations.length + selectedCertifications.length}
+                                        </span>
+                                    )}
+                                </Button>
+                            </SheetTrigger>
+                            <SheetContent side="left" className="w-[300px] overflow-y-auto">
+                                <SheetHeader>
+                                    <SheetTitle>Filters</SheetTitle>
+                                </SheetHeader>
+                                <div className="mt-6">
+                                    <FilterContent />
+                                </div>
+                            </SheetContent>
+                        </Sheet>
+                    </form>
+                </div>
             </div>
 
-            <div className="flex gap-6">
-                {/* Desktop Sidebar Filters */}
-                <aside className="hidden lg:block w-64 flex-shrink-0">
-                    <div className="bg-card border rounded-lg p-4 sticky top-20">
+            <div className="container flex-1 flex gap-6 py-4 md:py-6 min-h-0">
+                {/* Header + info */}
+                <div className="hidden lg:block w-64 flex-shrink-0 overflow-y-auto scrollbar-thin">
+                    <div className="mb-4">
+                        <h1 className="text-xl font-bold text-foreground">
+                            {query ? `Results for "${query}"` : "All Factories"}
+                        </h1>
+                        <p className="text-sm text-muted-foreground mt-1">
+                            {filteredFactories.length} factories found
+                        </p>
+                    </div>
+                    <div className="bg-card border rounded-lg p-4">
                         <FilterContent />
                     </div>
-                </aside>
+                </div>
 
-                {/* Factory List */}
-                <main className="flex-1 space-y-4">
+                {/* Factory List - Independent Scroll */}
+                <main className="flex-1 overflow-y-auto scrollbar-thin min-h-0">
+                    {/* Mobile header */}
+                    <div className="lg:hidden mb-4">
+                        <h1 className="text-xl font-bold text-foreground">
+                            {query ? `Results for "${query}"` : "All Factories"}
+                        </h1>
+                        <p className="text-sm text-muted-foreground mt-1">
+                            {filteredFactories.length} factories found
+                        </p>
+                    </div>
+
                     {/* Active Filters */}
                     {hasActiveFilters && (
-                        <div className="flex items-center gap-2 flex-wrap">
+                        <div className="flex items-center gap-2 flex-wrap mb-4">
                             {selectedCategories.map((cat) => (
                                 <span
                                     key={cat}
@@ -270,16 +308,19 @@ function FactoryListContent() {
             </div>
         </div>
     );
-}
+};
 
 export default function FactoryList() {
     return (
-        <div className="min-h-screen bg-secondary/20 flex flex-col">
-            <Navbar />
-            <Suspense fallback={<div className="container py-10">Loading factories...</div>}>
-                <FactoryListContent />
-            </Suspense>
-            <Footer />
-        </div>
+        <Suspense fallback={
+            <div className="h-screen flex items-center justify-center bg-secondary/20">
+                <div className="animate-pulse flex flex-col items-center gap-4">
+                    <div className="h-12 w-12 rounded-full bg-primary/20" />
+                    <div className="h-4 w-32 bg-primary/10 rounded" />
+                </div>
+            </div>
+        }>
+            <FactoriesContent />
+        </Suspense>
     );
 }

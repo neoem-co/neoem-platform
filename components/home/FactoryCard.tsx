@@ -1,15 +1,18 @@
-"use client";
-
 import Link from "next/link";
 import { Star, Trophy, BadgeCheck, DollarSign } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import factory1 from "@/public/assets/factory-1.jpg";
+import factory2 from "@/public/assets/factory-2.jpg";
+import factory3 from "@/public/assets/factory-3.jpg";
+import factory4 from "@/public/assets/factory-4.jpg";
+import factory5 from "@/public/assets/factory-5.jpg";
 
-const factoryImages: Record<string, string> = {
-    "factory-1": "/assets/factory-1.jpg",
-    "factory-2": "/assets/factory-2.jpg",
-    "factory-3": "/assets/factory-3.jpg",
-    "factory-4": "/assets/factory-4.jpg",
-    "factory-5": "/assets/factory-5.jpg",
+const factoryImages: Record<string, any> = {
+    "factory-1": factory1,
+    "factory-2": factory2,
+    "factory-3": factory3,
+    "factory-4": factory4,
+    "factory-5": factory5,
 };
 
 interface FactoryCardProps {
@@ -33,7 +36,7 @@ interface FactoryCardProps {
 }
 
 export function FactoryCard({ factory, variant = "vertical" }: FactoryCardProps) {
-    const imageUrl = factoryImages[factory.image] || "/assets/factory-1.jpg";
+    const imageUrl = factoryImages[factory.image] || factory1;
 
     const PriceIndicator = () => (
         <span className="flex items-center text-muted-foreground">
@@ -54,7 +57,7 @@ export function FactoryCard({ factory, variant = "vertical" }: FactoryCardProps)
             >
                 <div className="w-48 h-32 flex-shrink-0 rounded-md overflow-hidden">
                     <img
-                        src={imageUrl}
+                        src={imageUrl.src || imageUrl}
                         alt={factory.name}
                         className="w-full h-full object-cover"
                     />
@@ -104,12 +107,12 @@ export function FactoryCard({ factory, variant = "vertical" }: FactoryCardProps)
         >
             <div className="relative h-40 overflow-hidden">
                 <img
-                    src={imageUrl}
+                    src={imageUrl.src || imageUrl}
                     alt={factory.name}
                     className="w-full h-full object-cover"
                 />
                 {factory.verified && (
-                    <div className="absolute top-2 right-2 trust-badge">
+                    <div className="absolute top-2 right-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-background/90 text-success shadow-sm backdrop-blur-sm">
                         <BadgeCheck className="h-3.5 w-3.5" />
                         Verified
                     </div>
