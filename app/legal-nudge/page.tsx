@@ -1,5 +1,3 @@
-"use client";
-
 import Link from "next/link";
 import { PartyPopper, Building2, FileSearch, ArrowRight, ChevronRight, Rocket } from "lucide-react";
 import { Navbar } from "@/components/layout/Navbar";
@@ -7,7 +5,7 @@ import { Footer } from "@/components/layout/Footer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-export default function LegalNudge() {
+const LegalNudge = () => {
     return (
         <div className="min-h-screen bg-background flex flex-col">
             <Navbar />
@@ -49,10 +47,12 @@ export default function LegalNudge() {
                                                 Required for FDA registration and B2B contracts
                                             </p>
                                         </div>
-                                        <Button className="w-full sm:w-auto">
-                                            Fast Track
-                                            <ArrowRight className="h-4 w-4 ml-2" />
-                                        </Button>
+                                        <Link href="/brand-launchpad" className="w-full sm:w-auto">
+                                            <Button className="w-full sm:w-auto">
+                                                Fast Track
+                                                <ArrowRight className="h-4 w-4 ml-2" />
+                                            </Button>
+                                        </Link>
                                     </CardContent>
                                 </Card>
 
@@ -67,10 +67,12 @@ export default function LegalNudge() {
                                                 Verify your brand name is available for registration
                                             </p>
                                         </div>
-                                        <Button variant="outline" className="w-full sm:w-auto">
-                                            Check Now
-                                            <ArrowRight className="h-4 w-4 ml-2" />
-                                        </Button>
+                                        <Link href="/brand-launchpad" className="w-full sm:w-auto">
+                                            <Button variant="outline" className="w-full sm:w-auto">
+                                                Check Now
+                                                <ArrowRight className="h-4 w-4 ml-2" />
+                                            </Button>
+                                        </Link>
                                     </CardContent>
                                 </Card>
                             </div>
@@ -99,7 +101,7 @@ export default function LegalNudge() {
                                     Complete your brand setup while waiting for production
                                 </p>
                             </div>
-                            <Link href="/launchpad">
+                            <Link href="/brand-launchpad">
                                 <Button className="w-full sm:w-auto">
                                     Brand Launchpad
                                     <Rocket className="h-4 w-4 ml-2" />
@@ -127,4 +129,6 @@ export default function LegalNudge() {
             <Footer />
         </div>
     );
-}
+};
+
+export default LegalNudge;
