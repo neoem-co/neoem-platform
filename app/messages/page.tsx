@@ -8,13 +8,18 @@ import { Footer } from "@/components/layout/Footer";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import factory1 from "@/public/assets/factory-1.jpg";
+import factory2 from "@/public/assets/factory-2.jpg";
+import factory3 from "@/public/assets/factory-3.jpg";
+import factory4 from "@/public/assets/factory-4.jpg";
+import factory5 from "@/public/assets/factory-5.jpg";
 
-const factoryImages: Record<string, string> = {
-    "factory-1": "/assets/factory-1.jpg",
-    "factory-2": "/assets/factory-2.jpg",
-    "factory-3": "/assets/factory-3.jpg",
-    "factory-4": "/assets/factory-4.jpg",
-    "factory-5": "/assets/factory-5.jpg",
+const factoryImages: Record<string, any> = {
+    "factory-1": factory1,
+    "factory-2": factory2,
+    "factory-3": factory3,
+    "factory-4": factory4,
+    "factory-5": factory5,
 };
 
 const conversations = [
@@ -71,7 +76,7 @@ const getStatusBadge = (status: string) => {
     }
 };
 
-export default function Messages() {
+const Messages = () => {
     const [searchQuery, setSearchQuery] = useState("");
 
     const filteredConversations = conversations.filter((conv) =>
@@ -127,7 +132,7 @@ export default function Messages() {
                                         <div className="relative">
                                             <div className="w-12 h-12 rounded-full overflow-hidden">
                                                 <img
-                                                    src={factoryImages[conv.factoryImage] || "/assets/factory-1.jpg"}
+                                                    src={factoryImages[conv.factoryImage]?.src || factory1.src}
                                                     alt={conv.factoryName}
                                                     className="w-full h-full object-cover"
                                                 />
@@ -164,4 +169,6 @@ export default function Messages() {
             <Footer />
         </div>
     );
-}
+};
+
+export default Messages;

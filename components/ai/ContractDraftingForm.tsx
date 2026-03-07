@@ -1,9 +1,10 @@
-import { useState } from "react";
-import { FileText, Sparkles, Loader2 } from "lucide-react";
+import { useState, useEffect } from "react";
+import { FileText, Sparkles, Loader2, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
     Select,
     SelectContent,
@@ -16,6 +17,7 @@ interface ContractDraftingFormProps {
     factoryName: string;
     onGenerate: (contract: ContractData) => void;
     onClose: () => void;
+    initialData?: ContractData | null;
 }
 
 interface ContractData {
@@ -24,25 +26,69 @@ interface ContractData {
     totalPrice: string;
     deliveryDate: string;
     penaltyClause: string;
+    paymentTerms: string;
+    qualityStandards: string;
+    warrantyPeriod: string;
+    additionalClauses: string;
 }
 
-export function ContractDraftingForm({ factoryName, onGenerate, onClose }: ContractDraftingFormProps) {
+export function ContractDraftingForm({ factoryName, onGenerate, onClose, initialData }: ContractDraftingFormProps) {
     const [loading, setLoading] = useState(false);
+    const [generated, setGenerated] = useState(false);
     const [formData, setFormData] = useState<ContractData>({
         productType: "Sunscreen SPF50 Mousse",
         quantity: "1000",
         totalPrice: "120000",
         deliveryDate: "",
         penaltyClause: "0.1",
+        paymentTerms: "30-40-30",
+        qualityStandards: "",
+        warrantyPeriod: "30",
+        additionalClauses: "",
     });
+
+    useEffect(() => {
+        if (initialData) {
+            setFormData(prev => ({ ...prev, ...initialData }));
+        }
+    }, [initialData]);
 
     const handleSubmit = async () => {
         setLoading(true);
-        // Simulate AI processing
         await new Promise((resolve) => setTimeout(resolve, 1500));
         setLoading(false);
+        setGenerated(true);
         onGenerate(formData);
     };
+
+    if (generated) {
+        return (
+            <Card className="border-success/30">
+                <CardHeader className="py-3">
+                    <div className="flex items-center justify-between">
+                        <CardTitle className="text-sm flex items-center gap-2">
+                            <FileText className="h-4 w-4 text-success" />
+                            Contract Generated
+                        </CardTitle>
+                        <Button variant="ghost" size="sm" onClick={() => { setGenerated(false); onClose(); }}>
+                            Close
+                        </Button>
+                    </div>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                    <div className="p-4 bg-success/5 border border-success/20 rounded-lg text-center space-y-2">
+                        <FileText className="h-8 w-8 text-success mx-auto" />
+                        <p className="font-medium text-foreground">Contract_Draft.pdf</p>
+                        <p className="text-xs text-muted-foreground">Generated just now</p>
+                    </div>
+                    <Button variant="outline" className="w-full" size="sm">
+                        <Download className="h-4 w-4 mr-2" />
+                        Download Contract PDF
+                    </Button>
+                </CardContent>
+            </Card>
+        );
+    }
 
     return (
         <Card className="border-primary/30">
@@ -50,7 +96,7 @@ export function ContractDraftingForm({ factoryName, onGenerate, onClose }: Contr
                 <div className="flex items-center justify-between">
                     <CardTitle className="text-sm flex items-center gap-2">
                         <FileText className="h-4 w-4 text-primary" />
-                        Draft New Contract
+                        {initialData ? "Edit Contract" : "Draft New Contract"}
                     </CardTitle>
                     <Button variant="ghost" size="sm" onClick={onClose}>
                         Cancel
@@ -58,60 +104,125 @@ export function ContractDraftingForm({ factoryName, onGenerate, onClose }: Contr
                 </div>
             </CardHeader>
             <CardContent className="space-y-4">
+                {/* Auto-fill document style */}
+                <div className="border rounded-lg p-4 bg-secondary/20 space-y-1 text-sm">
+                    <p className="text-center text-xs text-muted-foreground font-medium uppercase tracking-wider mb-3">Manufacturing Agreement</p>
+                    <p className="text-muted-foreground">
+                        This agreement is entered into between <span className="font-medium text-foreground">Your Company</span> (Buyer)
+                        and <span className="font-medium text-primary">{factoryName}</span> (Manufacturer).
+                    </p>
+                </div>
+
                 <div className="space-y-2">
-                    <Label>Product Type</Label>
+                    <Label>Product Type <span className="text-destructive">*</span></Label>
                     <Input
                         value={formData.productType}
                         onChange={(e) => setFormData({ ...formData, productType: e.target.value })}
                         placeholder="e.g., Cream, Serum, Lotion"
+                        className="border-primary/30 bg-primary/5 focus:bg-background"
                     />
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-2">
-                        <Label>Quantity</Label>
+                        <Label>Quantity <span className="text-destructive">*</span></Label>
                         <Input
                             type="number"
                             value={formData.quantity}
                             onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
                             placeholder="1000"
+                            className="border-primary/30 bg-primary/5 focus:bg-background"
                         />
                     </div>
                     <div className="space-y-2">
-                        <Label>Total Price (฿)</Label>
+                        <Label>Total Price (฿) <span className="text-destructive">*</span></Label>
                         <Input
                             type="number"
                             value={formData.totalPrice}
                             onChange={(e) => setFormData({ ...formData, totalPrice: e.target.value })}
                             placeholder="120000"
+                            className="border-primary/30 bg-primary/5 focus:bg-background"
                         />
                     </div>
                 </div>
 
+                <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-2">
+                        <Label>Delivery Date <span className="text-destructive">*</span></Label>
+                        <Input
+                            type="date"
+                            value={formData.deliveryDate}
+                            onChange={(e) => setFormData({ ...formData, deliveryDate: e.target.value })}
+                            className="border-primary/30 bg-primary/5 focus:bg-background"
+                        />
+                    </div>
+                    <div className="space-y-2">
+                        <Label>Warranty (days)</Label>
+                        <Input
+                            type="number"
+                            value={formData.warrantyPeriod}
+                            onChange={(e) => setFormData({ ...formData, warrantyPeriod: e.target.value })}
+                            placeholder="30"
+                            className="border-primary/30 bg-primary/5 focus:bg-background"
+                        />
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-2">
+                        <Label>Penalty Clause</Label>
+                        <Select
+                            value={formData.penaltyClause}
+                            onValueChange={(value) => setFormData({ ...formData, penaltyClause: value })}
+                        >
+                            <SelectTrigger className="border-primary/30 bg-primary/5">
+                                <SelectValue placeholder="Select penalty clause" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="none">None</SelectItem>
+                                <SelectItem value="0.1">0.1% per day late</SelectItem>
+                                <SelectItem value="1">1% per day late</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    <div className="space-y-2">
+                        <Label>Payment Terms</Label>
+                        <Select
+                            value={formData.paymentTerms}
+                            onValueChange={(value) => setFormData({ ...formData, paymentTerms: value })}
+                        >
+                            <SelectTrigger className="border-primary/30 bg-primary/5">
+                                <SelectValue placeholder="Payment terms" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="30-40-30">30-40-30 Milestone</SelectItem>
+                                <SelectItem value="50-50">50-50 Split</SelectItem>
+                                <SelectItem value="100-upfront">100% Upfront</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+                </div>
+
                 <div className="space-y-2">
-                    <Label>Delivery Date</Label>
-                    <Input
-                        type="date"
-                        value={formData.deliveryDate}
-                        onChange={(e) => setFormData({ ...formData, deliveryDate: e.target.value })}
+                    <Label>Quality Standards</Label>
+                    <Textarea
+                        value={formData.qualityStandards}
+                        onChange={(e) => setFormData({ ...formData, qualityStandards: e.target.value })}
+                        placeholder="e.g., ISO 9001, GMP certified, specific testing requirements..."
+                        className="border-primary/30 bg-primary/5 focus:bg-background"
+                        rows={2}
                     />
                 </div>
 
                 <div className="space-y-2">
-                    <Label>Penalty Clause</Label>
-                    <Select
-                        value={formData.penaltyClause}
-                        onValueChange={(value) => setFormData({ ...formData, penaltyClause: value })}
-                    >
-                        <SelectTrigger>
-                            <SelectValue placeholder="Select penalty clause" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="none">None</SelectItem>
-                            <SelectItem value="0.1">0.1% per day late</SelectItem>
-                            <SelectItem value="1">1% per day late</SelectItem>
-                        </SelectContent>
-                    </Select>
+                    <Label>Additional Clauses</Label>
+                    <Textarea
+                        value={formData.additionalClauses}
+                        onChange={(e) => setFormData({ ...formData, additionalClauses: e.target.value })}
+                        placeholder="Any special terms, conditions, or requirements..."
+                        className="border-primary/30 bg-primary/5 focus:bg-background"
+                        rows={2}
+                    />
                 </div>
 
                 <Button onClick={handleSubmit} disabled={loading} className="w-full">
@@ -123,7 +234,7 @@ export function ContractDraftingForm({ factoryName, onGenerate, onClose }: Contr
                     ) : (
                         <>
                             <Sparkles className="h-4 w-4 mr-2" />
-                            Generate Contract
+                            {initialData ? "Update Contract" : "Generate Contract"}
                         </>
                     )}
                 </Button>

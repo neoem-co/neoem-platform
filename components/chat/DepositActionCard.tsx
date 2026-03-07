@@ -15,7 +15,7 @@ export function DepositActionCard({ amount, status, onPay }: DepositActionCardPr
     return (
         <Card className={`my-4 border-2 ${isPaid ? "border-success/30 bg-success/5" : "border-primary/30 bg-primary/5"}`}>
             <CardContent className="p-4">
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div className="flex flex-col items-start sm:items-center justify-between gap-4">
                     <div className="flex items-center gap-3">
                         <div className={`w-12 h-12 rounded-full flex items-center justify-center ${isPaid ? "bg-success/20" : "bg-primary/20"
                             }`}>
