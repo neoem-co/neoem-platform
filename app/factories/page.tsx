@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, Suspense } from "react";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { Filter, SlidersHorizontal, X, Search } from "lucide-react";
 import { Navbar } from "@/components/layout/Navbar";
@@ -15,7 +15,7 @@ const locations = ["Bangkok", "Samut Prakan", "Pathum Thani", "Chonburi", "Nonth
 const certifications = ["ISO 9001", "GMP", "FDA Approved", "Halal", "Organic", "OEKO-TEX"];
 const categories = ["Cosmetics", "Supplements", "Packaging", "Clothing", "Skincare"];
 
-const FactoryList = () => {
+const FactoriesContent = () => {
     const searchParams = useSearchParams();
     const router = useRouter();
     const pathname = usePathname();
@@ -310,4 +310,17 @@ const FactoryList = () => {
     );
 };
 
-export default FactoryList;
+export default function FactoryList() {
+    return (
+        <Suspense fallback={
+            <div className="h-screen flex items-center justify-center bg-secondary/20">
+                <div className="animate-pulse flex flex-col items-center gap-4">
+                    <div className="h-12 w-12 rounded-full bg-primary/20" />
+                    <div className="h-4 w-32 bg-primary/10 rounded" />
+                </div>
+            </div>
+        }>
+            <FactoriesContent />
+        </Suspense>
+    );
+}
