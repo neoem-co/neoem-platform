@@ -1,0 +1,114 @@
+{
+  "template_id": "hybrid_oem",
+  "template_name_th": "สัญญาจ้างผลิตสินค้า OEM",
+  "template_name_en": "OEM Manufacturing Agreement",
+  "legal_basis": "ป.แพ่งและพาณิชย์ ลักษณะ 7 จ้างทำของ (มาตรา 587-607) ผสมลักษณะ 1 ซื้อขาย",
+  "preamble_template": "สัญญาฉบับนี้ทำขึ้น ณ {location} เมื่อวันที่ {date} ระหว่าง {buyer_name} ({buyer_company}) ซึ่งต่อไปในสัญญาจะเรียกว่า \"ผู้ว่าจ้าง\" ฝ่ายหนึ่ง กับ {seller_name} ({seller_company}) ซึ่งต่อไปในสัญญาจะเรียกว่า \"ผู้รับจ้าง\" อีกฝ่ายหนึ่ง ทั้งสองฝ่ายตกลงทำสัญญากันมีข้อความดังต่อไปนี้",
+  "articles": [
+    {
+      "article_number": 1,
+      "title_th": "คำนิยาม",
+      "title_en": "Definitions",
+      "guidance": "นิยาม: ผู้ว่าจ้าง, ผู้รับจ้าง, สินค้า, สูตร/แบบ, ข้อกำหนด, MOQ, Lead Time",
+      "required": true
+    },
+    {
+      "article_number": 2,
+      "title_th": "วัตถุประสงค์และขอบเขตงาน",
+      "title_en": "Purpose and Scope",
+      "guidance": "ผู้ว่าจ้างตกลงว่าจ้างผลิตสินค้า OEM ตาม specs, ผู้รับจ้างตกลงรับจ้างผลิตตามคุณสมบัติ",
+      "required": true
+    },
+    {
+      "article_number": 3,
+      "title_th": "วัตถุดิบและข้อกำหนดสินค้า",
+      "title_en": "Raw Materials and Product Specifications",
+      "guidance": "วัตถุดิบฝ่ายใดจัดหา, มาตรฐานวัตถุดิบ, specifications, packaging",
+      "required": true
+    },
+    {
+      "article_number": 4,
+      "title_th": "ราคาและการชำระเงิน",
+      "title_en": "Price and Payment",
+      "guidance": "ราคาต่อหน่วย, ราคารวม, งวดชำระ, กำหนดชำระ, VAT, บัญชีรับเงิน",
+      "required": true
+    },
+    {
+      "article_number": 5,
+      "title_th": "การส่งมอบ",
+      "title_en": "Delivery",
+      "guidance": "วันส่งมอบ, สถานที่, ค่าขนส่ง, partial delivery, ความเสี่ยงระหว่างขนส่ง",
+      "required": true
+    },
+    {
+      "article_number": 6,
+      "title_th": "การประกันคุณภาพและการตรวจรับ",
+      "title_en": "Quality Assurance and Acceptance",
+      "guidance": "มาตรฐาน (อย., GMP, ISO), ขั้นตอนตรวจรับ, ระยะเวลา, rejection, re-work",
+      "required": true
+    },
+    {
+      "article_number": 7,
+      "title_th": "ทรัพย์สินทางปัญญา",
+      "title_en": "Intellectual Property",
+      "guidance": "สูตร/แบบเป็นของผู้ว่าจ้าง, กระบวนการผลิตเป็นของผู้รับจ้าง, ห้ามผลิตสินค้าเดียวกันให้คู่แข่ง, ห้ามลอกเลียน",
+      "required": true
+    },
+    {
+      "article_number": 8,
+      "title_th": "การรักษาความลับ",
+      "title_en": "Confidentiality",
+      "guidance": "ครอบคลุมสูตร/แบบ/ข้อมูลทางธุรกิจ, ระยะเวลา 3-5 ปีหลังสิ้นสุด, บทลงโทษ, NDA แยก",
+      "required": true
+    },
+    {
+      "article_number": 9,
+      "title_th": "ความรับผิดชอบและการรับประกัน",
+      "title_en": "Liability and Warranty",
+      "guidance": "ระยะประกัน, ขอบเขต, สินค้า defect, product liability, insurance",
+      "required": true
+    },
+    {
+      "article_number": 10,
+      "title_th": "เหตุสุดวิสัย",
+      "title_en": "Force Majeure",
+      "guidance": "นิยาม, แจ้งภายใน 7 วัน, เลื่อนกำหนด, สิทธิ์ยกเลิกหากเกิน 90 วัน",
+      "required": true
+    },
+    {
+      "article_number": 11,
+      "title_th": "การยกเลิกสัญญา",
+      "title_en": "Termination",
+      "guidance": "ผิดสัญญาข้อสำคัญ, ล้มละลาย, แจ้งล่วงหน้า 30 วัน, ผลยกเลิก, คืนสูตร/แบบ",
+      "required": true
+    },
+    {
+      "article_number": 12,
+      "title_th": "บทลงโทษ",
+      "title_en": "Penalties",
+      "guidance": "ส่งล่าช้า: X% ต่อวัน (เพดาน Y%), สินค้าไม่ตรง spec: ผลิตใหม่/คืนเงิน, breach: ค่าเสียหาย",
+      "required": true
+    },
+    {
+      "article_number": 13,
+      "title_th": "การระงับข้อพิพาท",
+      "title_en": "Dispute Resolution",
+      "guidance": "เจรจา 30 วัน → ไกล่เกลี่ยสถาบันอนุญาโตตุลาการ → ศาลแพ่ง, เขตอำนาจ",
+      "required": true
+    },
+    {
+      "article_number": 14,
+      "title_th": "เงื่อนไขทั่วไป",
+      "title_en": "General Provisions",
+      "guidance": "สัญญาฉบับสมบูรณ์, แก้ไขต้องเป็นลายลักษณ์อักษร, โอนสิทธิ์, โมฆะบางส่วน, กฎหมายไทยบังคับ",
+      "required": true
+    }
+  ],
+  "fairness_checks": [
+    "IP: ต้องคุ้มครองทั้ง buyer (สูตร/แบบ) และ factory (know-how/กระบวนการ)",
+    "ค่าปรับส่งล่าช้าต้องมีเพดาน ไม่ควรเกิน 10%",
+    "สิทธิ์ยกเลิกต้องเป็นธรรมทั้งสองฝ่าย",
+    "MOQ และ lead time ต้องสมเหตุสมผล",
+    "ค่าชำระเงินต้องมีงวดที่ไม่เอาเปรียบฝ่ายใด"
+  ]
+}

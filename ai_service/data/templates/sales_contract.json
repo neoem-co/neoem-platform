@@ -1,0 +1,105 @@
+{
+  "template_id": "sales_contract",
+  "template_name_th": "สัญญาซื้อขาย",
+  "template_name_en": "Sales Contract",
+  "legal_basis": "ป.แพ่งและพาณิชย์ ลักษณะ 1 ซื้อขาย (มาตรา 453-490)",
+  "preamble_template": "สัญญาฉบับนี้ทำขึ้น ณ {location} เมื่อวันที่ {date} ระหว่าง {buyer_name} ({buyer_company}) ซึ่งต่อไปในสัญญาจะเรียกว่า \"ผู้ซื้อ\" ฝ่ายหนึ่ง กับ {seller_name} ({seller_company}) ซึ่งต่อไปในสัญญาจะเรียกว่า \"ผู้ขาย\" อีกฝ่ายหนึ่ง ทั้งสองฝ่ายตกลงทำสัญญากันมีข้อความดังต่อไปนี้",
+  "articles": [
+    {
+      "article_number": 1,
+      "title_th": "คำนิยาม",
+      "title_en": "Definitions",
+      "guidance": "นิยาม: ผู้ซื้อ, ผู้ขาย, สินค้า, ข้อกำหนดสินค้า",
+      "required": true
+    },
+    {
+      "article_number": 2,
+      "title_th": "รายการสินค้าและราคา",
+      "title_en": "Products and Price",
+      "guidance": "ระบุสินค้า, จำนวน, หน่วย, ราคาต่อหน่วย, ราคารวม, สกุลเงิน, VAT",
+      "required": true
+    },
+    {
+      "article_number": 3,
+      "title_th": "การชำระเงิน",
+      "title_en": "Payment Terms",
+      "guidance": "วิธีชำระ, งวดชำระ, กำหนดชำระ, บัญชีรับเงิน",
+      "required": true
+    },
+    {
+      "article_number": 4,
+      "title_th": "การส่งมอบสินค้า",
+      "title_en": "Delivery",
+      "guidance": "วันส่งมอบ, สถานที่, Incoterms, ค่าขนส่ง, ความเสี่ยงระหว่างขนส่ง",
+      "required": true
+    },
+    {
+      "article_number": 5,
+      "title_th": "การตรวจรับสินค้า",
+      "title_en": "Inspection and Acceptance",
+      "guidance": "ระยะเวลาตรวจสอบ, เงื่อนไขปฏิเสธ, การคืนสินค้า",
+      "required": true
+    },
+    {
+      "article_number": 6,
+      "title_th": "การรับประกันสินค้า",
+      "title_en": "Warranty",
+      "guidance": "ระยะเวลาประกัน, ขอบเขต, การเยียวยา, ข้อยกเว้น",
+      "required": true
+    },
+    {
+      "article_number": 7,
+      "title_th": "ทรัพย์สินทางปัญญา",
+      "title_en": "Intellectual Property",
+      "guidance": "ความเป็นเจ้าของ IP, สิทธิ์ใช้เครื่องหมายการค้า, ห้ามละเมิด",
+      "required": true
+    },
+    {
+      "article_number": 8,
+      "title_th": "การรักษาความลับ",
+      "title_en": "Confidentiality",
+      "guidance": "ขอบเขตข้อมูลลับ, ระยะเวลา, บทลงโทษ",
+      "required": true
+    },
+    {
+      "article_number": 9,
+      "title_th": "เหตุสุดวิสัย",
+      "title_en": "Force Majeure",
+      "guidance": "นิยาม, แจ้ง, ผล, สิทธิ์ยกเลิก",
+      "required": true
+    },
+    {
+      "article_number": 10,
+      "title_th": "การยกเลิกสัญญา",
+      "title_en": "Termination",
+      "guidance": "เงื่อนไข, แจ้งล่วงหน้า, ผล, ชำระหนี้คงค้าง",
+      "required": true
+    },
+    {
+      "article_number": 11,
+      "title_th": "บทลงโทษ",
+      "title_en": "Penalties",
+      "guidance": "ค่าปรับล่าช้า, สินค้าชำรุด, เพดานค่าปรับ",
+      "required": true
+    },
+    {
+      "article_number": 12,
+      "title_th": "การระงับข้อพิพาท",
+      "title_en": "Dispute Resolution",
+      "guidance": "เจรจา → ไกล่เกลี่ย → ศาล, เขตอำนาจ",
+      "required": true
+    },
+    {
+      "article_number": 13,
+      "title_th": "เงื่อนไขทั่วไป",
+      "title_en": "General Provisions",
+      "guidance": "แก้ไขเพิ่มเติม, โอนสิทธิ์, โมฆะบางส่วน, กฎหมายบังคับ",
+      "required": true
+    }
+  ],
+  "fairness_checks": [
+    "ค่าปรับต้องเป็นธรรมทั้งสองฝ่าย",
+    "สิทธิ์ยกเลิกต้องมีทั้งสองฝ่าย",
+    "เงื่อนไขชำระเงินต้องสมเหตุสมผล"
+  ]
+}

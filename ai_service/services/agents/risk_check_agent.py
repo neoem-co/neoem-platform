@@ -66,7 +66,6 @@ async def structure_contract(raw_text: str) -> StructuredContract:
         system_prompt=CLAUSE_STRUCTURING_SYSTEM,
         user_prompt=CLAUSE_STRUCTURING_USER.format(raw_text=truncated),
         temperature=0.05,
-        max_tokens=4096,
     )
 
     try:
@@ -219,15 +218,15 @@ async def analyse_risks(
     """
     logger.info("Stage 5: Running risk analysis")
 
-    # Serialise inputs for the prompt
+    # Serialise inputs for the prompt — truncate aggressively to stay within token limits
     contract_json = json.dumps(
         {
             "contract_type": structured_contract.contract_type.value,
             "parties": structured_contract.parties,
             "effective_date": structured_contract.effective_date,
             "clauses": [
-                {"id": c.clause_id, "title": c.title, "body": c.body[:600]}
-                for c in structured_contract.clauses
+                {"id": c.clause_id, "title": c.title, "body": c.body[:300]}
+                for c in structured_contract.clauses[:15]
             ],
         },
         ensure_ascii=False,
@@ -253,7 +252,6 @@ async def analyse_risks(
             thanoy_analysis=thanoy_analysis or "(Thanoy ไม่สามารถวิเคราะห์ได้)",
         ),
         temperature=0.1,
-        max_tokens=6000,
     )
 
     try:

@@ -1,0 +1,114 @@
+{
+  "template_id": "distribution",
+  "template_name_th": "สัญญาจัดจำหน่าย",
+  "template_name_en": "Distribution Agreement",
+  "legal_basis": "ป.แพ่งและพาณิชย์ ลักษณะ 1 ซื้อขาย, ลักษณะ 15 ตัวแทน",
+  "preamble_template": "สัญญาฉบับนี้ทำขึ้น ณ {location} เมื่อวันที่ {date} ระหว่าง {buyer_name} ({buyer_company}) ซึ่งต่อไปในสัญญาจะเรียกว่า \"ผู้จัดจำหน่าย\" ฝ่ายหนึ่ง กับ {seller_name} ({seller_company}) ซึ่งต่อไปในสัญญาจะเรียกว่า \"ผู้ผลิต\" อีกฝ่ายหนึ่ง ทั้งสองฝ่ายตกลงทำสัญญากันมีข้อความดังต่อไปนี้",
+  "articles": [
+    {
+      "article_number": 1,
+      "title_th": "คำนิยาม",
+      "title_en": "Definitions",
+      "guidance": "นิยาม: สินค้า, เขตพื้นที่, ผู้จัดจำหน่าย, ผู้ผลิต, ช่องทางจำหน่าย",
+      "required": true
+    },
+    {
+      "article_number": 2,
+      "title_th": "การแต่งตั้งและเขตพื้นที่",
+      "title_en": "Appointment and Territory",
+      "guidance": "แต่งตั้งเป็นตัวแทนจำหน่าย (exclusive/non-exclusive), เขตพื้นที่, channel restrictions",
+      "required": true
+    },
+    {
+      "article_number": 3,
+      "title_th": "สินค้าและราคา",
+      "title_en": "Products and Pricing",
+      "guidance": "รายการสินค้า, ราคาขายส่ง, ส่วนลด, การปรับราคา, SRP/MAP",
+      "required": true
+    },
+    {
+      "article_number": 4,
+      "title_th": "การสั่งซื้อและปริมาณขั้นต่ำ",
+      "title_en": "Orders and Minimum Purchase",
+      "guidance": "ขั้นตอนสั่งซื้อ, MOQ ต่อคำสั่ง, minimum annual purchase, forecast",
+      "required": true
+    },
+    {
+      "article_number": 5,
+      "title_th": "การชำระเงิน",
+      "title_en": "Payment Terms",
+      "guidance": "เงื่อนไขชำระ (credit term), วิธีชำระ, ดอกเบี้ยล่าช้า, letter of credit",
+      "required": true
+    },
+    {
+      "article_number": 6,
+      "title_th": "การส่งมอบ",
+      "title_en": "Delivery",
+      "guidance": "Incoterms, สถานที่ส่งมอบ, lead time, partial shipment, ค่าขนส่ง, insurance",
+      "required": true
+    },
+    {
+      "article_number": 7,
+      "title_th": "การรับประกันและคืนสินค้า",
+      "title_en": "Warranty and Returns",
+      "guidance": "ระยะประกัน, ขอบเขต, เงื่อนไขคืน, defective goods, credit/replacement",
+      "required": true
+    },
+    {
+      "article_number": 8,
+      "title_th": "ทรัพย์สินทางปัญญาและเครื่องหมายการค้า",
+      "title_en": "Intellectual Property and Trademarks",
+      "guidance": "สิทธิ์ใช้เครื่องหมายการค้าเพื่อจำหน่าย, ห้ามดัดแปลง, marketing materials, brand guidelines",
+      "required": true
+    },
+    {
+      "article_number": 9,
+      "title_th": "การรักษาความลับ",
+      "title_en": "Confidentiality",
+      "guidance": "ข้อมูลราคา/ลูกค้า/กลยุทธ์, ระยะเวลา 3 ปีหลังสิ้นสุด",
+      "required": true
+    },
+    {
+      "article_number": 10,
+      "title_th": "ระยะเวลาและการต่ออายุ",
+      "title_en": "Term and Renewal",
+      "guidance": "ระยะเวลา, auto-renewal, แจ้งไม่ต่ออายุล่วงหน้า 90 วัน",
+      "required": true
+    },
+    {
+      "article_number": 11,
+      "title_th": "การยกเลิกสัญญา",
+      "title_en": "Termination",
+      "guidance": "ผิดสัญญาข้อสำคัญ, ล้มละลาย, ไม่ถึง minimum purchase, แจ้งล่วงหน้า 30 วัน, ผลยกเลิก",
+      "required": true
+    },
+    {
+      "article_number": 12,
+      "title_th": "เหตุสุดวิสัย",
+      "title_en": "Force Majeure",
+      "guidance": "นิยาม, แจ้งภายใน 7 วัน, สิทธิ์ยกเลิกหากเกิน 90 วัน",
+      "required": true
+    },
+    {
+      "article_number": 13,
+      "title_th": "การระงับข้อพิพาท",
+      "title_en": "Dispute Resolution",
+      "guidance": "เจรจา 30 วัน → อนุญาโตตุลาการ → ศาล, กฎหมายไทย",
+      "required": true
+    },
+    {
+      "article_number": 14,
+      "title_th": "เงื่อนไขทั่วไป",
+      "title_en": "General Provisions",
+      "guidance": "สัญญาฉบับสมบูรณ์, แก้ไขเป็นลายลักษณ์อักษร, โอนสิทธิ์, โมฆะบางส่วน",
+      "required": true
+    }
+  ],
+  "fairness_checks": [
+    "Territory exclusivity ต้องสมเหตุสมผลกับ minimum purchase",
+    "Minimum purchase ต้องไม่สูงจนเป็นภาระเกินไป",
+    "สิทธิ์ยกเลิกต้องเป็นธรรมทั้งสองฝ่าย",
+    "ระยะแจ้งไม่ต่ออายุต้องเพียงพอให้หาทางเลือกอื่น",
+    "ราคาขายส่งต้องให้ margin ที่สมเหตุสมผลแก่ผู้จัดจำหน่าย"
+  ]
+}

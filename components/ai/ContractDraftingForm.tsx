@@ -12,6 +12,12 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
+import {
+    generateDraft,
+    finalizeContract,
+    type DealSheet,
+    type FinalizeResponse,
+} from "@/lib/ai-api";
 
 interface ContractDraftingFormProps {
     factoryName: string;
@@ -35,6 +41,8 @@ interface ContractData {
 export function ContractDraftingForm({ factoryName, onGenerate, onClose, initialData }: ContractDraftingFormProps) {
     const [loading, setLoading] = useState(false);
     const [generated, setGenerated] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const [finalizeResult, setFinalizeResult] = useState<FinalizeResponse | null>(null);
     const [formData, setFormData] = useState<ContractData>({
         productType: "Sunscreen SPF50 Mousse",
         quantity: "1000",
@@ -55,10 +63,54 @@ export function ContractDraftingForm({ factoryName, onGenerate, onClose, initial
 
     const handleSubmit = async () => {
         setLoading(true);
-        await new Promise((resolve) => setTimeout(resolve, 1500));
-        setLoading(false);
-        setGenerated(true);
-        onGenerate(formData);
+        setError(null);
+        try {
+            const dealSheet: DealSheet = {
+                vendor: { name: factoryName, role: "seller" },
+                client: { name: "Your Company", role: "buyer" },
+                product: {
+                    name: formData.productType,
+                    quantity: parseInt(formData.quantity) || undefined,
+                },
+                total_price: parseFloat(formData.totalPrice) || undefined,
+                delivery_date: formData.deliveryDate || undefined,
+                commercial_terms: {
+                    ip_ownership: "buyer",
+                    penalty_type: formData.penaltyClause === "none" ? "none" : "percentage_daily",
+                    penalty_details: formData.penaltyClause !== "none" ? `${formData.penaltyClause}% per day` : undefined,
+                },
+                additional_notes: formData.additionalClauses || undefined,
+            };
+            const draftResult = await generateDraft({
+                template_type: "hire_of_work",
+                deal_sheet: dealSheet,
+                parties: [
+                    { name: "Your Company", role: "buyer" },
+                    { name: factoryName, role: "seller" },
+                ],
+                product: { name: formData.productType, quantity: parseInt(formData.quantity) || undefined },
+                total_price: parseFloat(formData.totalPrice) || undefined,
+                delivery_date: formData.deliveryDate || undefined,
+            });
+            // Finalize immediately for this simpler form
+            const result = await finalizeContract({
+                contract_title: draftResult.contract_title,
+                articles: draftResult.articles,
+                preamble_th: draftResult.preamble_th,
+                effective_date: draftResult.effective_date || undefined,
+                parties: [
+                    { name: "Your Company", role: "buyer" },
+                    { name: factoryName, role: "seller" },
+                ],
+            });
+            setFinalizeResult(result);
+            setGenerated(true);
+            onGenerate(formData);
+        } catch (err: unknown) {
+            setError(err instanceof Error ? err.message : "Generation failed");
+        } finally {
+            setLoading(false);
+        }
     };
 
     if (generated) {
@@ -78,13 +130,31 @@ export function ContractDraftingForm({ factoryName, onGenerate, onClose, initial
                 <CardContent className="space-y-3">
                     <div className="p-4 bg-success/5 border border-success/20 rounded-lg text-center space-y-2">
                         <FileText className="h-8 w-8 text-success mx-auto" />
-                        <p className="font-medium text-foreground">Contract_Draft.pdf</p>
-                        <p className="text-xs text-muted-foreground">Generated just now</p>
+                        <p className="font-medium text-foreground">{finalizeResult?.message_en || "Contract Generated"}</p>
+                        <p className="text-xs text-muted-foreground">{finalizeResult?.message_th || "Generated just now"}</p>
                     </div>
-                    <Button variant="outline" className="w-full" size="sm">
-                        <Download className="h-4 w-4 mr-2" />
-                        Download Contract PDF
-                    </Button>
+                    {finalizeResult?.pdf_url && (
+                        <a href={finalizeResult.pdf_url.replace("/api/", "/api/ai/")} download>
+                            <Button variant="outline" className="w-full" size="sm">
+                                <Download className="h-4 w-4 mr-2" />
+                                Download Contract PDF
+                            </Button>
+                        </a>
+                    )}
+                    {finalizeResult?.docx_url && (
+                        <a href={finalizeResult.docx_url.replace("/api/", "/api/ai/")} download>
+                            <Button variant="outline" className="w-full" size="sm">
+                                <Download className="h-4 w-4 mr-2" />
+                                Download Contract Word
+                            </Button>
+                        </a>
+                    )}
+                    {!finalizeResult && (
+                        <Button variant="outline" className="w-full" size="sm">
+                            <Download className="h-4 w-4 mr-2" />
+                            Download Contract PDF
+                        </Button>
+                    )}
                 </CardContent>
             </Card>
         );
@@ -238,6 +308,10 @@ export function ContractDraftingForm({ factoryName, onGenerate, onClose, initial
                         </>
                     )}
                 </Button>
+
+                {error && (
+                    <p className="text-xs text-destructive text-center">{error}</p>
+                )}
             </CardContent>
         </Card>
     );

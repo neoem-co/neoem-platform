@@ -9,6 +9,7 @@ import logging
 import time
 
 from fastapi import APIRouter, File, Form, UploadFile, HTTPException
+from pydantic import BaseModel, Field
 from typing import Optional
 
 from models.risk_check import (
@@ -19,6 +20,8 @@ from models.risk_check import (
 )
 from services.ocr.iapp_ocr import OCRService
 from services.agents.risk_check_agent import run_risk_check_pipeline
+from services.llm.typhoon_client import typhoon_invoke
+from services.llm.prompts import RISK_EXPLAIN_SYSTEM, RISK_EXPLAIN_USER
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/risk-check", tags=["Risk Check"])
@@ -90,12 +93,16 @@ async def analyze_contract(
     ocr_result = await ocr_service.extract(file_bytes, file.filename or "document.pdf")
 
     # Run risk analysis pipeline
-    result = await run_risk_check_pipeline(
-        ocr_result=ocr_result,
-        chat_history=messages,
-        factory_info=factory,
-        language=language,
-    )
+    try:
+        result = await run_risk_check_pipeline(
+            ocr_result=ocr_result,
+            chat_history=messages,
+            factory_info=factory,
+            language=language,
+        )
+    except Exception as e:
+        logger.error("Risk analysis pipeline failed: %s", str(e))
+        raise HTTPException(500, f"Risk analysis failed: {str(e)}")
 
     return result
 
@@ -121,3 +128,79 @@ async def ocr_only(
         "char_count": result.get("char_count", 0),
         "method": result.get("method", "unknown"),
     }
+
+
+# ── Risk Explanation (AI deep-dive on a single risk) ─────────────────────────
+
+
+class RiskExplainRequest(BaseModel):
+    risk_id: str
+    title_th: str = ""
+    title_en: str = ""
+    level: str = "medium"
+    clause_ref: str = ""
+    description_th: str = ""
+    description_en: str = ""
+    recommendation_th: str = ""
+    recommendation_en: str = ""
+    category: str = "general"
+
+
+class RiskExplainResponse(BaseModel):
+    risk_id: str
+    explanation_th: str
+    explanation_en: str
+    business_impact: list[str] = Field(default_factory=list)
+    worst_case_scenario: str = ""
+    suggested_fix: str = ""
+
+
+@router.post("/explain", response_model=RiskExplainResponse)
+async def explain_risk(request: RiskExplainRequest):
+    """
+    AI-powered deep explanation of a single risk item.
+    Explains what the risk means, how it can harm the business,
+    gives a real-world scenario, and suggests a contract fix.
+    """
+    try:
+        response_text = await typhoon_invoke(
+            system_prompt=RISK_EXPLAIN_SYSTEM,
+            user_prompt=RISK_EXPLAIN_USER.format(
+                title_th=request.title_th,
+                title_en=request.title_en,
+                level=request.level,
+                clause_ref=request.clause_ref or "ไม่ระบุ",
+                description_th=request.description_th,
+                description_en=request.description_en,
+                recommendation_th=request.recommendation_th,
+                recommendation_en=request.recommendation_en,
+                category=request.category,
+            ),
+            temperature=0.2,
+        )
+
+        # Try to parse JSON response
+        import re
+        json_match = re.search(r"\{[\s\S]*\}", response_text)
+        if json_match:
+            data = json.loads(json_match.group())
+        else:
+            data = {
+                "explanation_th": response_text,
+                "explanation_en": "",
+                "business_impact": [],
+                "worst_case_scenario": "",
+                "suggested_fix": "",
+            }
+
+        return RiskExplainResponse(
+            risk_id=request.risk_id,
+            explanation_th=data.get("explanation_th", ""),
+            explanation_en=data.get("explanation_en", ""),
+            business_impact=data.get("business_impact", []),
+            worst_case_scenario=data.get("worst_case_scenario", ""),
+            suggested_fix=data.get("suggested_fix", ""),
+        )
+    except Exception as e:
+        logger.error("Risk explanation failed: %s", str(e))
+        raise HTTPException(500, f"Risk explanation failed: {str(e)}")

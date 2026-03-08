@@ -19,6 +19,7 @@ import { AILegalWorkspace } from "@/components/legal/AILegalWorkspace";
 import { TOSModal } from "@/components/chat/TOSModal";
 import { DepositActionCard } from "@/components/chat/DepositActionCard";
 import factoriesData from "@/data/factories.json";
+import type { ChatMessagePayload, FactoryInfoPayload } from "@/lib/ai-api";
 import factory1 from "@/public/assets/factory-1.jpg";
 import factory2 from "@/public/assets/factory-2.jpg";
 import factory3 from "@/public/assets/factory-3.jpg";
@@ -284,6 +285,20 @@ const DealRoom = () => {
                 onClose={() => setShowLegalWorkspace(false)}
                 factoryName={factory.name}
                 initialTab={legalWorkspaceTab}
+                chatHistory={messages.map((m): ChatMessagePayload => ({
+                    sender: m.sender,
+                    message: m.message,
+                    timestamp: m.timestamp,
+                }))}
+                factoryInfo={{
+                    factory_id: factory.id,
+                    name: factory.name,
+                    location: factory.location,
+                    category: factory.category,
+                    certifications: factory.certifications || [],
+                    rating: factory.rating,
+                    verified: factory.verified,
+                } as FactoryInfoPayload}
             />
 
             <PaymentModal open={showPaymentModal} onClose={() => setShowPaymentModal(false)} onSuccess={handlePaymentSuccess} amount={depositAmount} factoryName={factory.name} />

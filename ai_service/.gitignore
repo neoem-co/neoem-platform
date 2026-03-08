@@ -8,8 +8,9 @@ __pycache__/
 dist/
 build/
 
-# Data (generated at runtime)
-data/
+# Data (generated at runtime — exclude contracts and vector store)
+data/contracts/
+data/chroma_db/
 *.pdf
 *.docx
 

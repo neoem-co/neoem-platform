@@ -13,7 +13,7 @@ class Settings(BaseSettings):
         default="https://api.opentyphoon.ai/v1", alias="TYPHOON_BASE_URL"
     )
     typhoon_model: str = Field(
-        default="typhoon-v2-70b-instruct", alias="TYPHOON_MODEL"
+        default="typhoon-v2.5-30b-a3b-instruct", alias="TYPHOON_MODEL"
     )
 
     # ── iApp Technology ──────────────────────────────
@@ -44,7 +44,7 @@ class Settings(BaseSettings):
     log_level: str = Field(default="INFO", alias="LOG_LEVEL")
     ocr_char_threshold: int = Field(default=50, alias="OCR_CHAR_THRESHOLD")
 
-    model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
+    model_config = {"env_file": ".env", "env_file_encoding": "utf-8", "extra": "ignore"}
 
 
 settings = Settings()

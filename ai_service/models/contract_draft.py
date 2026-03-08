@@ -7,7 +7,7 @@ from __future__ import annotations
 from enum import Enum
 from typing import Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 
 # ─── Enums ───────────────────────────────────────────────────────────────────
@@ -75,6 +75,12 @@ class CommercialTerms(BaseModel):
     ip_details: Optional[str] = None
     penalty_type: PenaltyType = PenaltyType.NONE
     penalty_details: Optional[str] = None
+
+    @field_validator("ip_ownership", mode="before")
+    @classmethod
+    def _normalize_ip(cls, v: str) -> str:
+        aliases = {"seller": "factory", "joint": "shared", "manufacturer": "factory"}
+        return aliases.get(v, v) if isinstance(v, str) else v
 
 
 # — Step 1: Extract context from chat ————————————————————————————————————————

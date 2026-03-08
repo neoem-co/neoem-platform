@@ -118,5 +118,5 @@ async def download_contract(contract_id: str, format: str):
     return FileResponse(
         file_path,
         media_type=media_type,
-        filename=f"{contract_id}.{format}",
+        filename=f"Contract_{contract_id}.{format}",
     )

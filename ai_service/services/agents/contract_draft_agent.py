@@ -9,6 +9,7 @@ Steps (matching UI prototype):
 
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
 import time
@@ -39,6 +40,15 @@ from services.llm.prompts import (
     CONTEXT_EXTRACTION_USER,
     LINGUISTIC_POLISH_SYSTEM,
     LINGUISTIC_POLISH_USER,
+    TEMPLATE_ARTICLE_GENERATION_SYSTEM,
+    TEMPLATE_ARTICLE_GENERATION_USER,
+)
+from services.templates.template_loader import (
+    load_template,
+    fill_preamble,
+    build_article_skeleton,
+    build_fairness_checklist,
+    load_legal_refs,
 )
 
 logger = logging.getLogger(__name__)
@@ -71,7 +81,6 @@ async def extract_context(request: ExtractContextRequest) -> ExtractContextRespo
             factory_id=request.factory_id or "N/A",
         ),
         temperature=0.1,
-        max_tokens=3000,
     )
 
     try:
@@ -158,18 +167,63 @@ async def generate_draft(request: GenerateDraftRequest) -> GenerateDraftResponse
         indent=2,
     )
 
-    # ── Step 2: Article generation ───────────────────────────────────────
-    response_text = await typhoon_invoke(
-        system_prompt=ARTICLE_GENERATION_SYSTEM,
-        user_prompt=ARTICLE_GENERATION_USER.format(
-            template_type=request.template_type.value,
-            deal_sheet=deal_sheet_json,
-            parties=parties_json,
-            product=product_json,
-        ),
-        temperature=0.15,
-        max_tokens=6000,
-    )
+    # ── Step 2: Article generation (Template-First if template exists) ───
+    template = None
+    use_template = False
+    try:
+        template = load_template(request.template_type.value)
+        if template:
+            logger.info("Using template-first approach for %s", request.template_type.value)
+
+            preamble_filled = fill_preamble(
+                template,
+                [p.model_dump() for p in request.parties],
+                request.deal_sheet.delivery_date if request.deal_sheet else None,
+            )
+            article_skeleton = build_article_skeleton(template)
+            fairness_checklist = build_fairness_checklist(template)
+            legal_refs = load_legal_refs(request.template_type.value)
+
+            # Safe string substitution (avoids crashes from {/} in legal_refs)
+            user_prompt = TEMPLATE_ARTICLE_GENERATION_USER
+            subs = {
+                "{template_name}": template.get("template_name_th") or request.template_type.value,
+                "{legal_basis}": template.get("legal_basis") or "",
+                "{article_skeleton}": article_skeleton or "",
+                "{fairness_checklist}": fairness_checklist or "",
+                "{preamble}": preamble_filled or "",
+                "{deal_sheet}": deal_sheet_json,
+                "{parties}": parties_json,
+                "{product}": product_json,
+                "{legal_refs}": legal_refs or "",
+            }
+            for key, val in subs.items():
+                user_prompt = user_prompt.replace(key, str(val))
+
+            response_text = await typhoon_invoke(
+                system_prompt=TEMPLATE_ARTICLE_GENERATION_SYSTEM,
+                user_prompt=user_prompt,
+                temperature=0.15,
+            )
+            use_template = True
+    except Exception as e:
+        logger.warning("Template-first failed, falling back to generic prompt: %s", str(e))
+        template = None
+        use_template = False
+
+    if not use_template:
+        # Fallback: original prompt without template
+        logger.info("Using generic prompt for %s", request.template_type.value)
+        response_text = await typhoon_invoke(
+            system_prompt=ARTICLE_GENERATION_SYSTEM,
+            user_prompt=ARTICLE_GENERATION_USER.format(
+                template_type=request.template_type.value,
+                deal_sheet=deal_sheet_json,
+                parties=parties_json,
+                product=product_json,
+            ),
+            temperature=0.15,
+        )
 
     try:
         data = _parse_json_response(response_text)
@@ -203,12 +257,21 @@ async def generate_draft(request: GenerateDraftRequest) -> GenerateDraftResponse
     # ── Step 3: Linguistic polish (ราชการ tone) ──────────────────────────
     polished_articles = await _polish_articles(articles)
 
+    # Use template preamble if available and LLM didn't provide one
+    final_preamble_th = data.get("preamble_th", "")
+    if template and not final_preamble_th:
+        final_preamble_th = fill_preamble(
+            template,
+            [p.model_dump() for p in request.parties],
+            request.deal_sheet.delivery_date if request.deal_sheet else None,
+        )
+
     return GenerateDraftResponse(
         contract_title=data.get("contract_title", "สัญญา"),
         contract_filename=data.get("contract_filename", "Contract_Draft_v1"),
         articles=polished_articles,
         effective_date=data.get("effective_date"),
-        preamble_th=data.get("preamble_th", ""),
+        preamble_th=final_preamble_th,
         preamble_en=data.get("preamble_en", ""),
     )
 
@@ -216,15 +279,12 @@ async def generate_draft(request: GenerateDraftRequest) -> GenerateDraftResponse
 async def _polish_articles(articles: list[ContractArticle]) -> list[ContractArticle]:
     """
     Run each article through Typhoon for ราชการ linguistic polish.
-    To save latency, only polish articles that have substantive content.
+    Uses asyncio.gather to polish articles concurrently (much faster).
     """
-    polished: list[ContractArticle] = []
 
-    for article in articles:
+    async def _polish_one(article: ContractArticle) -> ContractArticle:
         if len(article.body_th) < 20:
-            polished.append(article)
-            continue
-
+            return article
         try:
             resp = await typhoon_invoke(
                 system_prompt=LINGUISTIC_POLISH_SYSTEM,
@@ -233,24 +293,23 @@ async def _polish_articles(articles: list[ContractArticle]) -> list[ContractArti
                     article_body=article.body_th,
                 ),
                 temperature=0.05,
-                max_tokens=2000,
             )
             data = _parse_json_response(resp)
-            polished.append(
-                ContractArticle(
-                    article_number=article.article_number,
-                    title_th=data.get("title_th", article.title_th),
-                    title_en=article.title_en,
-                    body_th=data.get("body_th", article.body_th),
-                    body_en=article.body_en,
-                    is_editable=article.is_editable,
-                )
+            return ContractArticle(
+                article_number=article.article_number,
+                title_th=data.get("title_th", article.title_th),
+                title_en=article.title_en,
+                body_th=data.get("body_th", article.body_th),
+                body_en=article.body_en,
+                is_editable=article.is_editable,
             )
         except Exception as e:
             logger.warning("Polish failed for article %d: %s", article.article_number, str(e))
-            polished.append(article)
+            return article
 
-    return polished
+    # Run all polish calls concurrently — respects Typhoon rate limits via httpx
+    polished = await asyncio.gather(*[_polish_one(a) for a in articles])
+    return list(polished)
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -283,7 +342,7 @@ async def finalize_contract(request: FinalizeRequest) -> FinalizeResponse:
         # For now: save locally
         pdf_path = f"./data/contracts/{contract_id}.pdf"
         _save_file(pdf_path, pdf_bytes)
-        pdf_url = f"/api/contracts/{contract_id}/download/pdf"
+        pdf_url = f"/api/contract-draft/contracts/{contract_id}/download/pdf"
 
     if request.output_format in ("docx", "both"):
         from services.document.docx_generator import generate_contract_docx
@@ -295,7 +354,7 @@ async def finalize_contract(request: FinalizeRequest) -> FinalizeResponse:
         )
         docx_path = f"./data/contracts/{contract_id}.docx"
         _save_file(docx_path, docx_bytes)
-        docx_url = f"/api/contracts/{contract_id}/download/docx"
+        docx_url = f"/api/contract-draft/contracts/{contract_id}/download/docx"
 
     # Save deal sheet JSON for future risk check comparison (History Check)
     if request.deal_sheet:
@@ -325,15 +384,36 @@ async def finalize_contract(request: FinalizeRequest) -> FinalizeResponse:
 
 
 def _parse_json_response(text: str) -> dict:
-    """Extract JSON from an LLM response that may contain markdown fences."""
+    """Extract JSON from an LLM response that may contain markdown fences or extra text."""
     text = text.strip()
-    if text.startswith("```"):
-        lines = text.split("\n")
-        lines = lines[1:]
-        if lines and lines[-1].strip() == "```":
-            lines = lines[:-1]
-        text = "\n".join(lines)
-    return json.loads(text)
+
+    # Strategy 1: try direct parse
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError:
+        pass
+
+    # Strategy 2: strip markdown code fences
+    if "```" in text:
+        import re
+        m = re.search(r"```(?:json)?\s*\n?(.*?)\n?\s*```", text, re.DOTALL)
+        if m:
+            try:
+                return json.loads(m.group(1).strip())
+            except json.JSONDecodeError:
+                pass
+
+    # Strategy 3: find the first { ... } block (greedy from first { to last })
+    first_brace = text.find("{")
+    last_brace = text.rfind("}")
+    if first_brace != -1 and last_brace > first_brace:
+        candidate = text[first_brace:last_brace + 1]
+        try:
+            return json.loads(candidate)
+        except json.JSONDecodeError:
+            pass
+
+    raise ValueError(f"Could not extract JSON from LLM response ({len(text)} chars)")
 
 
 def _save_file(path: str, content: bytes) -> None:

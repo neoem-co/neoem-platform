@@ -13,7 +13,7 @@ from typing import Optional
 
 from langchain_core.documents import Document
 from langchain_community.vectorstores import Chroma
-from langchain_openai import OpenAIEmbeddings
+from langchain_community.embeddings import HuggingFaceEmbeddings
 
 from config import settings
 
@@ -22,17 +22,19 @@ logger = logging.getLogger(__name__)
 # ── Singleton ────────────────────────────────────────────────────────────────
 _vector_store: Optional[Chroma] = None
 
+# Multilingual model with strong Thai support, runs locally, no API key needed
+_EMBEDDING_MODEL = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
 
-def _get_embeddings() -> OpenAIEmbeddings:
+
+def _get_embeddings() -> HuggingFaceEmbeddings:
     """
-    Use Typhoon's OpenAI-compatible embeddings endpoint.
-    Falls back to a lightweight sentence-transformer if Typhoon
-    does not expose an embeddings route.
+    Local sentence-transformer embeddings (no API key needed).
+    paraphrase-multilingual-MiniLM-L12-v2 supports Thai out of the box.
     """
-    return OpenAIEmbeddings(
-        openai_api_key=settings.typhoon_api_key,
-        openai_api_base=settings.typhoon_base_url,
-        model="typhoon-v2-70b-instruct",  # adjust to actual embedding model
+    return HuggingFaceEmbeddings(
+        model_name=_EMBEDDING_MODEL,
+        model_kwargs={"device": "cpu"},
+        encode_kwargs={"normalize_embeddings": True},
     )
 
 

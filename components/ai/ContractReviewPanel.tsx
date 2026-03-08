@@ -2,56 +2,76 @@ import { useState } from "react";
 import { FileSearch, AlertTriangle, CheckCircle2, XCircle, Upload, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+    analyzeContractRisk,
+    type RiskCheckResponse,
+    type RiskItemResult,
+    type ChatMessagePayload,
+    type FactoryInfoPayload,
+} from "@/lib/ai-api";
 
 interface ContractReviewPanelProps {
     onClose: () => void;
+    chatHistory?: ChatMessagePayload[];
+    factoryInfo?: FactoryInfoPayload;
 }
+
+type RiskType = "high" | "medium" | "low";
 
 interface RiskItem {
     id: string;
-    type: "high" | "medium" | "low";
+    type: RiskType;
     clause: string;
     description: string;
 }
 
-const mockRisks: RiskItem[] = [
-    {
-        id: "1",
-        type: "high",
-        clause: "Termination Clause (Missing)",
-        description: "No termination clause found. Recommend adding exit terms.",
-    },
-    {
-        id: "2",
-        type: "medium",
-        clause: "Payment Terms - Clause 4.2",
-        description: "100% upfront payment is risky. Consider milestone-based payments.",
-    },
-    {
-        id: "3",
-        type: "low",
-        clause: "Delivery Timeline - Clause 6.1",
-        description: "Delivery deadline is vague. Specify exact dates.",
-    },
-];
+function mapRiskLevel(level: string): RiskType {
+    if (level === "critical" || level === "high") return "high";
+    if (level === "medium") return "medium";
+    return "low";
+}
 
-export function ContractReviewPanel({ onClose }: ContractReviewPanelProps) {
+function mapApiRisks(risks: RiskItemResult[]): RiskItem[] {
+    return risks.map((r) => ({
+        id: r.risk_id,
+        type: mapRiskLevel(r.level),
+        clause: r.title_en || r.title_th,
+        description: r.description_en || r.description_th,
+    }));
+}
+
+export function ContractReviewPanel({ onClose, chatHistory = [], factoryInfo }: ContractReviewPanelProps) {
     const [file, setFile] = useState<File | null>(null);
     const [analyzing, setAnalyzing] = useState(false);
     const [results, setResults] = useState<RiskItem[] | null>(null);
+    const [overallRisk, setOverallRisk] = useState<string>("medium");
+    const [error, setError] = useState<string | null>(null);
 
     const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files?.[0]) {
             setFile(e.target.files[0]);
+            setError(null);
         }
     };
 
     const handleAnalyze = async () => {
+        if (!file) return;
         setAnalyzing(true);
-        // Mock OCR + Legal AI analysis
-        await new Promise((resolve) => setTimeout(resolve, 2500));
-        setAnalyzing(false);
-        setResults(mockRisks);
+        setError(null);
+        try {
+            const response: RiskCheckResponse = await analyzeContractRisk(
+                file,
+                chatHistory,
+                factoryInfo,
+            );
+            setResults(mapApiRisks(response.risks));
+            setOverallRisk(response.overall_risk);
+        } catch (err: unknown) {
+            const message = err instanceof Error ? err.message : "Analysis failed";
+            setError(message);
+        } finally {
+            setAnalyzing(false);
+        }
     };
 
     const getRiskIcon = (type: RiskItem["type"]) => {
@@ -133,6 +153,10 @@ export function ContractReviewPanel({ onClose }: ContractReviewPanelProps) {
                             )}
                         </Button>
 
+                        {error && (
+                            <p className="text-xs text-destructive text-center">{error}</p>
+                        )}
+
                         <p className="text-xs text-muted-foreground text-center">
                             Powered by iApp OCR & Thanoy Legal AI
                         </p>
@@ -140,9 +164,9 @@ export function ContractReviewPanel({ onClose }: ContractReviewPanelProps) {
                 ) : (
                     <>
                         {/* Risk Summary */}
-                        <div className="p-3 bg-warning/10 rounded-lg">
+                        <div className={`p-3 rounded-lg ${overallRisk === "critical" || overallRisk === "high" ? "bg-destructive/10" : overallRisk === "medium" ? "bg-warning/10" : "bg-success/10"}`}>
                             <p className="text-sm font-medium text-foreground">
-                                Risk Level: <span className="text-warning">Medium</span>
+                                Risk Level: <span className={overallRisk === "critical" || overallRisk === "high" ? "text-destructive" : overallRisk === "medium" ? "text-warning" : "text-success"}>{overallRisk.charAt(0).toUpperCase() + overallRisk.slice(1)}</span>
                             </p>
                             <p className="text-xs text-muted-foreground mt-1">
                                 Found {results.length} items requiring attention

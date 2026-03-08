@@ -1,132 +1,43 @@
 """
 PDF generator for finalised contracts.
-Uses ReportLab with Thai font support.
+Uses fpdf2 with HarfBuzz text shaping for proper Thai rendering.
 """
 
 from __future__ import annotations
 
-import io
 import logging
 import os
 from typing import Optional
 
-from reportlab.lib import colors
-from reportlab.lib.enums import TA_CENTER, TA_JUSTIFY, TA_LEFT
-from reportlab.lib.pagesizes import A4
-from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
-from reportlab.lib.units import cm, mm
-from reportlab.pdfbase import pdfmetrics
-from reportlab.pdfbase.ttfonts import TTFont
-from reportlab.platypus import (
-    Paragraph,
-    SimpleDocTemplate,
-    Spacer,
-    Table,
-    TableStyle,
-)
+from fpdf import FPDF
 
 from models.contract_draft import ContractArticle, PartyInfo
 
 logger = logging.getLogger(__name__)
 
-# ── Font registration ────────────────────────────────────────────────────────
-# We attempt to register a Thai-capable font.
-# If not available, fall back to Helvetica (will not render Thai correctly in prod).
-_THAI_FONT_NAME = "THSarabun"
-_FONT_REGISTERED = False
+# ── Font paths ───────────────────────────────────────────────────────────────
+_FONT_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "fonts")
+_FONT_REGULAR = os.path.join(_FONT_DIR, "Sarabun-Regular.ttf")
+_FONT_BOLD = os.path.join(_FONT_DIR, "Sarabun-Bold.ttf")
+
+# A4 dimensions in mm
+_A4_W = 210
+_A4_H = 297
+_MARGIN_LEFT = 25
+_MARGIN_RIGHT = 25
+_MARGIN_TOP = 20
+_MARGIN_BOTTOM = 20
+_CONTENT_W = _A4_W - _MARGIN_LEFT - _MARGIN_RIGHT
 
 
-def _ensure_font() -> str:
-    """Register a Thai TrueType font if available. Return the font name to use."""
-    global _FONT_REGISTERED
-    if _FONT_REGISTERED:
-        return _THAI_FONT_NAME
+class _ContractPDF(FPDF):
+    """Thin subclass to add page-number footer."""
 
-    # Common locations for TH Sarabun New
-    font_paths = [
-        "./fonts/THSarabunNew.ttf",
-        "./fonts/THSarabunNew Bold.ttf",
-        "C:/Windows/Fonts/THSarabunNew.ttf",
-        "/usr/share/fonts/truetype/th-sarabun-new/THSarabunNew.ttf",
-    ]
-
-    for path in font_paths:
-        if os.path.exists(path):
-            try:
-                pdfmetrics.registerFont(TTFont(_THAI_FONT_NAME, path))
-                _FONT_REGISTERED = True
-                logger.info("Registered Thai font: %s", path)
-                return _THAI_FONT_NAME
-            except Exception as e:
-                logger.warning("Failed to register font %s: %s", path, e)
-
-    logger.warning("Thai font not found — PDF will use Helvetica (Thai text may not render)")
-    return "Helvetica"
-
-
-# ── Styles ───────────────────────────────────────────────────────────────────
-
-
-def _get_styles(font_name: str) -> dict:
-    """Build paragraph styles for the contract."""
-    base = getSampleStyleSheet()
-    return {
-        "title": ParagraphStyle(
-            "ContractTitle",
-            parent=base["Title"],
-            fontName=font_name,
-            fontSize=18,
-            leading=24,
-            alignment=TA_CENTER,
-            spaceAfter=12,
-        ),
-        "subtitle": ParagraphStyle(
-            "ContractSubtitle",
-            parent=base["Normal"],
-            fontName=font_name,
-            fontSize=12,
-            leading=16,
-            alignment=TA_CENTER,
-            spaceAfter=20,
-        ),
-        "preamble": ParagraphStyle(
-            "ContractPreamble",
-            parent=base["Normal"],
-            fontName=font_name,
-            fontSize=11,
-            leading=16,
-            alignment=TA_JUSTIFY,
-            spaceAfter=12,
-        ),
-        "article_title": ParagraphStyle(
-            "ArticleTitle",
-            parent=base["Heading2"],
-            fontName=font_name,
-            fontSize=13,
-            leading=18,
-            spaceBefore=12,
-            spaceAfter=6,
-        ),
-        "article_body": ParagraphStyle(
-            "ArticleBody",
-            parent=base["Normal"],
-            fontName=font_name,
-            fontSize=11,
-            leading=16,
-            alignment=TA_JUSTIFY,
-            spaceAfter=8,
-            leftIndent=1 * cm,
-        ),
-        "footer": ParagraphStyle(
-            "ContractFooter",
-            parent=base["Normal"],
-            fontName=font_name,
-            fontSize=9,
-            leading=12,
-            textColor=colors.grey,
-            alignment=TA_CENTER,
-        ),
-    }
+    def footer(self):
+        self.set_y(-15)
+        self.set_font("Sarabun", "", 9)
+        self.set_text_color(160, 160, 160)
+        self.cell(0, 10, f"- {self.page_no()} -", align="C")
 
 
 # ── Generator ────────────────────────────────────────────────────────────────
@@ -143,89 +54,129 @@ def generate_contract_pdf(
     Generate a PDF contract document.
     Returns the PDF as bytes.
     """
-    font_name = _ensure_font()
-    styles = _get_styles(font_name)
+    pdf = _ContractPDF()
+    pdf.set_text_shaping(True)
 
-    buffer = io.BytesIO()
-    doc = SimpleDocTemplate(
-        buffer,
-        pagesize=A4,
-        topMargin=2 * cm,
-        bottomMargin=2 * cm,
-        leftMargin=2.5 * cm,
-        rightMargin=2.5 * cm,
-    )
+    # Register Sarabun font
+    pdf.add_font("Sarabun", "", _FONT_REGULAR)
+    pdf.add_font("Sarabun", "B", _FONT_BOLD)
 
-    story: list = []
+    pdf.set_margins(_MARGIN_LEFT, _MARGIN_TOP, _MARGIN_RIGHT)
+    pdf.set_auto_page_break(True, margin=_MARGIN_BOTTOM)
+    pdf.add_page()
 
-    # ── Header ───────────────────────────────────────────────────────────
-    story.append(Paragraph("MANUFACTURING AGREEMENT", styles["title"]))
-    story.append(Paragraph(title, styles["subtitle"]))
+    # ── Title ────────────────────────────────────────────────────────────
+    pdf.set_font("Sarabun", "B", 18)
+    pdf.multi_cell(w=_CONTENT_W, text=title, align="C", new_x="LMARGIN", new_y="NEXT")
+    pdf.ln(2)
 
     if effective_date:
-        story.append(Paragraph(f"ลงวันที่ {effective_date}", styles["subtitle"]))
-
-    story.append(Spacer(1, 10))
+        pdf.set_font("Sarabun", "", 12)
+        pdf.cell(w=_CONTENT_W, text=f"ลงวันที่ {effective_date}", align="C", new_x="LMARGIN", new_y="NEXT")
+        pdf.ln(6)
 
     # ── Preamble ─────────────────────────────────────────────────────────
     if preamble:
-        story.append(Paragraph(preamble, styles["preamble"]))
-        story.append(Spacer(1, 10))
+        pdf.set_font("Sarabun", "", 14)
+        for para_text in preamble.split("\n"):
+            para_text = para_text.strip()
+            if para_text:
+                # Indent first line with a tab
+                pdf.multi_cell(
+                    w=_CONTENT_W,
+                    text=f"\t{para_text}",
+                    align="J",
+                    new_x="LMARGIN",
+                    new_y="NEXT",
+                )
+        pdf.ln(4)
 
     # ── Articles ─────────────────────────────────────────────────────────
     for article in articles:
-        article_header = f"ข้อ {article.article_number}: {article.title_th}"
-        story.append(Paragraph(article_header, styles["article_title"]))
+        # Article heading — centered, bold
+        pdf.set_font("Sarabun", "B", 14)
+        heading = f"ข้อ {article.article_number}  {article.title_th}"
+        pdf.multi_cell(w=_CONTENT_W, text=heading, align="C", new_x="LMARGIN", new_y="NEXT")
+        pdf.ln(1)
 
-        # Replace newlines with <br/> for ReportLab
-        body_html = article.body_th.replace("\n", "<br/>")
-        story.append(Paragraph(body_html, styles["article_body"]))
+        # Article body — justified, indented first line
+        pdf.set_font("Sarabun", "", 14)
+        body = article.body_th.strip()
+        # Split by newlines — each paragraph gets first-line indent
+        for para in body.split("\n"):
+            para = para.strip()
+            if para:
+                pdf.multi_cell(
+                    w=_CONTENT_W,
+                    text=f"\t{para}",
+                    align="J",
+                    new_x="LMARGIN",
+                    new_y="NEXT",
+                )
+        pdf.ln(3)
 
     # ── Signature block ──────────────────────────────────────────────────
-    story.append(Spacer(1, 40))
+    pdf.ln(15)
+    pdf.set_font("Sarabun", "", 14)
 
-    if parties:
-        sig_data = []
-        for party in parties:
-            sig_data.append([
-                f"ลงชื่อ .....................................",
-                "",
-                f"ลงชื่อ .....................................",
-            ])
-            names = [p.name for p in parties]
-            if len(names) >= 2:
-                sig_data.append([
-                    f"( {names[0]} )",
-                    "",
-                    f"( {names[1]} )",
-                ])
-                sig_data.append([
-                    parties[0].role if len(parties) > 0 else "",
-                    "",
-                    parties[1].role if len(parties) > 1 else "",
-                ])
-                break  # Only two signature columns
+    col_w = _CONTENT_W / 2
 
-        if sig_data:
-            table = Table(sig_data, colWidths=[6 * cm, 2 * cm, 6 * cm])
-            table.setStyle(
-                TableStyle([
-                    ("ALIGN", (0, 0), (-1, -1), "CENTER"),
-                    ("FONTSIZE", (0, 0), (-1, -1), 10),
-                    ("TOPPADDING", (0, 0), (-1, -1), 8),
-                ])
-            )
-            story.append(table)
+    if len(parties) >= 2:
+        _draw_sig_pair(pdf, col_w, parties[0], parties[1])
+    elif len(parties) == 1:
+        _draw_sig_single(pdf, parties[0])
 
-    # ── Footer ───────────────────────────────────────────────────────────
-    story.append(Spacer(1, 30))
-    story.append(
-        Paragraph(
-            "Generated by NeoEM AI Contract Drafting Service",
-            styles["footer"],
-        )
-    )
+    # Witness block
+    pdf.ln(15)
+    y_start = pdf.get_y()
+    # Left witness
+    pdf.set_xy(_MARGIN_LEFT, y_start)
+    pdf.cell(w=col_w, text="ลงชื่อ .........................................พยาน", align="C")
+    # Right witness
+    pdf.set_xy(_MARGIN_LEFT + col_w, y_start)
+    pdf.cell(w=col_w, text="ลงชื่อ .........................................พยาน", align="C", new_x="LMARGIN", new_y="NEXT")
+    pdf.ln(3)
+    y2 = pdf.get_y()
+    pdf.set_xy(_MARGIN_LEFT, y2)
+    pdf.cell(w=col_w, text="( ............................................. )", align="C")
+    pdf.set_xy(_MARGIN_LEFT + col_w, y2)
+    pdf.cell(w=col_w, text="( ............................................. )", align="C", new_x="LMARGIN", new_y="NEXT")
 
-    # Build PDF
-    doc.build(story)
-    return buffer.getvalue()
+    # ── Footer line ──────────────────────────────────────────────────────
+    pdf.ln(15)
+    pdf.set_font("Sarabun", "", 9)
+    pdf.set_text_color(160, 160, 160)
+    pdf.cell(w=_CONTENT_W, text="Generated by NeoEM AI Contract Drafting Service", align="C")
+    pdf.set_text_color(0, 0, 0)
+
+    return pdf.output()
+
+
+# ── Helpers ──────────────────────────────────────────────────────────────────
+
+
+def _draw_sig_pair(pdf: FPDF, col_w: float, left: PartyInfo, right: PartyInfo):
+    """Draw a two-column signature block."""
+    rows = [
+        ("ลงชื่อ .........................................", "ลงชื่อ ........................................."),
+        (f"( {left.name} )", f"( {right.name} )"),
+        (left.role, right.role),
+    ]
+    for left_text, right_text in rows:
+        y = pdf.get_y()
+        pdf.set_xy(_MARGIN_LEFT, y)
+        pdf.cell(w=col_w, text=left_text, align="C")
+        pdf.set_xy(_MARGIN_LEFT + col_w, y)
+        pdf.cell(w=col_w, text=right_text, align="C", new_x="LMARGIN", new_y="NEXT")
+        pdf.ln(3)
+
+
+def _draw_sig_single(pdf: FPDF, party: PartyInfo):
+    """Draw a single centered signature block."""
+    for text in [
+        "ลงชื่อ .........................................",
+        f"( {party.name} )",
+        party.role,
+    ]:
+        pdf.cell(w=_CONTENT_W, text=text, align="C", new_x="LMARGIN", new_y="NEXT")
+        pdf.ln(3)
