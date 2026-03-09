@@ -1,0 +1,29 @@
+# Environment
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+
+# Data (generated at runtime — exclude contracts and vector store)
+data/contracts/
+data/chroma_db/
+*.pdf
+*.docx
+
+# Vector store
+chroma_db/
+
+# Fonts (downloaded separately)
+fonts/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db

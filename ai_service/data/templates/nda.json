@@ -1,0 +1,85 @@
+{
+  "template_id": "nda",
+  "template_name_th": "สัญญาไม่เปิดเผยข้อมูล (NDA)",
+  "template_name_en": "Non-Disclosure Agreement",
+  "legal_basis": "ป.แพ่งและพาณิชย์ ว่าด้วยนิติกรรมและหนี้, พ.ร.บ.ความลับทางการค้า พ.ศ. 2545",
+  "preamble_template": "สัญญาฉบับนี้ทำขึ้น ณ {location} เมื่อวันที่ {date} ระหว่าง {buyer_name} ({buyer_company}) ซึ่งต่อไปในสัญญาจะเรียกว่า \"ฝ่ายเปิดเผย\" ฝ่ายหนึ่ง กับ {seller_name} ({seller_company}) ซึ่งต่อไปในสัญญาจะเรียกว่า \"ฝ่ายรับข้อมูล\" อีกฝ่ายหนึ่ง ทั้งสองฝ่ายตกลงทำสัญญากันมีข้อความดังต่อไปนี้",
+  "articles": [
+    {
+      "article_number": 1,
+      "title_th": "คำนิยาม",
+      "title_en": "Definitions",
+      "guidance": "นิยาม: ข้อมูลลับ (ครอบคลุมเทคนิค, ธุรกิจ, การเงิน, สูตร, กระบวนการ), ฝ่ายเปิดเผย, ฝ่ายรับข้อมูล",
+      "required": true
+    },
+    {
+      "article_number": 2,
+      "title_th": "วัตถุประสงค์",
+      "title_en": "Purpose",
+      "guidance": "เพื่อประเมินความเป็นไปได้ในการร่วมธุรกิจ/ว่าจ้างผลิต OEM",
+      "required": true
+    },
+    {
+      "article_number": 3,
+      "title_th": "ขอบเขตข้อมูลลับ",
+      "title_en": "Scope of Confidential Information",
+      "guidance": "ประเภทข้อมูล, เครื่องหมายลับ, ข้อมูลที่ไม่ถือเป็นความลับ (สาธารณะ, ทราบอยู่แล้ว, ได้ชอบธรรม)",
+      "required": true
+    },
+    {
+      "article_number": 4,
+      "title_th": "หน้าที่รักษาความลับ",
+      "title_en": "Obligations of Receiving Party",
+      "guidance": "ใช้เฉพาะวัตถุประสงค์, ไม่เปิดเผยบุคคลที่สาม, มาตรการป้องกัน, จำกัดผู้เข้าถึง",
+      "required": true
+    },
+    {
+      "article_number": 5,
+      "title_th": "ระยะเวลา",
+      "title_en": "Term",
+      "guidance": "ระยะเวลาสัญญา, ระยะเวลาปกป้องหลังสิ้นสุด (3-5 ปี), trade secrets ไม่มีกำหนด",
+      "required": true
+    },
+    {
+      "article_number": 6,
+      "title_th": "การคืนและทำลายข้อมูล",
+      "title_en": "Return and Destruction",
+      "guidance": "คืนเอกสาร/สื่อทั้งหมดเมื่อสิ้นสุดหรือร้องขอ, ทำลายสำเนา, ยืนยันเป็นลายลักษณ์อักษร",
+      "required": true
+    },
+    {
+      "article_number": 7,
+      "title_th": "ข้อยกเว้น",
+      "title_en": "Exceptions",
+      "guidance": "คำสั่งศาล/หน่วยงานรัฐ (แจ้งก่อนเปิดเผย), ที่ปรึกษากฎหมาย (ผูกพันลับ)",
+      "required": true
+    },
+    {
+      "article_number": 8,
+      "title_th": "การเยียวยาและค่าเสียหาย",
+      "title_en": "Remedies and Damages",
+      "guidance": "คุ้มครองชั่วคราว (injunction), ค่าเสียหายจริง, ค่าเสียหายที่กำหนดไว้ล่วงหน้า",
+      "required": true
+    },
+    {
+      "article_number": 9,
+      "title_th": "เงื่อนไขทั่วไป",
+      "title_en": "General Provisions",
+      "guidance": "สัญญาฉบับสมบูรณ์, แก้ไขเป็นลายลักษณ์อักษร, โอนสิทธิ์, ภาษาไทยบังคับ, กฎหมายไทย",
+      "required": true
+    },
+    {
+      "article_number": 10,
+      "title_th": "การระงับข้อพิพาท",
+      "title_en": "Dispute Resolution",
+      "guidance": "เจรจา → อนุญาโตตุลาการ → ศาลแพ่ง",
+      "required": true
+    }
+  ],
+  "fairness_checks": [
+    "ต้องเป็น mutual NDA (ทั้งสองฝ่ายมีหน้าที่เท่าเทียมกัน)",
+    "ระยะเวลาหลังสิ้นสุดต้องสมเหตุสมผล (ไม่เกิน 5 ปี ยกเว้น trade secrets)",
+    "ค่าเสียหายที่กำหนดล่วงหน้าต้องสมเหตุสมผล ไม่สูงเกินควร",
+    "ข้อยกเว้นการเปิดเผยตามกฎหมายต้องมี"
+  ]
+}
