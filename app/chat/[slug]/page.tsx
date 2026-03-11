@@ -1,13 +1,12 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { useParams } from "next/navigation";
 import Link from "next/link";
+import { useParams, useRouter } from "next/navigation";
 import {
     Send, Paperclip, FileText, Download, Bot,
     Sparkles, FileCheck, AlertTriangle, ChevronRight, X,
     CreditCard, ArrowLeft, PanelRightClose, PanelRight,
-    Upload
 } from "lucide-react";
 import { Navbar } from "@/components/layout/Navbar";
 import { Button } from "@/components/ui/button";
@@ -17,9 +16,9 @@ import { PaymentModal } from "@/components/payment/PaymentModal";
 import { ContractWarningModal } from "@/components/payment/ContractWarningModal";
 import { AILegalWorkspace } from "@/components/legal/AILegalWorkspace";
 import { TOSModal } from "@/components/chat/TOSModal";
-import { DepositActionCard } from "@/components/chat/DepositActionCard";
+import { MilestoneTracker } from "@/components/deal/MilestoneTracker";
+import { StickyPaymentWidget } from "@/components/deal/StickyPaymentWidget";
 import factoriesData from "@/data/factories.json";
-import type { ChatMessagePayload, FactoryInfoPayload } from "@/lib/ai-api";
 import factory1 from "@/public/assets/factory-1.jpg";
 import factory2 from "@/public/assets/factory-2.jpg";
 import factory3 from "@/public/assets/factory-3.jpg";
@@ -36,11 +35,13 @@ interface Message {
     sender: "user" | "factory" | "system";
     message: string;
     timestamp: string;
-    attachment?: { type: string; name: string; size: string; };
+    attachment?: { type: string; name: string; size: string };
 }
 
 const DealRoom = () => {
-    const { slug } = useParams();
+    const params = useParams();
+    const slug = params.slug as string;
+    const router = useRouter();
     const factory = factoriesData.factories.find((f) => f.slug === slug);
     const [showTOS, setShowTOS] = useState(true);
     const [tosAccepted, setTosAccepted] = useState(false);
@@ -52,12 +53,13 @@ const DealRoom = () => {
     const [aiPanelOpen, setAiPanelOpen] = useState(true);
     const [depositPaid, setDepositPaid] = useState(false);
     const [showLegalWorkspace, setShowLegalWorkspace] = useState(false);
-    const [legalWorkspaceTab, setLegalWorkspaceTab] = useState<"draft" | "risk" | "history">("draft");
+    const [legalWorkspaceTab, setLegalWorkspaceTab] = useState<"draft" | "risk" | "history" | "esign">("draft");
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const hasContractInChat = messages.some((m) => m.attachment?.type === "application/pdf");
     const depositAmount = 36000;
+    const totalDealValue = 120000;
 
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -100,67 +102,83 @@ const DealRoom = () => {
         }
     };
 
-    const openLegalWorkspace = (tab: "draft" | "risk" | "history") => {
+    const openLegalWorkspace = (tab: "draft" | "risk" | "history" | "esign") => {
         setLegalWorkspaceTab(tab);
         setShowLegalWorkspace(true);
     };
 
     const handlePayDeposit = () => {
-        if (hasContractInChat) { setShowContractWarning(true); }
-        else { setShowPaymentModal(true); }
+        if (hasContractInChat) setShowContractWarning(true);
+        else setShowPaymentModal(true);
     };
 
-    const handlePaymentSuccess = () => { setShowPaymentModal(false); setDepositPaid(true); window.location.href = "/legal-nudge"; };
+    const handlePaymentSuccess = () => { setShowPaymentModal(false); setDepositPaid(true); };
 
-    // Right panel: Summary + Triggers only
-    const AIAssistantContent = () => (
-        <div className="flex-1 p-4 space-y-4 overflow-y-auto scrollbar-thin">
-            {/* Live Summary */}
-            <Card>
-                <CardHeader className="py-3">
-                    <CardTitle className="text-sm flex items-center gap-2">
-                        <Sparkles className="h-4 w-4 text-primary" /> Live Summary
-                    </CardTitle>
-                </CardHeader>
-                <CardContent className="py-3 text-sm text-muted-foreground">
-                    <p><strong className="text-foreground">Product:</strong> Sunscreen SPF50 (Mousse)</p>
-                    <p><strong className="text-foreground">Quantity:</strong> 1,000 pieces</p>
-                    <p><strong className="text-foreground">Total:</strong> ฿120,000</p>
-                    <p><strong className="text-foreground">Delivery:</strong> 4-6 weeks</p>
-                </CardContent>
-            </Card>
+    const handleMilestoneAction = (action: string) => {
+        // Handle preview actions
+        if (action.startsWith("preview-")) {
+            const baseAction = action.replace("preview-", "");
+            if (baseAction === "draft") openLegalWorkspace("history");
+            else if (baseAction === "risk") openLegalWorkspace("risk");
+            return;
+        }
+        switch (action) {
+            case "draft": openLegalWorkspace("draft"); break;
+            case "risk": openLegalWorkspace("risk"); break;
+            case "esign": openLegalWorkspace("esign"); break;
+            case "pay-1": case "pay-2": case "pay-3": handlePayDeposit(); break;
+            case "launchpad": router.push("/brand-launchpad"); break;
+        }
+    };
 
-            {/* AI Legal Actions → opens Workspace */}
-            <div className="space-y-2">
-                <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">AI Legal Tools</p>
-                <Button className="w-full justify-start" onClick={() => openLegalWorkspace("draft")}>
-                    <FileCheck className="h-4 w-4 mr-2" /> Draft Contract
-                </Button>
-                <Button variant="outline" className="w-full justify-start" onClick={() => openLegalWorkspace("risk")}>
-                    <AlertTriangle className="h-4 w-4 mr-2 text-warning" /> Check Risks
-                </Button>
-                <Button variant="ghost" className="w-full justify-start text-muted-foreground" onClick={() => openLegalWorkspace("history")}>
-                    <FileText className="h-4 w-4 mr-2" /> Legal Hub / History
-                </Button>
+    // Right panel content
+    const SidePanelContent = () => (
+        <div className="flex-1 flex flex-col overflow-hidden">
+            <div className="flex-1 p-4 space-y-4 overflow-y-auto scrollbar-thin">
+                <MilestoneTracker onAction={handleMilestoneAction} />
+
+                <Card>
+                    <CardHeader className="py-3">
+                        <CardTitle className="text-sm flex items-center gap-2">
+                            <Sparkles className="h-4 w-4 text-primary" /> Live Summary
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent className="py-3 text-sm text-muted-foreground">
+                        <p><strong className="text-foreground">Product:</strong> Sunscreen SPF50 (Mousse)</p>
+                        <p><strong className="text-foreground">Quantity:</strong> 1,000 pieces</p>
+                        <p><strong className="text-foreground">Total:</strong> ฿120,000</p>
+                        <p><strong className="text-foreground">Delivery:</strong> 4-6 weeks</p>
+                    </CardContent>
+                </Card>
+
+                <div className="space-y-2">
+                    <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Quick Actions</p>
+                    <Button className="w-full justify-start text-xs h-8" onClick={() => openLegalWorkspace("draft")}>
+                        <FileCheck className="h-3.5 w-3.5 mr-2" /> Draft Contract
+                    </Button>
+                    <Button variant="outline" className="w-full justify-start text-xs h-8" onClick={() => openLegalWorkspace("risk")}>
+                        <AlertTriangle className="h-3.5 w-3.5 mr-2 text-warning" /> Check Risks
+                    </Button>
+                    <Button variant="ghost" className="w-full justify-start text-xs h-8 text-muted-foreground" onClick={() => openLegalWorkspace("history")}>
+                        <FileText className="h-3.5 w-3.5 mr-2" /> Legal Hub
+                    </Button>
+                </div>
+
+                <Card className="bg-secondary/30">
+                    <CardContent className="py-3">
+                        <p className="text-xs text-muted-foreground">
+                            💡 <strong>Tip:</strong> Both you and the factory see the same milestone status in real-time — full transparency.
+                        </p>
+                    </CardContent>
+                </Card>
             </div>
 
-            {/* Payment Section */}
-            <Card className="border-primary/20">
-                <CardHeader className="py-3">
-                    <CardTitle className="text-sm flex items-center gap-2"><CreditCard className="h-4 w-4 text-primary" /> Payment</CardTitle>
-                </CardHeader>
-                <CardContent className="py-3 space-y-3">
-                    <DepositActionCard amount={depositAmount} status={depositPaid ? "paid" : "pending"} onPay={handlePayDeposit} />
-                </CardContent>
-            </Card>
-
-            <Card className="bg-secondary/30">
-                <CardContent className="py-4">
-                    <p className="text-xs text-muted-foreground">
-                        💡 <strong>Tip:</strong> Ask for sample testing before bulk order to ensure quality meets your standards.
-                    </p>
-                </CardContent>
-            </Card>
+            <StickyPaymentWidget
+                currentMilestone="1st Payment (Deposit 30%)"
+                amount={depositAmount}
+                status={depositPaid ? "paid" : "pending"}
+                onPay={handlePayDeposit}
+            />
         </div>
     );
 
@@ -175,7 +193,7 @@ const DealRoom = () => {
                     <div className="flex items-center gap-3">
                         <Link href={`/factory/${slug}`}><Button variant="ghost" size="icon"><ArrowLeft className="h-5 w-5" /></Button></Link>
                         <div className="flex items-center gap-2">
-                            <div className="w-8 h-8 rounded-full overflow-hidden"><img src={imageUrl.src} alt={factory.name} className="w-full h-full object-cover" /></div>
+                            <div className="w-8 h-8 rounded-full overflow-hidden"><img src={imageUrl.src || imageUrl} alt={factory.name} className="w-full h-full object-cover" /></div>
                             <div>
                                 <h2 className="font-semibold text-foreground text-sm">{factory.name}</h2>
                                 <p className="text-[10px] text-success">● Online</p>
@@ -183,10 +201,10 @@ const DealRoom = () => {
                         </div>
                     </div>
                     <Sheet open={mobileAiOpen} onOpenChange={setMobileAiOpen}>
-                        <SheetTrigger asChild><Button variant="outline" size="sm"><Bot className="h-4 w-4 mr-1" /> AI</Button></SheetTrigger>
-                        <SheetContent side="bottom" className="h-[85vh]">
-                            <SheetHeader><SheetTitle className="flex items-center gap-2"><Bot className="h-5 w-5 text-primary" /> AI Legal Assistant</SheetTitle></SheetHeader>
-                            <AIAssistantContent />
+                        <SheetTrigger asChild><Button variant="outline" size="sm"><Bot className="h-4 w-4 mr-1" /> Timeline</Button></SheetTrigger>
+                        <SheetContent side="bottom" className="h-[85vh] flex flex-col">
+                            <SheetHeader><SheetTitle className="flex items-center gap-2"><Bot className="h-5 w-5 text-primary" /> AI Middleman Hub</SheetTitle></SheetHeader>
+                            <SidePanelContent />
                         </SheetContent>
                     </Sheet>
                 </div>
@@ -210,14 +228,14 @@ const DealRoom = () => {
                     {/* Desktop Chat Header */}
                     <div className="hidden lg:flex p-4 border-b items-center justify-between bg-card">
                         <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-full overflow-hidden"><img src={imageUrl.src} alt={factory.name} className="w-full h-full object-cover" /></div>
+                            <div className="w-10 h-10 rounded-full overflow-hidden"><img src={imageUrl.src || imageUrl} alt={factory.name} className="w-full h-full object-cover" /></div>
                             <div>
                                 <h2 className="font-semibold text-foreground">{factory.name}</h2>
                                 <p className="text-xs text-success">● Online</p>
                             </div>
                         </div>
                         <Button variant="ghost" size="sm" onClick={() => setAiPanelOpen(!aiPanelOpen)} className="flex items-center gap-2">
-                            {aiPanelOpen ? <><PanelRightClose className="h-4 w-4" /> Hide Panel</> : <><PanelRight className="h-4 w-4" /><Bot className="h-4 w-4" /> Legal Assistant</>}
+                            {aiPanelOpen ? <><PanelRightClose className="h-4 w-4" /> Hide Panel</> : <><PanelRight className="h-4 w-4" /><Bot className="h-4 w-4" /> Timeline</>}
                         </Button>
                     </div>
 
@@ -237,7 +255,7 @@ const DealRoom = () => {
                                             <Button size="icon" variant="ghost" className="h-8 w-8"><Download className="h-4 w-4" /></Button>
                                         </div>
                                     )}
-                                    <p className={`text-[10px] mt-1 ${msg.sender === "user" ? "text-primary-foreground/70" : "text-muted-foreground"}`}>
+                                    <p suppressHydrationWarning className={`text-[10px] mt-1 ${msg.sender === "user" ? "text-primary-foreground/70" : "text-muted-foreground"}`}>
                                         {new Date(msg.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                                     </p>
                                 </div>
@@ -265,43 +283,35 @@ const DealRoom = () => {
                     </div>
                 </div>
 
-                {/* Right Panel — Summary + Triggers */}
+                {/* Right Panel */}
                 {aiPanelOpen && (
                     <aside className="hidden lg:flex lg:w-[35%] flex-col bg-card border-l overflow-hidden">
                         <div className="p-4 border-b">
                             <div className="flex items-center gap-2">
                                 <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center"><Bot className="h-5 w-5 text-primary" /></div>
-                                <h3 className="font-semibold text-foreground">AI Legal Assistant</h3>
+                                <h3 className="font-semibold text-foreground text-sm">AI Middleman Hub</h3>
                             </div>
                         </div>
-                        <AIAssistantContent />
+                        <SidePanelContent />
                     </aside>
                 )}
             </div>
 
-            {/* AI Legal Workspace (full-screen modal) */}
             <AILegalWorkspace
                 open={showLegalWorkspace}
                 onClose={() => setShowLegalWorkspace(false)}
                 factoryName={factory.name}
                 initialTab={legalWorkspaceTab}
-                chatHistory={messages.map((m): ChatMessagePayload => ({
-                    sender: m.sender,
-                    message: m.message,
-                    timestamp: m.timestamp,
-                }))}
-                factoryInfo={{
-                    factory_id: factory.id,
-                    name: factory.name,
-                    location: factory.location,
-                    category: factory.category,
-                    certifications: factory.certifications || [],
-                    rating: factory.rating,
-                    verified: factory.verified,
-                } as FactoryInfoPayload}
             />
 
-            <PaymentModal open={showPaymentModal} onClose={() => setShowPaymentModal(false)} onSuccess={handlePaymentSuccess} amount={depositAmount} factoryName={factory.name} />
+            <PaymentModal
+                open={showPaymentModal}
+                onClose={() => setShowPaymentModal(false)}
+                onSuccess={handlePaymentSuccess}
+                amount={depositAmount}
+                factoryName={factory.name}
+                totalDealValue={totalDealValue}
+            />
             <ContractWarningModal
                 open={showContractWarning}
                 onClose={() => setShowContractWarning(false)}
