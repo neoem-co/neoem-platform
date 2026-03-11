@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { CreditCard, Shield, Loader2, QrCode, Landmark, Smartphone } from "lucide-react";
+import { CreditCard, Shield, Loader2, QrCode, Landmark, Smartphone, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
     Dialog,
@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 
 interface PaymentModalProps {
     open: boolean;
@@ -17,6 +18,7 @@ interface PaymentModalProps {
     onSuccess: () => void;
     amount: number;
     factoryName: string;
+    totalDealValue?: number;
 }
 
 const paymentMethods = [
@@ -26,15 +28,17 @@ const paymentMethods = [
     { id: "promptpay", label: "PromptPay", icon: Smartphone },
 ];
 
-export function PaymentModal({ open, onClose, onSuccess, amount, factoryName }: PaymentModalProps) {
+export function PaymentModal({ open, onClose, onSuccess, amount, factoryName, totalDealValue = 120000 }: PaymentModalProps) {
     const [loading, setLoading] = useState(false);
     const [cardNumber, setCardNumber] = useState("");
     const [expiry, setExpiry] = useState("");
     const [cvc, setCvc] = useState("");
     const [selectedMethod, setSelectedMethod] = useState("card");
+    const [paymentOption, setPaymentOption] = useState<"milestone" | "full">("milestone");
 
-    const platformFee = amount * 0.05;
-    const factoryAmount = amount * 0.95;
+    const activeAmount = paymentOption === "full" ? totalDealValue : amount;
+    const platformFee = activeAmount * 0.05;
+    const factoryAmount = activeAmount * 0.95;
 
     const handlePayment = async () => {
         setLoading(true);
@@ -71,16 +75,74 @@ export function PaymentModal({ open, onClose, onSuccess, amount, factoryName }: 
                         Secure Payment
                     </DialogTitle>
                     <DialogDescription>
-                        Pay deposit to {factoryName}
+                        Pay to {factoryName} via Escrow
                     </DialogDescription>
                 </DialogHeader>
 
-                <div className="space-y-6">
+                <div className="space-y-5">
+                    {/* Payment Option Selection */}
+                    <div className="space-y-2">
+                        <Label className="text-sm font-medium">Payment Option</Label>
+                        <div className="grid grid-cols-2 gap-2">
+                            <button
+                                onClick={() => setPaymentOption("milestone")}
+                                className={`p-3 rounded-lg border text-left transition-colors ${paymentOption === "milestone"
+                                        ? "border-primary bg-primary/5 ring-2 ring-primary/20"
+                                        : "border-border hover:border-primary/50"
+                                    }`}
+                            >
+                                <p className="text-sm font-medium text-foreground">Pay by Milestone</p>
+                                <p className="text-xs text-muted-foreground mt-0.5">
+                                    ฿{amount.toLocaleString()} (current)
+                                </p>
+                            </button>
+                            <button
+                                onClick={() => setPaymentOption("full")}
+                                className={`p-3 rounded-lg border text-left transition-colors ${paymentOption === "full"
+                                        ? "border-primary bg-primary/5 ring-2 ring-primary/20"
+                                        : "border-border hover:border-primary/50"
+                                    }`}
+                            >
+                                <p className="text-sm font-medium text-foreground">Pay Full Amount</p>
+                                <p className="text-xs text-muted-foreground mt-0.5">
+                                    ฿{totalDealValue.toLocaleString()} (lump sum)
+                                </p>
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Full payment escrow info */}
+                    {paymentOption === "full" && (
+                        <div className="p-3 bg-primary/5 border border-primary/20 rounded-lg space-y-2">
+                            <p className="text-xs font-medium text-foreground flex items-center gap-1.5">
+                                <Shield className="h-3.5 w-3.5 text-primary" />
+                                Escrow Holding & Auto-Release
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                                The full ฿{totalDealValue.toLocaleString()} will be held in escrow. Funds are released to the factory automatically at each milestone — but only after you click <strong>"Approve"</strong>.
+                            </p>
+                            <div className="space-y-1 pt-1">
+                                {[
+                                    { label: "Deposit (30%)", amount: totalDealValue * 0.3 },
+                                    { label: "Production (40%)", amount: totalDealValue * 0.4 },
+                                    { label: "Final / QC (30%)", amount: totalDealValue * 0.3 },
+                                ].map((m) => (
+                                    <div key={m.label} className="flex items-center justify-between text-xs">
+                                        <span className="text-muted-foreground">{m.label}</span>
+                                        <span className="text-foreground font-medium">฿{m.amount.toLocaleString()}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
                     {/* Amount Summary */}
                     <div className="p-4 bg-secondary/50 rounded-lg space-y-2">
                         <div className="flex justify-between text-sm">
-                            <span className="text-muted-foreground">Total Amount</span>
-                            <span className="font-semibold text-foreground">฿{amount.toLocaleString()}</span>
+                            <span className="text-muted-foreground">
+                                {paymentOption === "full" ? "Total Amount (Full)" : "Milestone Amount"}
+                            </span>
+                            <span className="font-semibold text-foreground">฿{activeAmount.toLocaleString()}</span>
                         </div>
                         <div className="flex justify-between text-xs text-muted-foreground">
                             <span>Factory receives (95%)</span>
@@ -120,7 +182,7 @@ export function PaymentModal({ open, onClose, onSuccess, amount, factoryName }: 
                         </p>
                     </div>
 
-                    {/* Card Form (shown for credit card) */}
+                    {/* Card Form */}
                     {selectedMethod === "card" && (
                         <div className="space-y-4">
                             <div className="space-y-2">
@@ -158,18 +220,16 @@ export function PaymentModal({ open, onClose, onSuccess, amount, factoryName }: 
                         </div>
                     )}
 
-                    {/* QR Code */}
                     {selectedMethod === "qr" && (
                         <div className="p-6 border rounded-lg text-center space-y-3">
                             <div className="w-40 h-40 mx-auto bg-secondary rounded-lg flex items-center justify-center">
                                 <QrCode className="h-20 w-20 text-muted-foreground" />
                             </div>
-                            <p className="text-sm text-foreground font-medium">Scan to pay ฿{amount.toLocaleString()}</p>
+                            <p className="text-sm text-foreground font-medium">Scan to pay ฿{activeAmount.toLocaleString()}</p>
                             <p className="text-xs text-muted-foreground">QR code expires in 15 minutes</p>
                         </div>
                     )}
 
-                    {/* Bank Transfer */}
                     {selectedMethod === "bank" && (
                         <div className="p-4 border rounded-lg space-y-3">
                             <p className="text-sm font-medium text-foreground">Transfer to:</p>
@@ -177,17 +237,16 @@ export function PaymentModal({ open, onClose, onSuccess, amount, factoryName }: 
                                 <p className="text-muted-foreground">Bank: <span className="text-foreground">Kasikorn Bank</span></p>
                                 <p className="text-muted-foreground">Account: <span className="text-foreground">xxx-x-xxxxx-x</span></p>
                                 <p className="text-muted-foreground">Name: <span className="text-foreground">NEOEM Escrow Co., Ltd.</span></p>
-                                <p className="text-muted-foreground">Amount: <span className="text-foreground font-semibold">฿{amount.toLocaleString()}</span></p>
+                                <p className="text-muted-foreground">Amount: <span className="text-foreground font-semibold">฿{activeAmount.toLocaleString()}</span></p>
                             </div>
                         </div>
                     )}
 
-                    {/* PromptPay */}
                     {selectedMethod === "promptpay" && (
                         <div className="p-6 border rounded-lg text-center space-y-3">
                             <Smartphone className="h-12 w-12 text-primary mx-auto" />
                             <p className="text-sm font-medium text-foreground">PromptPay ID: 0-xxxx-xxxxx-xx-x</p>
-                            <p className="text-sm text-muted-foreground">Amount: ฿{amount.toLocaleString()}</p>
+                            <p className="text-sm text-muted-foreground">Amount: ฿{activeAmount.toLocaleString()}</p>
                             <p className="text-xs text-muted-foreground">Open your banking app to complete the payment</p>
                         </div>
                     )}
@@ -208,7 +267,7 @@ export function PaymentModal({ open, onClose, onSuccess, amount, factoryName }: 
                                     Processing...
                                 </>
                             ) : (
-                                `Pay ฿${amount.toLocaleString()}`
+                                `Pay ฿${activeAmount.toLocaleString()}`
                             )}
                         </Button>
                     </div>
