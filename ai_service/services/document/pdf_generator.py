@@ -163,17 +163,35 @@ def generate_contract_pdf(
 # ── Helpers ──────────────────────────────────────────────────────────────────
 
 
+import re as _re
+
+_NUMBERED_PREFIX = _re.compile(
+    r"^(?:\d+[\.\)]|"       # 1. 1) 1.1 etc.
+    r"\([ก-ฮa-zA-Z]\)|"    # (ก) (a)
+    r"[ก-ฮ][\.)])"         # ก. ก)
+)
+
+
 def _write_indented_para(pdf: FPDF, text: str):
-    """Write a paragraph with Thai-style first-line indent (ย่อหน้า)."""
-    # Move right for first-line indent
-    x0 = pdf.get_x()
-    pdf.set_x(x0 + _PARA_INDENT)
-    # First line in indented width
-    first_line_w = _CONTENT_W - _PARA_INDENT
-    pdf.multi_cell(
-        w=first_line_w, h=_LINE_HEIGHT, text=text,
-        align="J", new_x="LMARGIN", new_y="NEXT",
-    )
+    """Write a paragraph.
+    Plain paragraphs get Thai-style ย่อหน้า first-line indent.
+    Numbered/lettered sub-items (1.1, (ก), etc.) are written flush-left.
+    """
+    if _NUMBERED_PREFIX.match(text):
+        # Sub-item — no indent, full content width
+        pdf.multi_cell(
+            w=_CONTENT_W, h=_LINE_HEIGHT, text=text,
+            align="J", new_x="LMARGIN", new_y="NEXT",
+        )
+    else:
+        # New paragraph — apply ย่อหน้า first-line indent
+        x0 = pdf.get_x()
+        pdf.set_x(x0 + _PARA_INDENT)
+        first_line_w = _CONTENT_W - _PARA_INDENT
+        pdf.multi_cell(
+            w=first_line_w, h=_LINE_HEIGHT, text=text,
+            align="J", new_x="LMARGIN", new_y="NEXT",
+        )
 
 
 def _draw_sig_pair(pdf: FPDF, col_w: float, left: PartyInfo, right: PartyInfo):
