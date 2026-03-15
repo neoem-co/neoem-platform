@@ -1,0 +1,43 @@
+services:
+  # Next.js Frontend
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    container_name: neoem-frontend
+    ports:
+      - "3000:3000"
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - /app/.next
+    env_file:
+      - .env
+    environment:
+      - AI_BACKEND_URL=http://ai-service:8000
+    depends_on:
+      - ai-service
+    networks:
+      - neoem-network
+
+  # FastAPI AI Backend
+  ai-service:
+    build:
+      context: ./ai_service
+      dockerfile: ../Dockerfile.backend
+    container_name: neoem-ai-service
+    ports:
+      - "8000:8000"
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+    env_file:
+      - ./ai_service/.env
+    volumes:
+      - ./ai_service:/app
+      - ./ai_service/data:/app/data
+    networks:
+      - neoem-network
+    restart: always
+
+networks:
+  neoem-network:
+    driver: bridge
