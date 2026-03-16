@@ -29,6 +29,13 @@ _MARGIN_TOP = 20
 _MARGIN_BOTTOM = 20
 _CONTENT_W = _A4_W - _MARGIN_LEFT - _MARGIN_RIGHT
 
+# Thai typesetting constants
+_LINE_HEIGHT = 7          # mm per line (comfortable 1.0 spacing for 14pt)
+_PARA_INDENT = 12.5       # mm first-line indent (≈1 tab, standard Thai ย่อหน้า)
+_SECTION_GAP = 4          # mm gap between articles
+_HEADING_GAP_BEFORE = 6   # mm gap before article heading
+_HEADING_GAP_AFTER = 1    # mm gap after article heading
+
 
 class _ContractPDF(FPDF):
     """Thin subclass to add page-number footer."""
@@ -67,12 +74,19 @@ def generate_contract_pdf(
 
     # ── Title ────────────────────────────────────────────────────────────
     pdf.set_font("Sarabun", "B", 18)
-    pdf.multi_cell(w=_CONTENT_W, text=title, align="C", new_x="LMARGIN", new_y="NEXT")
-    pdf.ln(2)
+    pdf.multi_cell(
+        w=_CONTENT_W, h=9, text=title,
+        align="C", new_x="LMARGIN", new_y="NEXT",
+    )
+    pdf.ln(3)
 
     if effective_date:
         pdf.set_font("Sarabun", "", 12)
-        pdf.cell(w=_CONTENT_W, text=f"ลงวันที่ {effective_date}", align="C", new_x="LMARGIN", new_y="NEXT")
+        pdf.cell(
+            w=_CONTENT_W, h=_LINE_HEIGHT,
+            text=f"ลงวันที่ {effective_date}",
+            align="C", new_x="LMARGIN", new_y="NEXT",
+        )
         pdf.ln(6)
 
     # ── Preamble ─────────────────────────────────────────────────────────
@@ -81,39 +95,33 @@ def generate_contract_pdf(
         for para_text in preamble.split("\n"):
             para_text = para_text.strip()
             if para_text:
-                # Indent first line with a tab
-                pdf.multi_cell(
-                    w=_CONTENT_W,
-                    text=f"\t{para_text}",
-                    align="J",
-                    new_x="LMARGIN",
-                    new_y="NEXT",
-                )
-        pdf.ln(4)
+                _write_indented_para(pdf, para_text)
+        pdf.ln(_SECTION_GAP)
 
     # ── Articles ─────────────────────────────────────────────────────────
     for article in articles:
+        # Space before article
+        pdf.ln(_HEADING_GAP_BEFORE)
+
         # Article heading — centered, bold
         pdf.set_font("Sarabun", "B", 14)
         heading = f"ข้อ {article.article_number}  {article.title_th}"
-        pdf.multi_cell(w=_CONTENT_W, text=heading, align="C", new_x="LMARGIN", new_y="NEXT")
-        pdf.ln(1)
+        pdf.multi_cell(
+            w=_CONTENT_W, h=_LINE_HEIGHT, text=heading,
+            align="C", new_x="LMARGIN", new_y="NEXT",
+        )
+        pdf.ln(_HEADING_GAP_AFTER)
 
-        # Article body — justified, indented first line
+        # Article body — justified with proper Thai indentation
         pdf.set_font("Sarabun", "", 14)
         body = article.body_th.strip()
-        # Split by newlines — each paragraph gets first-line indent
         for para in body.split("\n"):
             para = para.strip()
-            if para:
-                pdf.multi_cell(
-                    w=_CONTENT_W,
-                    text=f"\t{para}",
-                    align="J",
-                    new_x="LMARGIN",
-                    new_y="NEXT",
-                )
-        pdf.ln(3)
+            if not para:
+                pdf.ln(_LINE_HEIGHT * 0.5)  # half-line gap for empty lines
+                continue
+            _write_indented_para(pdf, para)
+        pdf.ln(_SECTION_GAP)
 
     # ── Signature block ──────────────────────────────────────────────────
     pdf.ln(15)
@@ -155,6 +163,37 @@ def generate_contract_pdf(
 # ── Helpers ──────────────────────────────────────────────────────────────────
 
 
+import re as _re
+
+_NUMBERED_PREFIX = _re.compile(
+    r"^(?:\d+[\.\)]|"       # 1. 1) 1.1 etc.
+    r"\([ก-ฮa-zA-Z]\)|"    # (ก) (a)
+    r"[ก-ฮ][\.)])"         # ก. ก)
+)
+
+
+def _write_indented_para(pdf: FPDF, text: str):
+    """Write a paragraph.
+    Plain paragraphs get Thai-style ย่อหน้า first-line indent.
+    Numbered/lettered sub-items (1.1, (ก), etc.) are written flush-left.
+    """
+    if _NUMBERED_PREFIX.match(text):
+        # Sub-item — no indent, full content width
+        pdf.multi_cell(
+            w=_CONTENT_W, h=_LINE_HEIGHT, text=text,
+            align="J", new_x="LMARGIN", new_y="NEXT",
+        )
+    else:
+        # New paragraph — apply ย่อหน้า first-line indent
+        x0 = pdf.get_x()
+        pdf.set_x(x0 + _PARA_INDENT)
+        first_line_w = _CONTENT_W - _PARA_INDENT
+        pdf.multi_cell(
+            w=first_line_w, h=_LINE_HEIGHT, text=text,
+            align="J", new_x="LMARGIN", new_y="NEXT",
+        )
+
+
 def _draw_sig_pair(pdf: FPDF, col_w: float, left: PartyInfo, right: PartyInfo):
     """Draw a two-column signature block."""
     rows = [
@@ -165,9 +204,9 @@ def _draw_sig_pair(pdf: FPDF, col_w: float, left: PartyInfo, right: PartyInfo):
     for left_text, right_text in rows:
         y = pdf.get_y()
         pdf.set_xy(_MARGIN_LEFT, y)
-        pdf.cell(w=col_w, text=left_text, align="C")
+        pdf.cell(w=col_w, h=_LINE_HEIGHT, text=left_text, align="C")
         pdf.set_xy(_MARGIN_LEFT + col_w, y)
-        pdf.cell(w=col_w, text=right_text, align="C", new_x="LMARGIN", new_y="NEXT")
+        pdf.cell(w=col_w, h=_LINE_HEIGHT, text=right_text, align="C", new_x="LMARGIN", new_y="NEXT")
         pdf.ln(3)
 
 

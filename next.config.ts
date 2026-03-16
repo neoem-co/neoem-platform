@@ -9,6 +9,10 @@ const nextConfig: NextConfig = {
     const aiBackendUrl = process.env.AI_BACKEND_URL || "http://localhost:8000";
     return [
       {
+        source: "/api/ai-health",
+        destination: `${aiBackendUrl}/health`,
+      },
+      {
         source: "/api/ai/:path*",
         destination: `${aiBackendUrl}/api/:path*`,
       },

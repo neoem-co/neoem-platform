@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
     FileText, Search, FolderClock, X, Upload, Loader2,
     AlertTriangle, CheckCircle2, XCircle, Download, Eye,
@@ -20,12 +20,27 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { ESignaturePanel } from "@/components/legal/ESignaturePanel";
+import {
+    analyzeContractRisk,
+    extractContext,
+    finalizeContract,
+    generateDraft,
+    getTemplates,
+    type ChatMessagePayload,
+    type ContractArticle,
+    type FactoryInfoPayload,
+    type GenerateDraftResponse,
+    type RiskCheckResponse,
+    type RiskExplainRequest,
+} from "@/lib/ai-api";
 
 interface AILegalWorkspaceProps {
     open: boolean;
     onClose: () => void;
     factoryName?: string;
     initialTab?: "draft" | "risk" | "history" | "esign";
+    chatHistory?: ChatMessagePayload[];
+    factoryInfo?: FactoryInfoPayload;
 }
 
 // ── Draft Contract types ──
@@ -90,7 +105,14 @@ const auditors = [
     { name: "Resena Don", role: "Reviti Locontam" },
 ];
 
-export function AILegalWorkspace({ open, onClose, factoryName = "Factory", initialTab = "draft" }: AILegalWorkspaceProps) {
+export function AILegalWorkspace({
+    open,
+    onClose,
+    factoryName = "Factory",
+    initialTab = "draft",
+    chatHistory = [],
+    factoryInfo,
+}: AILegalWorkspaceProps) {
     const [activeTab, setActiveTab] = useState<"draft" | "risk" | "history" | "esign">(initialTab);
 
     if (!open) return null;
@@ -139,8 +161,8 @@ export function AILegalWorkspace({ open, onClose, factoryName = "Factory", initi
 
                 {/* Main Content */}
                 <div className="flex-1 overflow-y-auto">
-                    {activeTab === "draft" && <DraftPanel factoryName={factoryName} />}
-                    {activeTab === "risk" && <RiskPanel />}
+                    {activeTab === "draft" && <DraftPanel factoryName={factoryName} chatHistory={chatHistory} factoryInfo={factoryInfo} />}
+                    {activeTab === "risk" && <RiskPanel chatHistory={chatHistory} factoryInfo={factoryInfo} />}
                     {activeTab === "esign" && <ESignaturePanel factoryName={factoryName} />}
                     {activeTab === "history" && <HistoryPanel />}
                 </div>
@@ -152,9 +174,30 @@ export function AILegalWorkspace({ open, onClose, factoryName = "Factory", initi
 // ══════════════════════════════════════════════════
 // DRAFT PANEL
 // ══════════════════════════════════════════════════
-function DraftPanel({ factoryName }: { factoryName: string }) {
+const TEMPLATE_TO_API: Record<string, string> = {
+    sales: "sales_contract",
+    "hire-of-work": "hire_of_work",
+    oem: "hybrid_oem",
+    nda: "nda",
+    distribution: "distribution",
+};
+
+function DraftPanel({
+    factoryName,
+    chatHistory,
+    factoryInfo,
+}: {
+    factoryName: string;
+    chatHistory: ChatMessagePayload[];
+    factoryInfo?: FactoryInfoPayload;
+}) {
     const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
     const [loading, setLoading] = useState(false);
+    const [finalizing, setFinalizing] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const [draftResult, setDraftResult] = useState<GenerateDraftResponse | null>(null);
+    const [downloadUrls, setDownloadUrls] = useState<{ pdf_url: string | null; docx_url: string | null } | null>(null);
+    const [recommendedTemplate, setRecommendedTemplate] = useState<string | null>(null);
     const [formData, setFormData] = useState<ContractData>({
         template: "",
         buyerName: "Your Company",
@@ -173,11 +216,117 @@ function DraftPanel({ factoryName }: { factoryName: string }) {
         additionalClauses: "",
     });
 
+    useEffect(() => {
+        let active = true;
+        const seedFromChat = async () => {
+            if (chatHistory.length === 0) return;
+            try {
+                const ctx = await extractContext(chatHistory, factoryName, factoryInfo?.factory_id);
+                if (!active) return;
+                const suggested = Object.entries(TEMPLATE_TO_API).find(([, value]) => value === ctx.suggested_template)?.[0] ?? "";
+                setRecommendedTemplate(ctx.suggested_template);
+                setFormData((prev) => ({
+                    ...prev,
+                    template: prev.template || suggested,
+                    buyerName: ctx.deal_sheet.client?.name || prev.buyerName,
+                    sellerName: ctx.deal_sheet.vendor?.name || prev.sellerName,
+                    productType: ctx.deal_sheet.product?.name || prev.productType,
+                    productSpec: ctx.deal_sheet.product?.specs || prev.productSpec,
+                    quantity: ctx.deal_sheet.product?.quantity?.toString() || prev.quantity,
+                    totalPrice: ctx.deal_sheet.total_price?.toString() || prev.totalPrice,
+                    deliveryDate: ctx.deal_sheet.delivery_date || prev.deliveryDate,
+                    ipOwnership: ctx.deal_sheet.commercial_terms?.ip_ownership || prev.ipOwnership,
+                    additionalClauses: ctx.deal_sheet.additional_notes || prev.additionalClauses,
+                }));
+            } catch {
+                // Keep manual entry if extraction fails.
+            }
+        };
+        seedFromChat();
+        return () => {
+            active = false;
+        };
+    }, [chatHistory, factoryInfo?.factory_id, factoryName]);
+
     const handleGenerate = async () => {
         setLoading(true);
-        await new Promise((r) => setTimeout(r, 2000));
-        setLoading(false);
-        setStep(3);
+        setError(null);
+        try {
+            const templateType = TEMPLATE_TO_API[formData.template] || "hire_of_work";
+            const response = await generateDraft({
+                template_type: templateType,
+                deal_sheet: {
+                    vendor: { name: formData.sellerName || factoryName, role: "seller" },
+                    client: { name: formData.buyerName || "Your Company", role: "buyer" },
+                    product: {
+                        name: formData.productType,
+                        specs: formData.productSpec || undefined,
+                        quantity: Number(formData.quantity) || undefined,
+                        unit: "pieces",
+                    },
+                    total_price: Number(formData.totalPrice) || undefined,
+                    delivery_date: formData.deliveryDate || undefined,
+                    commercial_terms: {
+                        ip_ownership: formData.ipOwnership,
+                        penalty_type: formData.penaltyClause === "none" ? "none" : "percentage_daily",
+                        penalty_details: formData.penaltyClause === "none" ? undefined : `${formData.penaltyClause}% per day`,
+                    },
+                    additional_notes: formData.additionalClauses || undefined,
+                },
+                parties: [
+                    { name: formData.buyerName || "Your Company", role: "buyer" },
+                    { name: formData.sellerName || factoryName, role: "seller" },
+                ],
+                product: {
+                    name: formData.productType,
+                    specs: formData.productSpec || undefined,
+                    quantity: Number(formData.quantity) || undefined,
+                    unit: "pieces",
+                },
+                total_price: Number(formData.totalPrice) || undefined,
+                delivery_date: formData.deliveryDate || undefined,
+                commercial_terms: {
+                    ip_ownership: formData.ipOwnership,
+                    penalty_type: formData.penaltyClause === "none" ? "none" : "percentage_daily",
+                    penalty_details: formData.penaltyClause === "none" ? undefined : `${formData.penaltyClause}% per day`,
+                },
+                language: "both",
+            });
+            setDraftResult(response);
+            setStep(3);
+        } catch (err) {
+            setError(err instanceof Error ? err.message : "Failed to generate contract draft");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleFinalize = async () => {
+        if (!draftResult) return;
+        setFinalizing(true);
+        setError(null);
+        try {
+            const result = await finalizeContract({
+                contract_title: draftResult.contract_title,
+                articles: draftResult.articles as ContractArticle[],
+                preamble_th: draftResult.preamble_th,
+                effective_date: draftResult.effective_date || undefined,
+                parties: [
+                    { name: formData.buyerName || "Your Company", role: "buyer" },
+                    { name: formData.sellerName || factoryName, role: "seller" },
+                ],
+                output_format: "both",
+            });
+            setDownloadUrls({
+                pdf_url: result.pdf_url ? result.pdf_url.replace("/api/", "/api/ai/") : null,
+                docx_url: result.docx_url ? result.docx_url.replace("/api/", "/api/ai/") : null,
+            });
+            setStep(4);
+        } catch (err) {
+            setError(err instanceof Error ? err.message : "Failed to finalize contract");
+        } finally {
+            setFinalizing(false);
+        }
     };
 
     const autoFillClass = "border-primary/30 bg-primary/5";
@@ -188,7 +337,9 @@ function DraftPanel({ factoryName }: { factoryName: string }) {
             <div className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-primary/5 border border-primary/20">
                 <Sparkles className="h-4 w-4 text-primary flex-shrink-0" />
                 <p className="text-sm text-foreground">
-                    💡 Based on your chat, we recommend: <span className="font-semibold text-primary">Hire of Work Contract</span>
+                    {recommendedTemplate
+                        ? <>💡 Based on your chat, we recommend: <span className="font-semibold text-primary">{recommendedTemplate.replace(/_/g, " ")}</span></>
+                        : <>💡 Select a template to generate a legally structured first draft.</>}
                 </p>
             </div>
 
@@ -370,11 +521,16 @@ function DraftPanel({ factoryName }: { factoryName: string }) {
                             <p className="text-xs text-muted-foreground italic mt-4">
                                 This is a preview. Full legal language will be included in the downloadable document.
                             </p>
+                            <p className="text-xs text-muted-foreground">
+                                Generated articles: {draftResult?.articles.length ?? 0}
+                            </p>
                         </CardContent>
                     </Card>
                     <div className="flex gap-3">
                         <Button variant="outline" onClick={() => setStep(2)} className="flex-1">Edit Details</Button>
-                        <Button onClick={() => setStep(4)} className="flex-1">Confirm & Download</Button>
+                        <Button onClick={handleFinalize} className="flex-1" disabled={finalizing || !draftResult}>
+                            {finalizing ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Finalizing...</> : "Confirm & Download"}
+                        </Button>
                     </div>
                 </div>
             )}
@@ -383,22 +539,40 @@ function DraftPanel({ factoryName }: { factoryName: string }) {
                 <div className="space-y-4 text-center py-8">
                     <div className="p-8 bg-success/5 border border-success/20 rounded-xl space-y-3 max-w-sm mx-auto">
                         <FileText className="h-14 w-14 text-success mx-auto" />
-                        <p className="font-semibold text-foreground text-lg">Contract_Draft.pdf</p>
+                        <p className="font-semibold text-foreground text-lg">{draftResult?.contract_filename || "Contract_Draft"}</p>
                         <p className="text-sm text-muted-foreground">Saved to History & Legal Hub</p>
                     </div>
                     <div className="flex gap-3 max-w-sm mx-auto">
-                        <Button className="flex-1" size="lg">
-                            <Download className="h-5 w-5 mr-2" /> PDF
-                        </Button>
-                        <Button variant="outline" className="flex-1" size="lg">
-                            <Download className="h-5 w-5 mr-2" /> Word
-                        </Button>
+                        {downloadUrls?.pdf_url ? (
+                            <a href={downloadUrls.pdf_url} download className="flex-1">
+                                <Button className="w-full" size="lg">
+                                    <Download className="h-5 w-5 mr-2" /> PDF
+                                </Button>
+                            </a>
+                        ) : (
+                            <Button className="flex-1" size="lg" disabled>
+                                <Download className="h-5 w-5 mr-2" /> PDF
+                            </Button>
+                        )}
+                        {downloadUrls?.docx_url ? (
+                            <a href={downloadUrls.docx_url} download className="flex-1">
+                                <Button variant="outline" className="w-full" size="lg">
+                                    <Download className="h-5 w-5 mr-2" /> Word
+                                </Button>
+                            </a>
+                        ) : (
+                            <Button variant="outline" className="flex-1" size="lg" disabled>
+                                <Download className="h-5 w-5 mr-2" /> Word
+                            </Button>
+                        )}
                     </div>
                     <Button variant="ghost" onClick={() => setStep(1)} className="mt-2">
                         Draft Another Contract
                     </Button>
                 </div>
             )}
+
+            {error && <p className="text-xs text-destructive text-center">{error}</p>}
         </div>
     );
 }
@@ -406,22 +580,60 @@ function DraftPanel({ factoryName }: { factoryName: string }) {
 // ══════════════════════════════════════════════════
 // RISK PANEL (Split-Screen 60:40) — with PDF viewer + Download Summary
 // ══════════════════════════════════════════════════
-function RiskPanel() {
+function RiskPanel({
+    chatHistory,
+    factoryInfo,
+}: {
+    chatHistory: ChatMessagePayload[];
+    factoryInfo?: FactoryInfoPayload;
+}) {
     const [file, setFile] = useState<File | null>(null);
     const [analyzing, setAnalyzing] = useState(false);
     const [results, setResults] = useState<RiskItem[] | null>(null);
     const [selectedRisk, setSelectedRisk] = useState<RiskItem | null>(null);
+    const [analysisSummary, setAnalysisSummary] = useState<string>("");
+    const [analysisError, setAnalysisError] = useState<string | null>(null);
+    const [previewUrl, setPreviewUrl] = useState<string | null>(null);
     const lawyerCostSaved = 15000;
 
+    useEffect(() => {
+        if (!file) {
+            setPreviewUrl(null);
+            return;
+        }
+        const url = URL.createObjectURL(file);
+        setPreviewUrl(url);
+        return () => URL.revokeObjectURL(url);
+    }, [file]);
+
     const handleUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files?.[0]) setFile(e.target.files[0]);
+        if (e.target.files?.[0]) {
+            setFile(e.target.files[0]);
+            setAnalysisError(null);
+        }
     };
 
     const handleAnalyze = async () => {
         setAnalyzing(true);
-        await new Promise((r) => setTimeout(r, 2500));
-        setAnalyzing(false);
-        setResults(mockRisks);
+        setAnalysisError(null);
+        try {
+            if (!file) return;
+            const response: RiskCheckResponse = await analyzeContractRisk(file, chatHistory, factoryInfo, "both");
+            const mapped = response.risks.map((risk) => ({
+                id: risk.risk_id,
+                type: risk.level === "critical" || risk.level === "high" ? "high" as const : risk.level === "medium" ? "medium" as const : "low" as const,
+                clause: risk.title_en || risk.title_th || risk.clause_ref || "Unspecified clause",
+                description: risk.description_en || risk.description_th,
+                page: 1,
+                recommendation: risk.recommendation_en || risk.recommendation_th || "Review this item with legal counsel.",
+            }));
+            setResults(mapped);
+            setAnalysisSummary(response.summary_en || response.summary_th || "Analysis completed");
+        } catch (err) {
+            setAnalysisError(err instanceof Error ? err.message : "Risk analysis failed");
+        } finally {
+            setAnalyzing(false);
+        }
     };
 
     const handleDownloadSummary = () => {
@@ -464,7 +676,7 @@ function RiskPanel() {
                     <h2 className="text-xl font-bold text-foreground text-center">Upload Contract to Check Risks</h2>
 
                     <label className="cursor-pointer block">
-                        <input type="file" accept=".pdf,.doc,.docx" onChange={handleUpload} className="hidden" />
+                        <input type="file" accept=".pdf,.png,.jpg,.jpeg" onChange={handleUpload} className="hidden" />
                         <div className={`border-2 border-dashed rounded-xl p-10 text-center transition-colors ${file ? "border-success bg-success/5" : "border-border hover:border-primary/50"}`}>
                             {file ? (
                                 <div className="space-y-2">
@@ -476,7 +688,7 @@ function RiskPanel() {
                                 <div className="space-y-2">
                                     <Upload className="h-10 w-10 text-muted-foreground mx-auto" />
                                     <p className="text-foreground font-medium">Click to upload PDF or drag & drop</p>
-                                    <p className="text-sm text-muted-foreground">Supports PDF, DOC, DOCX</p>
+                                    <p className="text-sm text-muted-foreground">Supports PDF, PNG, JPG</p>
                                 </div>
                             )}
                         </div>
@@ -485,6 +697,7 @@ function RiskPanel() {
                     <Button onClick={handleAnalyze} disabled={!file || analyzing} className="w-full" size="lg">
                         {analyzing ? <><Loader2 className="h-5 w-5 mr-2 animate-spin" /> Analyzing with OCR + Legal AI...</> : <><Search className="h-5 w-5 mr-2" /> Analyze Contract</>}
                     </Button>
+                    {analysisError && <p className="text-xs text-center text-destructive">{analysisError}</p>}
                 </div>
             </div>
         );
@@ -499,14 +712,20 @@ function RiskPanel() {
                         <Eye className="h-4 w-4" />
                         <span className="text-foreground font-medium">Document Preview</span>
                     </div>
-                    <Button variant="ghost" size="sm" className="h-7 text-xs"><Download className="h-3.5 w-3.5 mr-1" /> Download</Button>
+                    <Button variant="ghost" size="sm" className="h-7 text-xs" disabled={!previewUrl}><Download className="h-3.5 w-3.5 mr-1" /> Download</Button>
                 </div>
                 <div className="flex-1 overflow-hidden bg-secondary/10">
-                    <iframe
-                        src="/mock-contract.pdf"
-                        className="w-full h-full border-0"
-                        title="Contract PDF Viewer"
-                    />
+                    {previewUrl ? (
+                        <iframe
+                            src={previewUrl}
+                            className="w-full h-full border-0"
+                            title="Contract PDF Viewer"
+                        />
+                    ) : (
+                        <div className="h-full w-full flex items-center justify-center text-sm text-muted-foreground">
+                            Upload a document to preview
+                        </div>
+                    )}
                 </div>
             </div>
 
@@ -529,6 +748,10 @@ function RiskPanel() {
                         <BadgeDollarSign className="h-4 w-4 text-success flex-shrink-0" />
                         <span className="text-xs font-medium text-success">Savings: ~฿{lawyerCostSaved.toLocaleString()}</span>
                     </div>
+
+                    {analysisSummary && (
+                        <p className="text-xs text-muted-foreground">{analysisSummary}</p>
+                    )}
 
                     <div className="text-sm font-semibold text-foreground">Risk Summary</div>
                     <div className="flex gap-2">
