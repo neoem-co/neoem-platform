@@ -302,6 +302,20 @@ const DealRoom = () => {
                 onClose={() => setShowLegalWorkspace(false)}
                 factoryName={factory.name}
                 initialTab={legalWorkspaceTab}
+                chatHistory={messages.map((m) => ({
+                    sender: m.sender,
+                    message: m.message,
+                    timestamp: m.timestamp,
+                }))}
+                factoryInfo={{
+                    factory_id: factory.id,
+                    name: factory.name,
+                    location: factory.location,
+                    category: factory.category,
+                    certifications: factory.certifications,
+                    rating: factory.rating,
+                    verified: factory.verified,
+                }}
             />
 
             <PaymentModal

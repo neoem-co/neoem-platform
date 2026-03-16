@@ -304,7 +304,7 @@ export function getContractDownloadUrl(contractId: string, format: "pdf" | "docx
  */
 export async function checkAIHealth(): Promise<boolean> {
   try {
-    const res = await fetch(`${AI_BASE.replace("/api/ai", "")}/api/ai/../health`, {
+    const res = await fetch(`/api/ai-health`, {
       signal: AbortSignal.timeout(3000),
     });
     return res.ok;

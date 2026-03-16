@@ -7,18 +7,22 @@ services:
     container_name: neoem-frontend
     ports:
       - "3000:3000"
-    volumes:
-      - .:/app
-      - /app/node_modules
-      - /app/.next
     env_file:
       - .env
     environment:
       - AI_BACKEND_URL=http://ai-service:8000
     depends_on:
-      - ai-service
+      ai-service:
+        condition: service_healthy
     networks:
       - neoem-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
 
   # FastAPI AI Backend
   ai-service:
@@ -28,15 +32,17 @@ services:
     container_name: neoem-ai-service
     ports:
       - "8000:8000"
-    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
     env_file:
       - ./ai_service/.env
-    volumes:
-      - ./ai_service:/app
-      - ./ai_service/data:/app/data
     networks:
       - neoem-network
-    restart: always
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 90s
 
 networks:
   neoem-network:
