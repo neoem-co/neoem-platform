@@ -3,7 +3,8 @@ fastapi==0.115.6
 uvicorn[standard]==0.34.0
 python-multipart==0.0.20
 httpx==0.28.1
-urllib3==1.26.18
+urllib3==2.2.1
+requests==2.32.3
 charset-normalizer==3.3.2
 pydantic==2.10.4
 pydantic-settings==2.7.1
@@ -15,6 +16,8 @@ langchain-community==0.3.14
 langchain-core==0.3.29
 langgraph==0.2.60
 langchain-google-genai==2.0.9
+grpcio==1.62.1
+grpcio-status==1.62.1
 
 # Vector Store (Supabase pgvector used in prod)
 # chromadb==0.5.23

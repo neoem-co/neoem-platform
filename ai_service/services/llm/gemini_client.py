@@ -8,9 +8,6 @@ from __future__ import annotations
 import logging
 from typing import Optional
 
-from langchain_google_genai import ChatGoogleGenerativeAI
-from langchain_core.messages import HumanMessage, SystemMessage
-
 from config import settings
 
 logger = logging.getLogger(__name__)
@@ -18,7 +15,7 @@ logger = logging.getLogger(__name__)
 def get_gemini_llm(
     temperature: float = 0.1,
     model: Optional[str] = None,
-) -> ChatGoogleGenerativeAI:
+):
     """Create a LangChain ChatGoogleGenerativeAI pointing to Gemini API."""
     return ChatGoogleGenerativeAI(
         model=model or settings.gemini_model,
@@ -40,7 +37,7 @@ async def gemini_invoke(
     if not settings.gemini_api_key:
         logger.error("GEMINI_API_KEY is not set in environment variables")
         raise ValueError("GEMINI_API_KEY is missing")
-
+    
     llm = get_gemini_llm(temperature=temperature)
     messages = [
         SystemMessage(content=system_prompt),
