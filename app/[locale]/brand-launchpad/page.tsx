@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useTranslations, useLocale } from "next-intl";
 import {
     Building2, FileCheck, Palette, Shield, Award, Lightbulb, Check, ChevronRight,
     Rocket, Send, Briefcase, Megaphone, Calculator, Scale, Code, Truck, PartyPopper,
@@ -107,6 +108,8 @@ const knowledgeBaseItems = [
 ];
 
 const BrandLaunchpad = () => {
+    const t = useTranslations("BrandLaunchpad");
+    const locale = useLocale();
     const [category, setCategory] = useState<"all" | "cosmetics" | "supplements">("all");
     const [completedItems, setCompletedItems] = useState<string[]>([]);
     const [selectedPartner, setSelectedPartner] = useState<LaunchpadItem | null>(null);
@@ -163,19 +166,19 @@ const BrandLaunchpad = () => {
                             <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
                                 <Rocket className="h-5 w-5 text-primary" />
                             </div>
-                            <Badge variant="secondary">Brand Launchpad</Badge>
+                            <Badge variant="secondary">{t("brandLaunchpad")}</Badge>
                         </div>
-                        <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground mb-4">Your Brand Roadmap</h1>
+                        <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground mb-4">{t("title")}</h1>
                         <p className="text-muted-foreground text-lg mb-8">
-                            Complete these steps while your products are being manufactured. Build a compliant, protected brand from day one.
+                            {t("description")}
                         </p>
                         <div className="bg-card border rounded-xl p-6 max-w-md mx-auto">
                             <div className="flex items-center justify-between mb-2">
-                                <span className="text-sm font-medium text-foreground">Overall Progress</span>
-                                <span className="text-sm font-bold text-primary">{progress}% Ready</span>
+                                <span className="text-sm font-medium text-foreground">{t("overallProgress")}</span>
+                                <span className="text-sm font-bold text-primary">{progress}% {t("ready")}</span>
                             </div>
                             <Progress value={progress} className="h-3" />
-                            <p className="text-xs text-muted-foreground mt-2">{completedItems.length} of {filteredItems.length} tasks completed</p>
+                            <p className="text-xs text-muted-foreground mt-2">{completedItems.length} of {filteredItems.length} {t("tasksCompleted")}</p>
                         </div>
                     </div>
                 </div>
@@ -216,16 +219,16 @@ const BrandLaunchpad = () => {
                 <div className="container">
                     <Tabs defaultValue="checklist" className="space-y-6">
                         <TabsList className="w-full justify-start overflow-x-auto">
-                            <TabsTrigger value="checklist">Compliance Checklist</TabsTrigger>
-                            <TabsTrigger value="marketplace">Agency Marketplace</TabsTrigger>
+                            <TabsTrigger value="checklist">{t("complianceChecklist")}</TabsTrigger>
+                            <TabsTrigger value="marketplace">{t("agencyMarketplace")}</TabsTrigger>
                             <TabsTrigger value="knowledge">
-                                <BookOpen className="h-4 w-4 mr-1" /> Knowledge Base
+                                <BookOpen className="h-4 w-4 mr-1" /> {t("knowledgeBase")}
                             </TabsTrigger>
                         </TabsList>
 
                         <TabsContent value="checklist" className="space-y-6">
                             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 p-4 bg-background rounded-lg border">
-                                <span className="text-sm font-medium text-foreground">Product Category:</span>
+                                <span className="text-sm font-medium text-foreground">{t("productCategory")}:</span>
                                 <Select value={category} onValueChange={(v) => setCategory(v as typeof category)}>
                                     <SelectTrigger className="w-[200px]"><SelectValue placeholder="Select category" /></SelectTrigger>
                                     <SelectContent>
@@ -349,8 +352,8 @@ const BrandLaunchpad = () => {
                         {/* Knowledge Base Tab */}
                         <TabsContent value="knowledge" className="space-y-8">
                             <div className="text-center mb-6">
-                                <h2 className="text-2xl font-bold text-foreground mb-2">ศูนย์รวมความรู้สำหรับเริ่มต้นแบรนด์</h2>
-                                <p className="text-muted-foreground">Everything you need to know before starting your brand</p>
+                                <h2 className="text-2xl font-bold text-foreground mb-2">{t("knowledgeBase.title")}</h2>
+                                <p className="text-muted-foreground">{t("knowledgeBase.desc")}</p>
                             </div>
 
                             {/* Key considerations */}
@@ -437,7 +440,7 @@ const BrandLaunchpad = () => {
                                     Registering as a company can save you up to 30% in taxes compared to operating as an
                                     individual. Plus, it&apos;s required for FDA registration.
                                 </p>
-                                <Link href="/chat/skincare-plus" className="text-sm text-primary hover:underline mt-2 inline-block">
+                                <Link href={`/${locale}/chat/ilc-cosmetics`} className="text-sm text-primary hover:underline mt-2 inline-block">
                                     Return to Deal Room →
                                 </Link>
                             </div>

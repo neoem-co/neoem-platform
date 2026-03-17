@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useLocale } from "next-intl";
 import { MessageSquare, Search, ChevronRight } from "lucide-react";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
@@ -25,8 +26,8 @@ const factoryImages: Record<string, any> = {
 const conversations = [
     {
         id: "1",
-        factorySlug: "thai-cosmetics-pro",
-        factoryName: "Thai Cosmetics Pro",
+        factorySlug: "ilc-cosmetics",
+        factoryName: "International Laboratories Corp. Ltd. (ILC)",
         factoryImage: "factory-1",
         lastMessage: "Please review and let me know if you'd like to proceed.",
         timestamp: "2h ago",
@@ -35,8 +36,8 @@ const conversations = [
     },
     {
         id: "2",
-        factorySlug: "siam-herbal-extract",
-        factoryName: "Siam Herbal Extract",
+        factorySlug: "milott-laboratories",
+        factoryName: "Milott Laboratories Co., Ltd.",
         factoryImage: "factory-2",
         lastMessage: "We can start production once deposit is received.",
         timestamp: "1d ago",
@@ -45,8 +46,8 @@ const conversations = [
     },
     {
         id: "3",
-        factorySlug: "pure-skin-lab",
-        factoryName: "Pure Skin Lab Innovation",
+        factorySlug: "sji-cosmetics",
+        factoryName: "S & J International Enterprises PCL",
         factoryImage: "factory-3",
         lastMessage: "Thank you for your interest! What formulation are you looking for?",
         timestamp: "3d ago",
@@ -55,8 +56,8 @@ const conversations = [
     },
     {
         id: "4",
-        factorySlug: "ecopack-solutions",
-        factoryName: "EcoPack Solutions",
+        factorySlug: "derma-innovation",
+        factoryName: "Derma Innovation Co., Ltd.",
         factoryImage: "factory-4",
         lastMessage: "Sample packaging has been shipped.",
         timestamp: "1w ago",
@@ -77,6 +78,7 @@ const getStatusBadge = (status: string) => {
 };
 
 const Messages = () => {
+    const locale = useLocale();
     const [searchQuery, setSearchQuery] = useState("");
 
     const filteredConversations = conversations.filter((conv) =>
@@ -126,7 +128,7 @@ const Messages = () => {
                                 {filteredConversations.map((conv) => (
                                     <Link
                                         key={conv.id}
-                                        href={`/chat/${conv.factorySlug}`}
+                                        href={`/${locale}/chat/${conv.factorySlug}`}
                                         className="flex items-center gap-4 p-4 hover:bg-secondary/50 transition-colors"
                                     >
                                         <div className="relative">

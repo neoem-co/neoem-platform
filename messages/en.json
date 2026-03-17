@@ -70,11 +70,48 @@
         "ctaTitle": "Ready to start manufacturing?",
         "ctaDesc": "Join thousands of brands who trust NEOEM to connect them with the right factories.",
         "ctaFind": "Find Your Factory",
-        "ctaList": "List Your Factory"
+        "ctaList": "List Your Factory",
+        "featureShowcase": {
+            "title": "Secure Every Step with LegalTech",
+            "desc": "Integrated AI legal tools designed to protect your business, prevent exploitation, and build trust from the first chat to the final delivery."
+        }
     },
     "Common": {
         "search": "Search",
         "comingSoon": "Coming Soon",
         "comingSoonDesc": "This feature is part of our upcoming NEOEM V.4 update."
+    },
+    "BrandLaunchpad": {
+        "brandLaunchpad": "Brand Launchpad",
+        "title": "Your Brand Roadmap",
+        "description": "Complete these steps while your products are being manufactured. Build a compliant, protected brand from day one.",
+        "registration": "Company Registration",
+        "registrationDesc": "DBD fast-track setup",
+        "brandDesign": "Brand Design",
+        "brandDesignDesc": "Logo & packaging ready",
+        "compliance": "FDA / Trademark",
+        "complianceDesc": "Legal compliance done",
+        "marketplace": "Expert Marketplace",
+        "marketplaceDesc": "Lawyers, accountants & more",
+        "overallProgress": "Overall Progress",
+        "ready": "Ready",
+        "tasksCompleted": "tasks completed",
+        "complianceChecklist": "Compliance Checklist",
+        "agencyMarketplace": "Agency Marketplace",
+        "knowledgeBase": "Knowledge Base",
+        "keyConsiderations": "Key Considerations",
+        "keyConsiderationsDesc": "Essential factors to consider before starting your brand",
+        "productCategory": "Product Category",
+        "selectCategory": "Select category",
+        "knowledgeBaseTitle": "Knowledge Base",
+        "knowledgeBaseDesc": "Everything you need to know before starting your brand"
+    },
+    "Pricing": {
+        "badge": "Pricing Plans",
+        "title": "Choose Your Growth Plan",
+        "description": "All plans include access to our platform and AI-powered tools. Upgrade anytime.",
+        "popular": "Most Popular",
+        "contact": "Have questions?",
+        "contactLink": "Contact our sales team"
     }
 }

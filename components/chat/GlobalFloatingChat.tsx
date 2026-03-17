@@ -27,7 +27,7 @@ interface Conversation {
 const initialConversations: Conversation[] = [
     {
         id: "1",
-        name: "Thai Cosmetics Pro",
+        name: "International Laboratories Corp. Ltd. (ILC)",
         lastMessage: "We'll start production next week.",
         time: "2m ago",
         unread: 2,
@@ -39,7 +39,7 @@ const initialConversations: Conversation[] = [
     },
     {
         id: "2",
-        name: "Pure Skin Lab",
+        name: "Milott Laboratories Co., Ltd.",
         lastMessage: "Please confirm the order quantity.",
         time: "1h ago",
         unread: 1,
@@ -49,7 +49,7 @@ const initialConversations: Conversation[] = [
     },
     {
         id: "3",
-        name: "Siam Herbal Extract",
+        name: "S & J International Enterprises PCL",
         lastMessage: "Shipment confirmed. Tracking sent.",
         time: "Yesterday",
         unread: 0,
@@ -69,7 +69,7 @@ export function GlobalFloatingChat() {
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     // Hide on deal room pages
-    if (pathname.startsWith("/chat/")) return null;
+    if (pathname.includes("/chat/")) return null;
 
     const totalUnread = conversations.reduce((sum, c) => sum + c.unread, 0);
     const activeConv = conversations.find((c) => c.id === activeChat);

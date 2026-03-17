@@ -8,14 +8,15 @@ import { TrustBanners } from "@/components/home/TrustBanners";
 import { FeatureShowcase } from "@/components/home/FeatureShowcase";
 import { DotMatrixBackground } from "@/components/home/DotMatrixBackground";
 import factoriesData from "@/data/factories.json";
-import { Link } from "@/i18n/routing";
+import Link from "next/link";
+import { useLocale, useTranslations } from "next-intl";
 import { Rocket, ChevronRight, CheckCircle2, Palette, Shield, Scale } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { useTranslations } from "next-intl";
 
 const Index = () => {
   const t = useTranslations("HomePage");
+  const locale = useLocale();
   const topFactories = factoriesData.factories.slice(0, 4);
 
   return (
@@ -47,7 +48,7 @@ const Index = () => {
                 {t("verifiedPicksDesc")}
               </p>
             </div>
-            <Link href="/factories" className="text-sm font-medium text-primary hover:underline">
+            <Link href={`/${locale}/factories`} className="text-sm font-medium text-primary hover:underline">
               {t("viewAll")} →
             </Link>
           </div>
@@ -97,7 +98,7 @@ const Index = () => {
             </div>
 
             <div className="text-center">
-              <Link href="/brand-launchpad">
+              <Link href={`/${locale}/brand-launchpad`}>
                 <Button size="lg" className="gap-2">
                   <Rocket className="h-5 w-5" />
                   {t("exploreLaunchpad")}
@@ -144,10 +145,10 @@ const Index = () => {
               {t("ctaDesc")}
             </p>
             <div className="flex items-center justify-center gap-4 flex-wrap">
-              <Link href="/factories" className="inline-flex items-center justify-center h-12 px-8 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition-colors">
+              <Link href={`/${locale}/factories`} className="inline-flex items-center justify-center h-12 px-8 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition-colors">
                 {t("ctaFind")}
               </Link>
-              <Link href="/pricing" className="inline-flex items-center justify-center h-12 px-8 bg-secondary text-secondary-foreground rounded-lg font-medium hover:bg-secondary/80 transition-colors">
+              <Link href={`/${locale}/pricing`} className="inline-flex items-center justify-center h-12 px-8 bg-secondary text-secondary-foreground rounded-lg font-medium hover:bg-secondary/80 transition-colors">
                 {t("ctaList")}
               </Link>
             </div>

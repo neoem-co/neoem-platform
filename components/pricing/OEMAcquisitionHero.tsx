@@ -1,10 +1,12 @@
 "use client";
 
 import Link from "next/link";
+import { useLocale } from "next-intl";
 import { Button } from "@/components/ui/button";
 import factoriesData from "@/data/factories.json";
 
 export function OEMAcquisitionHero() {
+    const locale = useLocale();
     const factories = factoriesData.factories.slice(0, 6);
 
     return (
@@ -42,7 +44,7 @@ export function OEMAcquisitionHero() {
                         size="lg"
                         className="bg-background text-primary hover:bg-background/90 font-semibold px-8"
                     >
-                        <Link href="/oem-onboarding">Register Your Factory</Link>
+                        <Link href={`/${locale}/oem-onboarding`}>Register Your Factory</Link>
                     </Button>
                     <p className="text-sm text-primary-foreground/70 mt-4">
                         Free to start • No credit card required

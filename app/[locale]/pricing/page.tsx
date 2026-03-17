@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { Check, Crown, Zap, Building2, BadgeCheck, BarChart3, Image, Megaphone, Search, Users, FileText, Phone } from "lucide-react";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
@@ -19,10 +20,10 @@ const tiers = [
         priceSubtextEn: "Free for lifetime",
         theme: "default",
         features: [
-            { icon: Building2, text: "Basic Profile Creation" },
-            { icon: Search, text: "Organic Search Visibility" },
-            { icon: FileText, text: "AI Quotation Generator" },
-            { icon: Image, text: "Upload max 5 Product Photos" },
+            { icon: Building2, text: "สร้างโปรไฟล์พื้นฐาน", textEn: "Basic Profile Creation" },
+            { icon: Search, text: "ติดอันดับการค้นหาแบบปกติ", textEn: "Organic Search Visibility" },
+            { icon: FileText, text: "สร้างใบเสนอราคาด้วย AI", textEn: "AI Quotation Generator" },
+            { icon: Image, text: "อัปโหลดรูปภาพสินค้าได้สูงสุด 5 รูป", textEn: "Upload max 5 Product Photos" },
         ],
         cta: "Get Started",
         ctaLink: "/oem-onboarding",
@@ -38,11 +39,11 @@ const tiers = [
         theme: "primary",
         popular: true,
         features: [
-            { icon: Check, text: "Everything in Starter" },
-            { icon: BadgeCheck, text: "Verified Badge (Green Check)" },
-            { icon: BarChart3, text: "Access to Visitor Insights" },
-            { icon: Image, text: "Unlimited Photos & Videos" },
-            { icon: Megaphone, text: 'Free "Search Boost" Ad (1 time/month)' },
+            { icon: Check, text: "ทุกอย่างใน Starter", textEn: "Everything in Starter" },
+            { icon: BadgeCheck, text: "Verified Badge (Green Check)", textEn: "Verified Badge (Green Check)" },
+            { icon: BarChart3, text: "ดูข้อมูลเชิงลึกของผู้เยี่ยมชม", textEn: "Access to Visitor Insights" },
+            { icon: Image, text: "อัปโหลดรูปภาพและวิดีโอไม่จำกัด", textEn: "Unlimited Photos & Videos" },
+            { icon: Megaphone, text: 'โปรโมท "Search Boost" ฟรี 1 ครั้ง/เดือน', textEn: 'Free "Search Boost" Ad (1 time/month)' },
         ],
         cta: "Upgrade to Pro",
         ctaLink: "/oem-onboarding",
@@ -57,19 +58,21 @@ const tiers = [
         priceSubtext: "฿ 49,900 / year",
         theme: "premium",
         features: [
-            { icon: Check, text: "Everything in Pro" },
-            { icon: Building2, text: "On-site Factory Audit" },
-            { icon: BarChart3, text: "Deep Market Trend Reports" },
-            { icon: Crown, text: "Guaranteed Top Search Ranking" },
-            { icon: Phone, text: "Dedicated Account Manager" },
+            { icon: Check, text: "ทุกอย่างใน Pro", textEn: "Everything in Pro" },
+            { icon: Building2, text: "ตรวจสอบโรงงานในพื้นที่", textEn: "On-site Factory Audit" },
+            { icon: BarChart3, text: "รายงานแนวโน้มตลาดเชิงลึก", textEn: "Deep Market Trend Reports" },
+            { icon: Crown, text: "รับประกันอันดับการค้นหาสูงสุด", textEn: "Guaranteed Top Search Ranking" },
+            { icon: Phone, text: "ผู้จัดการบัญชีเฉพาะ", textEn: "Dedicated Account Manager" },
         ],
-        cta: "Contact Sales",
+        cta: "Upgrade to Premium",
         ctaLink: "#",
         ctaVariant: "outline" as const,
     },
 ];
 
 export default function Pricing() {
+    const t = useTranslations("Pricing");
+
     return (
         <div className="min-h-screen bg-secondary/20 flex flex-col">
             <Navbar />
@@ -82,13 +85,13 @@ export default function Pricing() {
                 <div className="text-center max-w-2xl mx-auto mb-12">
                     <Badge variant="secondary" className="mb-4">
                         <Zap className="h-3 w-3 mr-1" />
-                        Pricing Plans
+                        {t("badge")}
                     </Badge>
                     <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
-                        Choose Your Growth Plan
+                        {t("title")}
                     </h2>
                     <p className="text-muted-foreground">
-                        All plans include access to our platform and AI-powered tools. Upgrade anytime.
+                        {t("description")}
                     </p>
                 </div>
 
@@ -107,7 +110,7 @@ export default function Pricing() {
                             {tier.popular && (
                                 <div className="absolute -top-3 left-1/2 -translate-x-1/2">
                                     <Badge className="bg-primary text-primary-foreground">
-                                        Most Popular
+                                        {t("popular")}
                                     </Badge>
                                 </div>
                             )}
@@ -181,9 +184,9 @@ export default function Pricing() {
                 {/* FAQ / Trust Section */}
                 <div className="mt-16 text-center">
                     <p className="text-muted-foreground">
-                        Have questions?{" "}
+                        {t("contact")}{" "}
                         <Link href="#" className="text-primary hover:underline">
-                            Contact our sales team
+                            {t("contactLink")}
                         </Link>
                     </p>
                 </div>

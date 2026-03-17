@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useLocale } from "next-intl";
 import { useRouter } from "next/navigation";
 import {
     Package, Eye, TrendingUp, MessageSquare, FileText, Download,
@@ -153,6 +154,7 @@ const initialFormData: QuotationFormData = {
 
 const OEMDashboard = () => {
     const router = useRouter();
+    const locale = useLocale();
     const [activeMenu, setActiveMenu] = useState<MenuKey>("overview");
     const [showUpsellModal, setShowUpsellModal] = useState(false);
     const [showAuditUpsell, setShowAuditUpsell] = useState(false);
@@ -251,7 +253,7 @@ const OEMDashboard = () => {
                                         <span className="text-sm font-bold text-primary">{totalPoints} pts</span>
                                     </div>
                                 </button>
-                                <Link href="/chat/thai-cosmetics-pro">
+                                <Link href={`/${locale}/chat/ilc-cosmetics`}>
                                     <Button variant="outline" size="sm"><ExternalLink className="h-4 w-4 mr-1" />Preview</Button>
                                 </Link>
                             </div>
@@ -276,7 +278,7 @@ const OEMDashboard = () => {
                         </div>
 
                         {/* Verified Badge Progress — Clickable */}
-                        <Card className="mb-6 border-primary/20 bg-primary/5 cursor-pointer hover:bg-primary/10 transition-colors" onClick={() => router.push("/oem-onboarding")}>
+                        <Card className="mb-6 border-primary/20 bg-primary/5 cursor-pointer hover:bg-primary/10 transition-colors" onClick={() => router.push(`/${locale}/oem-onboarding`)}>
                             <CardContent className="p-4">
                                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                                     <div className="flex items-center gap-3">
@@ -552,7 +554,7 @@ const OEMDashboard = () => {
                                             <div
                                                 key={chat.id}
                                                 className="flex items-center gap-3 p-3 bg-secondary/50 rounded-lg hover:bg-secondary/70 transition-colors cursor-pointer"
-                                                onClick={() => router.push("/chat/thai-cosmetics-pro")}
+                                                onClick={() => router.push(`/${locale}/chat/ilc-cosmetics`)}
                                             >
                                                 <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
                                                     <span className="text-sm font-medium text-primary">{chat.name.charAt(0)}</span>
@@ -596,7 +598,7 @@ const OEMDashboard = () => {
                         {activeMenu === "analytics" && (
                             <Card><CardHeader><CardTitle className="text-lg flex items-center gap-2"><BarChart3 className="h-5 w-5 text-primary" /> Advanced Analytics</CardTitle><CardDescription>Unlock with Pro</CardDescription></CardHeader>
                                 <CardContent><div className="relative"><div className="blur-sm pointer-events-none select-none space-y-8"><div className="grid md:grid-cols-2 gap-6"><div><h4 className="text-sm font-medium text-foreground mb-4">Monthly Revenue</h4><ResponsiveContainer width="100%" height={200}><BarChart data={revenueData}><CartesianGrid strokeDasharray="3 3" /><XAxis dataKey="month" /><YAxis /><Tooltip /><Bar dataKey="revenue" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} /></BarChart></ResponsiveContainer></div><div><h4 className="text-sm font-medium text-foreground mb-4">Order Trend</h4><ResponsiveContainer width="100%" height={200}><LineChart data={orderTrendData}><CartesianGrid strokeDasharray="3 3" /><XAxis dataKey="month" /><YAxis /><Tooltip /><Line type="monotone" dataKey="orders" stroke="hsl(var(--primary))" strokeWidth={2} /></LineChart></ResponsiveContainer></div></div><div className="max-w-xs mx-auto"><ResponsiveContainer width="100%" height={200}><PieChart><Pie data={categoryData} cx="50%" cy="50%" outerRadius={80} dataKey="value" label>{categoryData.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}</Pie><Tooltip /></PieChart></ResponsiveContainer></div></div>
-                                    <div className="absolute inset-0 flex items-center justify-center"><div className="text-center space-y-4 bg-background/80 backdrop-blur-sm p-8 rounded-xl border shadow-lg"><div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center mx-auto"><Lock className="h-7 w-7 text-primary" /></div><h3 className="text-lg font-semibold text-foreground">Unlock Analytics</h3><p className="text-sm text-muted-foreground max-w-xs">Upgrade to Pro to access detailed analytics.</p><Link href="/pricing"><Button className="mt-2"><TrendingUp className="h-4 w-4 mr-2" />Upgrade</Button></Link></div></div>
+                                    <div className="absolute inset-0 flex items-center justify-center"><div className="text-center space-y-4 bg-background/80 backdrop-blur-sm p-8 rounded-xl border shadow-lg"><div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center mx-auto"><Lock className="h-7 w-7 text-primary" /></div><h3 className="text-lg font-semibold text-foreground">Unlock Analytics</h3><p className="text-sm text-muted-foreground max-w-xs">Upgrade to Pro to access detailed analytics.</p><Link href={`/${locale}/pricing`}><Button className="mt-2"><TrendingUp className="h-4 w-4 mr-2" />Upgrade</Button></Link></div></div>
                                 </div></CardContent>
                             </Card>
                         )}
@@ -604,7 +606,7 @@ const OEMDashboard = () => {
                         {activeMenu === "trends" && (
                             <Card><CardHeader><CardTitle className="text-lg flex items-center gap-2"><TrendingUp className="h-5 w-5 text-primary" /> Market Trends</CardTitle><CardDescription>Industry insights</CardDescription></CardHeader>
                                 <CardContent><div className="relative"><div className="blur-sm pointer-events-none select-none space-y-6"><div className="grid sm:grid-cols-3 gap-4">{trendInsights.map(i => <div key={i.title} className="p-4 bg-secondary/50 rounded-lg"><p className="text-xs text-muted-foreground">{i.title}</p><p className="text-lg font-bold text-foreground">{i.value}</p><p className="text-sm text-success">{i.change}</p></div>)}</div><ResponsiveContainer width="100%" height={250}><LineChart data={revenueData}><CartesianGrid strokeDasharray="3 3" /><XAxis dataKey="month" /><YAxis /><Tooltip /><Line type="monotone" dataKey="revenue" stroke="hsl(var(--primary))" strokeWidth={2} /></LineChart></ResponsiveContainer></div>
-                                    <div className="absolute inset-0 flex items-center justify-center"><div className="text-center space-y-4 bg-background/80 backdrop-blur-sm p-8 rounded-xl border shadow-lg"><div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center mx-auto"><Lock className="h-7 w-7 text-primary" /></div><h3 className="text-lg font-semibold text-foreground">Unlock Trends</h3><p className="text-sm text-muted-foreground max-w-xs">Subscribe for real-time market insights.</p><Link href="/pricing"><Button className="mt-2"><TrendingUp className="h-4 w-4 mr-2" />Subscribe</Button></Link></div></div>
+                                    <div className="absolute inset-0 flex items-center justify-center"><div className="text-center space-y-4 bg-background/80 backdrop-blur-sm p-8 rounded-xl border shadow-lg"><div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center mx-auto"><Lock className="h-7 w-7 text-primary" /></div><h3 className="text-lg font-semibold text-foreground">Unlock Trends</h3><p className="text-sm text-muted-foreground max-w-xs">Subscribe for real-time market insights.</p><Link href={`/${locale}/pricing`}><Button className="mt-2"><TrendingUp className="h-4 w-4 mr-2" />Subscribe</Button></Link></div></div>
                                 </div></CardContent>
                             </Card>
                         )}

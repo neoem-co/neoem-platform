@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
+import { useLocale } from "next-intl";
 import { useParams, useRouter } from "next/navigation";
 import {
     Send, Paperclip, FileText, Download, Bot,
@@ -43,6 +44,7 @@ const DealRoom = () => {
     const slug = params.slug as string;
     const router = useRouter();
     const factory = factoriesData.factories.find((f) => f.slug === slug);
+    const locale = useLocale();
     const [showTOS, setShowTOS] = useState(true);
     const [tosAccepted, setTosAccepted] = useState(false);
     const [messages, setMessages] = useState<Message[]>([...factoriesData.chatHistory as Message[]]);
@@ -73,7 +75,7 @@ const DealRoom = () => {
                 <Navbar />
                 <div className="container py-20 text-center">
                     <h1 className="text-2xl font-bold text-foreground">Factory not found</h1>
-                    <Link href="/factories" className="text-primary hover:underline mt-4 inline-block">Browse all factories</Link>
+                    <Link href={`/${locale}/factories`} className="text-primary hover:underline mt-4 inline-block">Browse all factories</Link>
                 </div>
             </div>
         );
@@ -127,7 +129,7 @@ const DealRoom = () => {
             case "risk": openLegalWorkspace("risk"); break;
             case "esign": openLegalWorkspace("esign"); break;
             case "pay-1": case "pay-2": case "pay-3": handlePayDeposit(); break;
-            case "launchpad": router.push("/brand-launchpad"); break;
+            case "launchpad": router.push(`/${locale}/brand-launchpad`); break;
         }
     };
 
@@ -191,7 +193,7 @@ const DealRoom = () => {
             <div className="lg:hidden border-b bg-card">
                 <div className="flex items-center justify-between p-3">
                     <div className="flex items-center gap-3">
-                        <Link href={`/factory/${slug}`}><Button variant="ghost" size="icon"><ArrowLeft className="h-5 w-5" /></Button></Link>
+                        <Link href={`/${locale}/factory/${slug}`}><Button variant="ghost" size="icon"><ArrowLeft className="h-5 w-5" /></Button></Link>
                         <div className="flex items-center gap-2">
                             <div className="w-8 h-8 rounded-full overflow-hidden"><img src={imageUrl.src || imageUrl} alt={factory.name} className="w-full h-full object-cover" /></div>
                             <div>
@@ -214,9 +216,9 @@ const DealRoom = () => {
             <div className="hidden lg:block border-b">
                 <div className="container py-3">
                     <nav className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <Link href="/" className="hover:text-foreground">Home</Link><ChevronRight className="h-4 w-4" />
-                        <Link href="/factories" className="hover:text-foreground">Factories</Link><ChevronRight className="h-4 w-4" />
-                        <Link href={`/factory/${slug}`} className="hover:text-foreground">{factory.name}</Link><ChevronRight className="h-4 w-4" />
+                        <Link href={`/${locale}/`} className="hover:text-foreground">Home</Link><ChevronRight className="h-4 w-4" />
+                        <Link href={`/${locale}/factories`} className="hover:text-foreground">Factories</Link><ChevronRight className="h-4 w-4" />
+                        <Link href={`/${locale}/factory/${slug}`} className="hover:text-foreground">{factory.name}</Link><ChevronRight className="h-4 w-4" />
                         <span className="text-foreground">Deal Room</span>
                     </nav>
                 </div>

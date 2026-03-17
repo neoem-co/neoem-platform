@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useLocale } from "next-intl";
 import { useRouter } from "next/navigation";
 import NextImage from "next/image";
 import {
@@ -23,23 +24,23 @@ import factoryHero from "@/public/assets/factory-hero.jpg";
 // Mock data
 const mockOrders = [
     {
-        id: "NEO-2026-001", factory: "Thai Cosmetics Pro", product: "Sunscreen SPF50 - Mousse Formula",
+        id: "NEO-2026-001", factory: "International Laboratories Corp. Ltd. (ILC)", product: "Sunscreen SPF50 - Mousse Formula",
         quantity: "1,000 pcs", totalValue: 120000, status: "production", paymentStatus: "escrow-funded",
-        lastUpdated: "2 hours ago", thumbnail: factoryHero, slug: "thai-cosmetics-pro",
+        lastUpdated: "2 hours ago", thumbnail: factoryHero, slug: "ilc-cosmetics",
         payments: { deposit: { amount: 36000, status: "paid", date: "Jan 4, 2026" }, production: { amount: 48000, status: "pending", date: null }, final: { amount: 36000, status: "locked", date: null } },
         currentStep: 2,
     },
     {
-        id: "NEO-2026-002", factory: "Pure Skin Lab", product: "Anti-Aging Serum 30ml",
+        id: "NEO-2026-002", factory: "Milott Laboratories Co., Ltd.", product: "Anti-Aging Serum 30ml",
         quantity: "500 pcs", totalValue: 75000, status: "deposit", paymentStatus: "deposit-pending",
-        lastUpdated: "1 day ago", thumbnail: factoryHero, slug: "pure-skin-lab",
+        lastUpdated: "1 day ago", thumbnail: factoryHero, slug: "milott-laboratories",
         payments: { deposit: { amount: 22500, status: "pending", date: null }, production: { amount: 30000, status: "locked", date: null }, final: { amount: 22500, status: "locked", date: null } },
         currentStep: 1,
     },
     {
-        id: "NEO-2026-003", factory: "Siam Herbal Extract", product: "Turmeric Supplement Capsules",
+        id: "NEO-2026-003", factory: "S & J International Enterprises PCL", product: "Turmeric Supplement Capsules",
         quantity: "2,000 pcs", totalValue: 180000, status: "completed", paymentStatus: "released",
-        lastUpdated: "Jan 15, 2026", thumbnail: factoryHero, slug: "siam-herbal-extract",
+        lastUpdated: "Jan 15, 2026", thumbnail: factoryHero, slug: "sji-cosmetics",
         payments: { deposit: { amount: 54000, status: "paid", date: "Dec 10, 2025" }, production: { amount: 72000, status: "paid", date: "Dec 25, 2025" }, final: { amount: 54000, status: "paid", date: "Jan 15, 2026" } },
         currentStep: 5,
     },
@@ -100,6 +101,7 @@ const activeOrders = mockOrders.filter(o => o.status !== "completed").length;
 const completedOrders = mockOrders.filter(o => o.status === "completed").length;
 
 const Dashboard = () => {
+    const locale = useLocale();
     const router = useRouter();
     const [activeMenu, setActiveMenu] = useState<MenuKey>("overview");
     const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
@@ -283,8 +285,8 @@ const Dashboard = () => {
                     </div>
 
                     <div className="flex gap-3">
-                        <Link href={`/chat/${selectedOrder.slug}`} className="flex-1"><Button variant="outline" className="w-full"><MessageSquare className="h-4 w-4 mr-2" /> Open Deal Room</Button></Link>
-                        <Link href="/brand-launchpad" className="flex-1"><Button className="w-full">Brand Launchpad <ChevronRight className="h-4 w-4 ml-2" /></Button></Link>
+                        <Link href={`/${locale}/chat/${selectedOrder.slug}`} className="flex-1"><Button variant="outline" className="w-full"><MessageSquare className="h-4 w-4 mr-2" /> Open Deal Room</Button></Link>
+                        <Link href={`/${locale}/brand-launchpad`} className="flex-1"><Button className="w-full">Brand Launchpad <ChevronRight className="h-4 w-4 ml-2" /></Button></Link>
                     </div>
                 </div>
             );
@@ -358,7 +360,7 @@ const Dashboard = () => {
     const MessagesPanel = () => (
         <div className="space-y-4">
             {mockOrders.filter(o => o.status !== "completed").map((order) => (
-                <Link href={`/chat/${order.slug}`} key={order.id}>
+                <Link href={`/${locale}/chat/${order.slug}`} key={order.id}>
                     <Card className="hover:shadow-md transition-shadow cursor-pointer mb-3">
                         <CardContent className="p-4 flex items-center gap-3">
                             <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
