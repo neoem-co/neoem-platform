@@ -2,12 +2,12 @@
     "rewrites": [
         {
             "source": "/api/ai/(.*)",
-            "destination": "/ai_service/main.py"
+            "destination": "/api/ai"
         }
     ],
     "functions": {
-        "ai_service/main.py": {
-            "runtime": "vercel-python@0.1.1",
+        "api/ai.py": {
+            "runtime": "@vercel/python",
             "memory": 1024,
             "maxDuration": 60
         }
