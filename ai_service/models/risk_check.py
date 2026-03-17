@@ -97,7 +97,7 @@ class DealContext(BaseModel):
     chat_summary: str = ""
     agreed_product: Optional[str] = None
     agreed_price: Optional[float] = None
-    agreed_quantity: Optional[int] = None
+    agreed_quantity: Optional[str] = None
     agreed_delivery: Optional[str] = None
     factory_name: Optional[str] = None
     factory_certifications: list[str] = Field(default_factory=list)
