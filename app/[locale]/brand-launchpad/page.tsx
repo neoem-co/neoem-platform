@@ -352,8 +352,8 @@ const BrandLaunchpad = () => {
                         {/* Knowledge Base Tab */}
                         <TabsContent value="knowledge" className="space-y-8">
                             <div className="text-center mb-6">
-                                <h2 className="text-2xl font-bold text-foreground mb-2">{t("knowledgeBase.title")}</h2>
-                                <p className="text-muted-foreground">{t("knowledgeBase.desc")}</p>
+                                <h2 className="text-2xl font-bold text-foreground mb-2">{t("knowledgeBaseTitle")}</h2>
+                                <p className="text-muted-foreground">{t("knowledgeBaseDesc")}</p>
                             </div>
 
                             {/* Key considerations */}

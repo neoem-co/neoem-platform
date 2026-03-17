@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useLocale } from "next-intl";
+import { useTranslations } from "next-intl";
 import { MessageSquare, Search, ChevronRight } from "lucide-react";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
@@ -79,6 +80,7 @@ const getStatusBadge = (status: string) => {
 
 const Messages = () => {
     const locale = useLocale();
+    const t = useTranslations("Messages");
     const [searchQuery, setSearchQuery] = useState("");
 
     const filteredConversations = conversations.filter((conv) =>
@@ -95,10 +97,10 @@ const Messages = () => {
                     <div>
                         <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
                             <MessageSquare className="h-6 w-6 text-primary" />
-                            Messages
+                            {t("title")}
                         </h1>
                         <p className="text-muted-foreground mt-1">
-                            Your conversations with factories
+                            {t("desc")}
                         </p>
                     </div>
                     <div className="relative w-full md:w-80">
@@ -115,13 +117,13 @@ const Messages = () => {
                 {/* Conversations List */}
                 <Card>
                     <CardHeader className="pb-3">
-                        <CardTitle className="text-lg">All Conversations</CardTitle>
+                        <CardTitle className="text-lg">{t("allConversations")}</CardTitle>
                     </CardHeader>
                     <CardContent className="p-0">
                         {filteredConversations.length === 0 ? (
                             <div className="p-8 text-center">
                                 <MessageSquare className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                                <p className="text-muted-foreground">No conversations found</p>
+                                <p className="text-muted-foreground">{t("noConversations")}</p>
                             </div>
                         ) : (
                             <div className="divide-y">

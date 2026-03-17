@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useLocale } from "next-intl";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import {
     Package, Eye, TrendingUp, MessageSquare, FileText, Download,
     Clock, CheckCircle2, Loader2, Plus, ChevronRight, ChevronLeft,
@@ -153,6 +154,7 @@ const initialFormData: QuotationFormData = {
 };
 
 const OEMDashboard = () => {
+    const t = useTranslations();
     const router = useRouter();
     const locale = useLocale();
     const [activeMenu, setActiveMenu] = useState<MenuKey>("overview");
@@ -236,7 +238,7 @@ const OEMDashboard = () => {
                         {/* Header with Tier Badge */}
                         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
                             <div>
-                                <h1 className="text-2xl font-bold text-foreground">Factory Dashboard</h1>
+                                <h1 className="text-2xl font-bold text-foreground">{t("OEMDashboard.title")}</h1>
                                 <p className="text-muted-foreground text-sm">Welcome back, Thai Cosmetics Pro</p>
                             </div>
                             <div className="flex items-center gap-3">
@@ -254,7 +256,7 @@ const OEMDashboard = () => {
                                     </div>
                                 </button>
                                 <Link href={`/${locale}/chat/ilc-cosmetics`}>
-                                    <Button variant="outline" size="sm"><ExternalLink className="h-4 w-4 mr-1" />Preview</Button>
+                                    <Button variant="outline" size="sm"><ExternalLink className="h-4 w-4 mr-1" />{t("OEMDashboard.preview")}</Button>
                                 </Link>
                             </div>
                         </div>
@@ -286,8 +288,8 @@ const OEMDashboard = () => {
                                             <BadgeCheck className="h-5 w-5 text-primary" />
                                         </div>
                                         <div>
-                                            <p className="font-medium text-foreground">Verified Badge Progress</p>
-                                            <p className="text-xs text-muted-foreground">{completedVerifications}/{verificationTasks.length} tasks — Click to upload documents</p>
+                                            <p className="font-medium text-foreground">{t("OEMDashboard.verifiedBadgeProgress")}</p>
+                                            <p className="text-xs text-muted-foreground">{completedVerifications}/{verificationTasks.length}{t("OEMDashboard.tasks")} — {t("OEMDashboard.clickToUploadDocuments")}</p>
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-3 min-w-[200px]">
@@ -326,8 +328,8 @@ const OEMDashboard = () => {
                                 {/* Points breakdown */}
                                 <Card>
                                     <CardHeader className="pb-3">
-                                        <CardTitle className="text-lg flex items-center gap-2"><Award className="h-5 w-5 text-primary" /> Points Breakdown</CardTitle>
-                                        <CardDescription>Points influence your search ranking and can be redeemed for Ad Boosts</CardDescription>
+                                        <CardTitle className="text-lg flex items-center gap-2"><Award className="h-5 w-5 text-primary" /> {t("OEMDashboard.pointsBreakdown")}</CardTitle>
+                                        <CardDescription>{t("OEMDashboard.pointsInfluence")}</CardDescription>
                                     </CardHeader>
                                     <CardContent>
                                         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -348,7 +350,7 @@ const OEMDashboard = () => {
 
                                 <div className="grid lg:grid-cols-2 gap-6">
                                     <Card>
-                                        <CardHeader><CardTitle className="text-lg flex items-center gap-2"><MessageSquare className="h-5 w-5 text-primary" /> Recent Chats</CardTitle></CardHeader>
+                                        <CardHeader><CardTitle className="text-lg flex items-center gap-2"><MessageSquare className="h-5 w-5 text-primary" /> {t("OEMDashboard.recentChats")}</CardTitle></CardHeader>
                                         <CardContent className="space-y-3">
                                             {recentChats.map((chat) => (
                                                 <div key={chat.id} className="flex items-center gap-3 p-3 bg-secondary/50 rounded-lg hover:bg-secondary/70 transition-colors cursor-pointer">
@@ -363,7 +365,7 @@ const OEMDashboard = () => {
                                         </CardContent>
                                     </Card>
                                     <Card>
-                                        <CardHeader><CardTitle className="text-lg flex items-center gap-2"><Package className="h-5 w-5 text-primary" /> Active Orders</CardTitle></CardHeader>
+                                        <CardHeader><CardTitle className="text-lg flex items-center gap-2"><Package className="h-5 w-5 text-primary" />{t("OEMDashboard.activeOrders")} </CardTitle></CardHeader>
                                         <CardContent className="space-y-3">
                                             {orders.slice(0, 3).map((order) => (
                                                 <div key={order.id} className="flex items-center justify-between p-3 bg-secondary/50 rounded-lg">
@@ -381,7 +383,7 @@ const OEMDashboard = () => {
                             <Card>
                                 <CardHeader>
                                     <div className="flex items-center justify-between">
-                                        <CardTitle className="text-lg">Factory Profile</CardTitle>
+                                        <CardTitle className="text-lg">{t("OEMDashboard.factoryProfile")}</CardTitle>
                                         <Button variant="outline" size="sm" onClick={() => setEditingProfile(!editingProfile)}>
                                             <Edit className="h-4 w-4 mr-2" />{editingProfile ? "Save Changes" : "Edit Profile"}
                                         </Button>
@@ -390,16 +392,16 @@ const OEMDashboard = () => {
                                 <CardContent className="space-y-6">
                                     <div className="flex items-center gap-4">
                                         <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center"><User className="h-8 w-8 text-primary" /></div>
-                                        {editingProfile && <Button variant="outline" size="sm"><Upload className="h-4 w-4 mr-2" />Change Photo</Button>}
+                                        {editingProfile && <Button variant="outline" size="sm"><Upload className="h-4 w-4 mr-2" />{t("OEMDashboard.changePhoto")}</Button>}
                                     </div>
                                     <div className="space-y-2"><Label>About</Label>{editingProfile ? <Textarea value={profileAbout} onChange={(e) => setProfileAbout(e.target.value)} rows={3} /> : <p className="text-sm text-muted-foreground">{profileAbout}</p>}</div>
                                     <div className="space-y-2"><Label>Tags</Label><div className="flex flex-wrap gap-2">{profileData.tags.map(t => <Badge key={t} variant="secondary">{t}</Badge>)}</div></div>
-                                    <div className="space-y-2"><Label>Showcase Products</Label>
-                                        <div className="flex items-center gap-1 text-xs text-muted-foreground mb-2"><ImageIcon className="h-3 w-3" /><span>Free: 5 photos max</span><Video className="h-3 w-3 ml-2 text-muted" /><span className="text-muted">Video: Pro only</span></div>
+                                    <div className="space-y-2"><Label>{t("OEMDashboard.showcaseProducts")}</Label>
+                                        <div className="flex items-center gap-1 text-xs text-muted-foreground mb-2"><ImageIcon className="h-3 w-3" /><span>{t("OEMDashboard.free")}: 5 {t("OEMDashboard.photos")}</span><Video className="h-3 w-3 ml-2 text-muted" /><span className="text-muted">{t("OEMDashboard.video")}: Pro only</span></div>
                                         <div className="grid sm:grid-cols-3 gap-3">{profileData.products.map(p => <div key={p.name} className="p-3 border rounded-lg bg-secondary/30"><p className="font-medium text-foreground text-sm">{p.name}</p><p className="text-xs text-muted-foreground">{p.category} • MOQ {p.moq}</p></div>)}</div>
                                     </div>
-                                    <div className="space-y-2"><Label>Machinery</Label><div className="flex flex-wrap gap-2">{profileData.machinery.map(m => <Badge key={m} variant="outline">{m}</Badge>)}</div></div>
-                                    <div className="space-y-2"><Label>Certifications</Label><div className="flex flex-wrap gap-2">{profileData.certifications.map(c => <Badge key={c} className="bg-success/10 text-success border-success/30">{c}</Badge>)}</div></div>
+                                    <div className="space-y-2"><Label>{t("OEMDashboard.machinery")}</Label><div className="flex flex-wrap gap-2">{profileData.machinery.map(m => <Badge key={m} variant="outline">{m}</Badge>)}</div></div>
+                                    <div className="space-y-2"><Label>{t("OEMDashboard.certifications")}</Label><div className="flex flex-wrap gap-2">{profileData.certifications.map(c => <Badge key={c} className="bg-success/10 text-success border-success/30">{c}</Badge>)}</div></div>
                                 </CardContent>
                             </Card>
                         )}
@@ -407,12 +409,12 @@ const OEMDashboard = () => {
                         {activeMenu === "orders" && (
                             <Card>
                                 <CardHeader>
-                                    <div className="flex items-center justify-between"><CardTitle className="text-lg">Order Management</CardTitle><Button variant="outline" size="sm" onClick={handleExportCSV}><Download className="h-4 w-4 mr-2" />Export CSV</Button></div>
+                                    <div className="flex items-center justify-between"><CardTitle className="text-lg">Order Management</CardTitle><Button variant="outline" size="sm" onClick={handleExportCSV}><Download className="h-4 w-4 mr-2" />{t("OEMDashboard.exportCSV")}</Button></div>
                                 </CardHeader>
                                 <CardContent>
                                     <div className="space-y-4 md:hidden">
                                         {orders.map(order => (
-                                            <Card key={order.id} className="bg-secondary/30"><CardContent className="p-4 space-y-3"><div className="flex items-center justify-between"><span className="font-medium text-foreground">{order.id}</span>{getStatusBadge(order.status)}</div><div className="space-y-1 text-sm"><p><span className="text-muted-foreground">Customer:</span> {order.customer}</p><p><span className="text-muted-foreground">Product:</span> {order.product}</p><p><span className="text-muted-foreground">Amount:</span> <span className="font-semibold">{order.amount}</span></p></div></CardContent></Card>
+                                            <Card key={order.id} className="bg-secondary/30"><CardContent className="p-4 space-y-3"><div className="flex items-center justify-between"><span className="font-medium text-foreground">{order.id}</span>{getStatusBadge(order.status)}</div><div className="space-y-1 text-sm"><p><span className="text-muted-foreground">{t("OEMDashboard.customer")}:</span> {order.customer}</p><p><span className="text-muted-foreground">{t("OEMDashboard.product")}:</span> {order.product}</p><p><span className="text-muted-foreground">{t("OEMDashboard.amount")}:</span> <span className="font-semibold">{order.amount}</span></p></div></CardContent></Card>
                                         ))}
                                     </div>
                                     <div className="hidden md:block overflow-x-auto">
@@ -447,14 +449,14 @@ const OEMDashboard = () => {
                                         <div className="space-y-6">
                                             <div className="text-center py-8">
                                                 <div className="w-16 h-16 rounded-full bg-success/10 flex items-center justify-center mx-auto mb-4"><CheckCircle2 className="h-8 w-8 text-success" /></div>
-                                                <h3 className="text-xl font-semibold text-foreground mb-2">Quotation Generated!</h3>
-                                                <p className="text-muted-foreground">Your professional quotation is ready</p>
+                                                <h3 className="text-xl font-semibold text-foreground mb-2">{t("OEMDashboard.quotationGenerated")}</h3>
+                                                <p className="text-muted-foreground">{t("OEMDashboard.yourProfessionalQuotationIsReady")}</p>
                                             </div>
                                             <div className="p-4 bg-success/10 rounded-lg flex items-center justify-between">
-                                                <div className="flex items-center gap-3"><FileText className="h-5 w-5 text-success" /><div><p className="font-medium text-foreground">Quotation_{quotationForm.productName || "Product"}.pdf</p><p className="text-xs text-muted-foreground">Generated just now</p></div></div>
-                                                <div className="flex gap-2"><Button variant="outline" size="sm"><Download className="h-4 w-4 mr-1" />Download</Button><Button size="sm">Send to Chat</Button></div>
+                                                <div className="flex items-center gap-3"><FileText className="h-5 w-5 text-success" /><div><p className="font-medium text-foreground">Quotation_{quotationForm.productName || "Product"}.pdf</p><p className="text-xs text-muted-foreground">{t("OEMDashboard.generatedJustNow")}</p></div></div>
+                                                <div className="flex gap-2"><Button variant="outline" size="sm"><Download className="h-4 w-4 mr-1" />{t("OEMDashboard.download")}</Button><Button size="sm">{t("OEMDashboard.sendToChat")}</Button></div>
                                             </div>
-                                            <Button variant="outline" className="w-full" onClick={handleResetWizard}><Plus className="h-4 w-4 mr-2" />Create New</Button>
+                                            <Button variant="outline" className="w-full" onClick={handleResetWizard}><Plus className="h-4 w-4 mr-2" />{t("OEMDashboard.createNew")}</Button>
                                         </div>
                                     )}
 
@@ -545,9 +547,9 @@ const OEMDashboard = () => {
                                 <Card>
                                     <CardHeader>
                                         <CardTitle className="text-lg flex items-center gap-2">
-                                            <MessageSquare className="h-5 w-5 text-primary" /> Active Deal Chats
+                                            <MessageSquare className="h-5 w-5 text-primary" />{t("OEMDashboard.activeDealChats")}
                                         </CardTitle>
-                                        <CardDescription>Open a deal room to chat, send quotations, and manage milestones</CardDescription>
+                                        <CardDescription>{t("OEMDashboard.openADealRoomToChatSendQuotationsAndManageMilestones")}</CardDescription>
                                     </CardHeader>
                                     <CardContent className="space-y-3">
                                         {recentChats.map((chat) => (
@@ -577,7 +579,7 @@ const OEMDashboard = () => {
                                 <Card className="bg-primary/5 border-primary/20">
                                     <CardContent className="p-4">
                                         <p className="text-xs text-muted-foreground">
-                                            💡 <strong className="text-foreground">Tip:</strong> In the Deal Room, you can use the AI Middleman Timeline to send proposals, draft contracts, and manage escrow payments — all visible to both parties.
+                                            💡 <strong className="text-foreground">Tip:</strong> {t("OEMDashboard.tips")}
                                         </p>
                                     </CardContent>
                                 </Card>
@@ -645,17 +647,17 @@ const OEMDashboard = () => {
             <Dialog open={showAuditUpsell} onOpenChange={setShowAuditUpsell}>
                 <DialogContent className="sm:max-w-md">
                     <DialogHeader>
-                        <DialogTitle className="flex items-center gap-2"><ClipboardCheck className="h-5 w-5 text-primary" /> On-site Factory Audit</DialogTitle>
-                        <DialogDescription>Available for Premium tier only</DialogDescription>
+                        <DialogTitle className="flex items-center gap-2"><ClipboardCheck className="h-5 w-5 text-primary" />{t("OEMDashboard.onSiteFactoryAudit")}</DialogTitle>
+                        <DialogDescription>{t("OEMDashboard.availableForPremiumTierOnly")}</DialogDescription>
                     </DialogHeader>
                     <div className="space-y-4">
                         <div className="p-6 text-center space-y-3">
                             <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto"><ClipboardCheck className="h-8 w-8 text-primary" /></div>
-                            <p className="text-foreground font-medium">Request a Physical Audit</p>
-                            <p className="text-sm text-muted-foreground">The NEOEM team will visit your factory to verify operations, equipment, and certifications. Boost your credibility by 300%!</p>
+                            <p className="text-foreground font-medium">{t("OEMDashboard.requestAPhysicalAudit")}</p>
+                            <p className="text-sm text-muted-foreground">{t("OEMDashboard.theNEOEMTeamWillVisitYourFactoryToVerifyOperationsEquipmentAndCertificationsBoostYourCredibilityBy300")}</p>
                         </div>
                         <Button className="w-full" onClick={() => { setShowAuditUpsell(false); setShowUpsellModal(true); }}>
-                            <Crown className="h-4 w-4 mr-2" /> Upgrade to Premium to Unlock
+                            <Crown className="h-4 w-4 mr-2" /> {t("OEMDashboard.upgradeToPremiumToUnlock")}
                         </Button>
                     </div>
                 </DialogContent>

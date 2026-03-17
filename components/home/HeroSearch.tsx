@@ -6,6 +6,7 @@ import { Search, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { TypeAnimation } from "react-type-animation";
 import { useTranslations } from "next-intl";
+import { useLocale } from "next-intl";
 
 const categories = [
     { id: "cosmetics", label: "Cosmetics" },
@@ -20,14 +21,15 @@ export function HeroSearch() {
     const t = useTranslations("HomePage");
     const [query, setQuery] = useState("");
     const router = useRouter();
+    const locale = useLocale();
 
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
-        router.push(`/factories${query ? `?q=${encodeURIComponent(query)}` : ""}` as any);
+        router.push(`${locale}/factories${query ? `?q=${encodeURIComponent(query)}` : ""}` as any);
     };
 
     const handleTagClick = (categoryId: string) => {
-        router.push(`/factories?category=${categoryId}` as any);
+        router.push(`${locale}/factories?category=${categoryId}` as any);
     };
 
     const animationSequence = useMemo(() => [

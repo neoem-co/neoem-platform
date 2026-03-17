@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useLocale } from "next-intl";
 import { Building2, Image, ChevronRight, ChevronLeft, Check, Upload, Loader2, Shield, FileCheck, Search, CreditCard } from "lucide-react";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
@@ -26,6 +27,7 @@ const steps = [
 
 const OEMOnboarding = () => {
     const router = useRouter();
+    const locale = useLocale();
     const [currentStep, setCurrentStep] = useState(1);
     const [loading, setLoading] = useState(false);
     const [dbdChecking, setDbdChecking] = useState(false);
@@ -76,7 +78,7 @@ const OEMOnboarding = () => {
         setLoading(true);
         await new Promise((resolve) => setTimeout(resolve, 2000));
         setLoading(false);
-        router.push("/oem-dashboard");
+        router.push(`${locale}/oem-dashboard`);
     };
 
     const canProceed = () => {
