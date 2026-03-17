@@ -43,10 +43,19 @@ class Settings(BaseSettings):
         default="./data/chroma_db", alias="CHROMA_PERSIST_DIR"
     )
 
+    # ── Supabase ─────────────────────────────────────
+    supabase_url: str = Field(default="", alias="SUPABASE_URL")
+    supabase_key: str = Field(default="", alias="SUPABASE_KEY")
+    # For pgvector: postgresql://postgres.ID:PASSWORD@aws-0-REGION.pooler.supabase.com:5432/postgres
+    supabase_db_url: str = Field(default="", alias="SUPABASE_DB_URL")
+
     # ── Application ──────────────────────────────────
     app_env: str = Field(default="development", alias="APP_ENV")
     app_port: int = Field(default=8000, alias="APP_PORT")
-    cors_origins: str = Field(default="http://localhost:3000", alias="CORS_ORIGINS")
+    cors_origins: str = Field(
+        default="http://localhost:3000,http://localhost:3001,https://*.vercel.app", 
+        alias="CORS_ORIGINS"
+    )
     log_level: str = Field(default="INFO", alias="LOG_LEVEL")
     ocr_char_threshold: int = Field(default=50, alias="OCR_CHAR_THRESHOLD")
 

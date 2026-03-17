@@ -14,9 +14,9 @@ langchain-core==0.3.29
 langgraph==0.2.60
 langchain-google-genai==2.0.9
 
-# Vector Store (dev: ChromaDB, prod: pgvector)
-chromadb==0.5.23
-sentence-transformers==3.3.1
+# Vector Store (Supabase pgvector used in prod)
+# chromadb==0.5.23
+# sentence-transformers==3.3.1
 
 # PDF & Document Processing
 PyMuPDF==1.25.2
@@ -29,3 +29,6 @@ uharfbuzz==0.44.0
 python-dotenv==1.0.1
 tenacity==9.0.0
 orjson==3.10.13
+supabase==2.11.0
+psycopg2-binary==2.9.10
+langchain-postgres==0.0.12

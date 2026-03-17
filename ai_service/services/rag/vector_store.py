@@ -12,26 +12,32 @@ import os
 from typing import Optional
 
 from langchain_core.documents import Document
+from langchain_postgres.vectorstores import PGVector
 from langchain_community.vectorstores import Chroma
 from langchain_community.embeddings import HuggingFaceEmbeddings
+from langchain_google_genai import GoogleGenerativeAIEmbeddings
 
 from config import settings
 
-logger = logging.getLogger(__name__)
-
-# ── Singleton ────────────────────────────────────────────────────────────────
-_vector_store: Optional[Chroma] = None
-_factory_store: Optional[Chroma] = None
-
-# Multilingual model with strong Thai support, runs locally, no API key needed
+# Shared instances
 _EMBEDDING_MODEL = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
+_vector_store: Optional[any] = None
+_factory_store: Optional[any] = None
 
 
-def _get_embeddings() -> HuggingFaceEmbeddings:
+def _get_embeddings():
     """
-    Local sentence-transformer embeddings (no API key needed).
-    paraphrase-multilingual-MiniLM-L12-v2 supports Thai out of the box.
+    Get embeddings model. Use Gemini in production (Vercel) and local HF in dev.
     """
+    if settings.vector_store_provider == "supabase" or settings.app_env == "production":
+        if settings.gemini_api_key:
+            logger.info("Using Google Gemini Embeddings")
+            return GoogleGenerativeAIEmbeddings(
+                model="models/embedding-001",
+                google_api_key=settings.gemini_api_key
+            )
+    
+    logger.info("Using local HuggingFace Embeddings (%s)", _EMBEDDING_MODEL)
     return HuggingFaceEmbeddings(
         model_name=_EMBEDDING_MODEL,
         model_kwargs={"device": "cpu"},
@@ -39,39 +45,59 @@ def _get_embeddings() -> HuggingFaceEmbeddings:
     )
 
 
-def get_vector_store() -> Chroma:
-    """Return (or create) the ChromaDB vector store for legal knowledge."""
+def get_vector_store():
+    """Return the vector store (ChromaDB or Supabase PGVector)."""
     global _vector_store
     if _vector_store is not None:
         return _vector_store
 
-    persist_dir = settings.chroma_persist_dir
-    os.makedirs(persist_dir, exist_ok=True)
+    embeddings = _get_embeddings()
 
-    _vector_store = Chroma(
-        collection_name="thai_legal_knowledge",
-        embedding_function=_get_embeddings(),
-        persist_directory=persist_dir,
-    )
-    logger.info("ChromaDB vector store initialised at %s", persist_dir)
+    if settings.vector_store_provider == "supabase" and settings.supabase_db_url:
+        _vector_store = PGVector(
+            embeddings=embeddings,
+            collection_name="thai_legal_knowledge",
+            connection=settings.supabase_db_url,
+            use_jsonb=True,
+        )
+        logger.info("Supabase PGVector initialised")
+    else:
+        persist_dir = settings.chroma_persist_dir
+        os.makedirs(persist_dir, exist_ok=True)
+        _vector_store = Chroma(
+            collection_name="thai_legal_knowledge",
+            embedding_function=embeddings,
+            persist_directory=persist_dir,
+        )
+        logger.info("ChromaDB vector store initialised at %s", persist_dir)
     return _vector_store
 
 
-def get_factory_store() -> Chroma:
-    """Return (or create) the ChromaDB vector store for factories."""
+def get_factory_store():
+    """Return the factory store."""
     global _factory_store
     if _factory_store is not None:
         return _factory_store
 
-    persist_dir = settings.chroma_persist_dir
-    os.makedirs(persist_dir, exist_ok=True)
+    embeddings = _get_embeddings()
 
-    _factory_store = Chroma(
-        collection_name="factories",
-        embedding_function=_get_embeddings(),
-        persist_directory=persist_dir,
-    )
-    logger.info("ChromaDB factory store initialised at %s", persist_dir)
+    if settings.vector_store_provider == "supabase" and settings.supabase_db_url:
+        _factory_store = PGVector(
+            embeddings=embeddings,
+            collection_name="factories",
+            connection=settings.supabase_db_url,
+            use_jsonb=True,
+        )
+        logger.info("Supabase PGVector (factories) initialised")
+    else:
+        persist_dir = settings.chroma_persist_dir
+        os.makedirs(persist_dir, exist_ok=True)
+        _factory_store = Chroma(
+            collection_name="factories",
+            embedding_function=embeddings,
+            persist_directory=persist_dir,
+        )
+        logger.info("ChromaDB factory store initialised at %s", persist_dir)
     return _factory_store
 
 

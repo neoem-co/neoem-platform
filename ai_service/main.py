@@ -88,17 +88,31 @@ async def health():
     }
 
 
+# ── Seeding Endpoint (for production/Vercel) ───────────────────────────
+@app.get("/api/ai/seed-db")
+async def seed_db(key: str = ""):
+    """Explicitly trigger vector store seeding. Use a secret key in prod."""
+    if settings.app_env == "production" and key != settings.gemini_api_key[:5]:
+        return {"error": "Unauthorized"}
+    
+    try:
+        from services.rag.vector_store import seed_thai_legal_knowledge
+        seed_thai_legal_knowledge()
+        return {"status": "success", "message": "Legal knowledge seeded"}
+    except Exception as e:
+        logger.error("Seeding failed: %s", str(e))
+        return {"status": "error", "message": str(e)}
+
+
 @app.get("/")
 async def root():
     return {
         "service": "NeoEM AI Service",
         "docs": "/docs",
         "endpoints": {
-            "risk_check": "/api/risk-check/analyze",
-            "contract_draft_templates": "/api/contract-draft/templates",
-            "contract_draft_extract": "/api/contract-draft/extract-context",
-            "contract_draft_generate": "/api/contract-draft/generate",
-            "contract_draft_finalize": "/api/contract-draft/finalize",
-            "semantic_search": "/api/search/semantic",
+            "risk_check": "/api/ai/risk-check/analyze",
+            "contract_draft": "/api/ai/contract-draft/...",
+            "health": "/api/ai/health",
+            "seed": "/api/ai/seed-db"
         },
     }

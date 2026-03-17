@@ -16,6 +16,9 @@ import time
 import uuid
 from typing import Optional
 
+from config import settings
+from services.supabase_client import upload_contract_file
+
 from models.contract_draft import (
     ChatMessage,
     CommercialTerms,
@@ -346,11 +349,18 @@ async def finalize_contract(request: FinalizeRequest) -> FinalizeResponse:
             articles=request.articles,
             parties=request.parties,
         )
-        # In production: upload to Supabase Storage and get URL
-        # For now: save locally
-        pdf_path = f"./data/contracts/{contract_id}.pdf"
-        _save_file(pdf_path, pdf_bytes)
-        pdf_url = f"/api/contract-draft/contracts/{contract_id}/download/pdf"
+        
+        pdf_path = f"contracts/{contract_id}.pdf"
+        
+        if settings.supabase_url and settings.supabase_key:
+            # Upload to Supabase Storage
+            pdf_url = upload_contract_file(pdf_path, pdf_bytes)
+            logger.info("Uploaded PDF to Supabase: %s", pdf_url)
+        else:
+            # Save locally
+            local_path = f"./data/{pdf_path}"
+            _save_file(local_path, pdf_bytes)
+            pdf_url = f"/api/contract-draft/contracts/{contract_id}/download/pdf"
 
     if request.output_format in ("docx", "both"):
         from services.document.docx_generator import generate_contract_docx
@@ -360,9 +370,18 @@ async def finalize_contract(request: FinalizeRequest) -> FinalizeResponse:
             articles=request.articles,
             parties=request.parties,
         )
-        docx_path = f"./data/contracts/{contract_id}.docx"
-        _save_file(docx_path, docx_bytes)
-        docx_url = f"/api/contract-draft/contracts/{contract_id}/download/docx"
+        
+        docx_path = f"contracts/{contract_id}.docx"
+        
+        if settings.supabase_url and settings.supabase_key:
+            # Upload to Supabase Storage
+            docx_url = upload_contract_file(docx_path, docx_bytes)
+            logger.info("Uploaded DOCX to Supabase: %s", docx_url)
+        else:
+            # Save locally
+            local_path = f"./data/{docx_path}"
+            _save_file(local_path, docx_bytes)
+            docx_url = f"/api/contract-draft/contracts/{contract_id}/download/docx"
 
     # Save deal sheet JSON for future risk check comparison (History Check)
     if request.deal_sheet:
