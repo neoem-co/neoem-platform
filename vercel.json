@@ -7,7 +7,6 @@
     ],
     "functions": {
         "api/ai.py": {
-            "runtime": "@vercel/python",
             "memory": 1024,
             "maxDuration": 60
         }
