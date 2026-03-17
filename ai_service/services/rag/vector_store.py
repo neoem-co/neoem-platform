@@ -13,6 +13,8 @@ from typing import Optional
 
 from config import settings
 
+logger = logging.getLogger(__name__)
+
 # Shared instances
 _EMBEDDING_MODEL = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
 _vector_store: Optional[any] = None
