@@ -16,7 +16,7 @@ openai==1.58.1
 langchain-community==0.3.14
 langchain-core==0.3.29
 langgraph==0.2.60
-langchain-google-genai==2.0.9
+langchain-google-genai==2.0.11
 grpcio==1.62.1
 grpcio-status==1.62.1
 
