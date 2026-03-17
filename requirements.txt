@@ -10,11 +10,11 @@ pydantic==2.10.4
 pydantic-settings==2.7.1
 
 # LangChain & AI
-langchain==0.3.14
+langchain==0.3.17
 langchain-openai==0.3.0
 openai==1.58.1
-langchain-community==0.3.14
-langchain-core==0.3.29
+langchain-community==0.3.16
+langchain-core==0.3.37
 langgraph==0.2.60
 langchain-google-genai==2.0.11
 grpcio==1.62.1
