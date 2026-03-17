@@ -11,12 +11,6 @@ import logging
 import os
 from typing import Optional
 
-from langchain_core.documents import Document
-from langchain_postgres.vectorstores import PGVector
-from langchain_community.vectorstores import Chroma
-from langchain_community.embeddings import HuggingFaceEmbeddings
-from langchain_google_genai import GoogleGenerativeAIEmbeddings
-
 from config import settings
 
 # Shared instances
@@ -31,12 +25,14 @@ def _get_embeddings():
     """
     if settings.vector_store_provider == "supabase" or settings.app_env == "production":
         if settings.gemini_api_key:
+            from langchain_google_genai import GoogleGenerativeAIEmbeddings
             logger.info("Using Google Gemini Embeddings")
             return GoogleGenerativeAIEmbeddings(
                 model="models/embedding-001",
                 google_api_key=settings.gemini_api_key
             )
     
+    from langchain_community.embeddings import HuggingFaceEmbeddings
     logger.info("Using local HuggingFace Embeddings (%s)", _EMBEDDING_MODEL)
     return HuggingFaceEmbeddings(
         model_name=_EMBEDDING_MODEL,
@@ -54,6 +50,7 @@ def get_vector_store():
     embeddings = _get_embeddings()
 
     if settings.vector_store_provider == "supabase" and settings.supabase_db_url:
+        from langchain_postgres.vectorstores import PGVector
         _vector_store = PGVector(
             embeddings=embeddings,
             collection_name="thai_legal_knowledge",
@@ -62,6 +59,7 @@ def get_vector_store():
         )
         logger.info("Supabase PGVector initialised")
     else:
+        from langchain_community.vectorstores import Chroma
         persist_dir = settings.chroma_persist_dir
         os.makedirs(persist_dir, exist_ok=True)
         _vector_store = Chroma(
@@ -82,6 +80,7 @@ def get_factory_store():
     embeddings = _get_embeddings()
 
     if settings.vector_store_provider == "supabase" and settings.supabase_db_url:
+        from langchain_postgres.vectorstores import PGVector
         _factory_store = PGVector(
             embeddings=embeddings,
             collection_name="factories",
@@ -90,6 +89,7 @@ def get_factory_store():
         )
         logger.info("Supabase PGVector (factories) initialised")
     else:
+        from langchain_community.vectorstores import Chroma
         persist_dir = settings.chroma_persist_dir
         os.makedirs(persist_dir, exist_ok=True)
         _factory_store = Chroma(
@@ -104,13 +104,13 @@ def get_factory_store():
 # ── Convenience helpers ──────────────────────────────────────────────────────
 
 
-async def similarity_search(query: str, k: int = 5) -> list[Document]:
+async def similarity_search(query: str, k: int = 5):
     """Search for the most relevant legal documents for a query."""
     store = get_vector_store()
     return store.similarity_search(query, k=k)
 
 
-async def factory_similarity_search(query: str, k: int = 10) -> list[tuple[Document, float]]:
+async def factory_similarity_search(query: str, k: int = 10):
     """Search for the most relevant factories for a query with scores."""
     store = get_factory_store()
     return store.similarity_search_with_relevance_scores(query, k=k)
@@ -146,7 +146,7 @@ def seed_thai_legal_knowledge() -> None:
         logger.info("Vector store already contains %d docs, skipping seed", len(existing["ids"]))
         return
 
-    # ── Curated Thai Legal Knowledge for OEM Contracts ────────────────────
+    from langchain_core.documents import Document
     legal_docs = [
         Document(
             page_content=(
