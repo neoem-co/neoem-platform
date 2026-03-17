@@ -4,6 +4,7 @@ uvicorn[standard]==0.34.0
 python-multipart==0.0.20
 httpx==0.28.1
 urllib3==1.26.18
+charset-normalizer==3.3.2
 pydantic==2.10.4
 pydantic-settings==2.7.1
 
@@ -31,5 +32,6 @@ python-dotenv==1.0.1
 tenacity==9.0.0
 orjson==3.10.13
 supabase==2.11.0
-psycopg-binary==3.2.4
+psycopg==3.1.18
+psycopg-binary==3.1.18
 langchain-postgres==0.0.12
