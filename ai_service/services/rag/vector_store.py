@@ -30,8 +30,9 @@ def _get_embeddings():
             from langchain_google_genai import GoogleGenerativeAIEmbeddings
             logger.info("Using Google Gemini Embeddings")
             return GoogleGenerativeAIEmbeddings(
-                model="text-embedding-004",
-                google_api_key=settings.gemini_api_key
+                model="models/embedding-001",
+                google_api_key=settings.gemini_api_key,
+                task_type="retrieval_document"
             )
     
     from langchain_community.embeddings import HuggingFaceEmbeddings
