@@ -53,13 +53,19 @@ def get_vector_store():
 
     if settings.vector_store_provider == "supabase" and settings.supabase_db_url:
         from langchain_postgres.vectorstores import PGVector
+        
+        # Ensure the URL uses the psycopg (v3) driver
+        db_url = settings.supabase_db_url
+        if db_url.startswith("postgresql://"):
+            db_url = db_url.replace("postgresql://", "postgresql+psycopg://", 1)
+        
         _vector_store = PGVector(
             embeddings=embeddings,
             collection_name="thai_legal_knowledge",
-            connection=settings.supabase_db_url,
+            connection=db_url,
             use_jsonb=True,
         )
-        logger.info("Supabase PGVector initialised")
+        logger.info("Supabase PGVector initialised (v3 driver)")
     else:
         from langchain_community.vectorstores import Chroma
         persist_dir = settings.chroma_persist_dir
@@ -83,10 +89,15 @@ def get_factory_store():
 
     if settings.vector_store_provider == "supabase" and settings.supabase_db_url:
         from langchain_postgres.vectorstores import PGVector
+        
+        db_url = settings.supabase_db_url
+        if db_url.startswith("postgresql://"):
+            db_url = db_url.replace("postgresql://", "postgresql+psycopg://", 1)
+            
         _factory_store = PGVector(
             embeddings=embeddings,
             collection_name="factories",
-            connection=settings.supabase_db_url,
+            connection=db_url,
             use_jsonb=True,
         )
         logger.info("Supabase PGVector (factories) initialised")
