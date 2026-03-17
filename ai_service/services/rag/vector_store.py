@@ -176,10 +176,15 @@ def seed_thai_legal_knowledge() -> None:
     store = get_vector_store()
 
     # Check if already seeded
-    existing = store.get()
-    if existing and len(existing.get("ids", [])) > 0:
-        logger.info("Vector store already contains %d docs, skipping seed", len(existing["ids"]))
-        return
+    try:
+        # Chroma has .get(), but PGVector doesn't. 
+        # A universal way is to try a simple search.
+        existing = store.similarity_search("สัญญา", k=1)
+        if existing:
+            logger.info("Vector store already seeded, skipping.")
+            return
+    except Exception as e:
+        logger.info("New or empty vector store detected, proceeding with seed. (%s)", str(e))
 
     from langchain_core.documents import Document
     legal_docs = [
