@@ -59,13 +59,25 @@ def get_vector_store():
         if db_url.startswith("postgresql://"):
             db_url = db_url.replace("postgresql://", "postgresql+psycopg://", 1)
         
+        # Add sslmode=require if not present
+        if "sslmode=" not in db_url:
+            separator = "&" if "?" in db_url else "?"
+            db_url += f"{separator}sslmode=require"
+            
         _vector_store = PGVector(
             embeddings=embeddings,
             collection_name="thai_legal_knowledge",
             connection=db_url,
             use_jsonb=True,
+            # Connection pool settings for serverless
+            engine_args={
+                "connect_args": {
+                    "connect_timeout": 10,
+                },
+                "pool_pre_ping": True,
+            }
         )
-        logger.info("Supabase PGVector initialised (v3 driver)")
+        logger.info("Supabase PGVector initialised (v3 driver + ssl)")
     else:
         from langchain_community.vectorstores import Chroma
         persist_dir = settings.chroma_persist_dir
@@ -94,11 +106,21 @@ def get_factory_store():
         if db_url.startswith("postgresql://"):
             db_url = db_url.replace("postgresql://", "postgresql+psycopg://", 1)
             
+        if "sslmode=" not in db_url:
+            separator = "&" if "?" in db_url else "?"
+            db_url += f"{separator}sslmode=require"
+            
         _factory_store = PGVector(
             embeddings=embeddings,
             collection_name="factories",
             connection=db_url,
             use_jsonb=True,
+            engine_args={
+                "connect_args": {
+                    "connect_timeout": 10,
+                },
+                "pool_pre_ping": True,
+            }
         )
         logger.info("Supabase PGVector (factories) initialised")
     else:
