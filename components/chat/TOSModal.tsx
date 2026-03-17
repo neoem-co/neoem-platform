@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
+import { useTranslations } from "next-intl";
 import {
     Dialog,
     DialogContent,
@@ -16,6 +17,7 @@ interface TOSModalProps {
 }
 
 export function TOSModal({ open, onAccept }: TOSModalProps) {
+    const t = useTranslations();
     const [agreed, setAgreed] = useState(false);
 
     return (
@@ -24,10 +26,10 @@ export function TOSModal({ open, onAccept }: TOSModalProps) {
                 <DialogHeader>
                     <DialogTitle className="flex items-center gap-2">
                         <Shield className="h-5 w-5 text-primary" />
-                        Terms of Service & NDA Agreement
+                        {t("chat.tosModal.title")}
                     </DialogTitle>
                     <DialogDescription>
-                        Please accept our terms before starting the conversation
+                        {t("chat.tosModal.description")}
                     </DialogDescription>
                 </DialogHeader>
 

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { FileText, FileCheck, ShieldAlert, BadgeCheck, Landmark, Rocket } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import { useTranslations } from "next-intl";
 
 const categories = [
     { id: "all", label: "All" },
@@ -52,6 +53,7 @@ const features = [
 
 export function FeatureShowcase() {
     const [activeCategory, setActiveCategory] = useState("all");
+    const t = useTranslations();
 
     const filtered = activeCategory === "all"
         ? features
@@ -63,10 +65,10 @@ export function FeatureShowcase() {
                 {/* Section Header */}
                 <div className="text-center mb-8">
                     <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
-                        Secure Every Step with LegalTech
+                        {t('HomePage.featureShowcase.title')}
                     </h2>
                     <p className="text-muted-foreground max-w-2xl mx-auto">
-                        Integrated AI legal tools designed to protect your business, prevent exploitation, and build trust from the first chat to the final delivery.
+                        {t('HomePage.featureShowcase.desc')}
                     </p>
                 </div>
 

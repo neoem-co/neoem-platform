@@ -2,6 +2,7 @@
 
 import { use } from "react";
 import Link from "next/link";
+import { useLocale } from "next-intl";
 import {
     BadgeCheck, Star, Trophy, MapPin, MessageSquare,
     Building2, Award, Factory as FactoryIcon, ChevronRight
@@ -25,6 +26,7 @@ const factoryImages: Record<string, string> = {
 
 export default function FactoryDetail({ params }: { params: Promise<{ slug: string }> }) {
     const { slug } = use(params);
+    const locale = useLocale();
     const factory = factoriesData.factories.find((f) => f.slug === slug);
 
     if (!factory) {
@@ -33,7 +35,7 @@ export default function FactoryDetail({ params }: { params: Promise<{ slug: stri
                 <Navbar />
                 <div className="container py-20 text-center">
                     <h1 className="text-2xl font-bold text-foreground">Factory not found</h1>
-                    <Link href="/factories" className="text-primary hover:underline mt-4 inline-block">
+                    <Link href={`/${locale}/factories`} className="text-primary hover:underline mt-4 inline-block">
                         Browse all factories
                     </Link>
                 </div>
@@ -56,9 +58,9 @@ export default function FactoryDetail({ params }: { params: Promise<{ slug: stri
             <div className="border-b bg-background">
                 <div className="container py-3 px-4">
                     <nav className="flex items-center gap-2 text-xs md:text-sm text-muted-foreground overflow-x-auto">
-                        <Link href="/" className="hover:text-foreground whitespace-nowrap">Home</Link>
+                        <Link href={`/${locale}/`} className="hover:text-foreground whitespace-nowrap">Home</Link>
                         <ChevronRight className="h-4 w-4 flex-shrink-0" />
-                        <Link href="/factories" className="hover:text-foreground whitespace-nowrap">Factories</Link>
+                        <Link href={`/${locale}/factories`} className="hover:text-foreground whitespace-nowrap">Factories</Link>
                         <ChevronRight className="h-4 w-4 flex-shrink-0" />
                         <span className="text-foreground truncate">{factory.name}</span>
                     </nav>
@@ -86,7 +88,7 @@ export default function FactoryDetail({ params }: { params: Promise<{ slug: stri
                         </div>
                     </div>
 
-                    <Link href={`/chat/${factory.slug}`}>
+                    <Link href={`/${locale}/chat/${factory.slug}`}>
                         <Button size="sm" className="md:size-default">
                             <MessageSquare className="h-4 w-4 md:mr-2" />
                             <span className="hidden md:inline">Chat / Request Quote</span>
@@ -221,7 +223,7 @@ export default function FactoryDetail({ params }: { params: Promise<{ slug: stri
                                 <Card>
                                     <CardContent className="pt-6 text-center text-muted-foreground">
                                         <p className="text-sm">Portfolio samples available upon request.</p>
-                                        <Link href={`/chat/${factory.slug}`}>
+                                        <Link href={`/${locale}/chat/${factory.slug}`}>
                                             <Button className="mt-4">Request Portfolio</Button>
                                         </Link>
                                     </CardContent>
@@ -286,7 +288,7 @@ export default function FactoryDetail({ params }: { params: Promise<{ slug: stri
                                 <p className="text-sm text-muted-foreground mb-4">
                                     Chat with this factory and get an AI-generated contract.
                                 </p>
-                                <Link href={`/chat/${factory.slug}`} className="block">
+                                <Link href={`/${locale}/chat/${factory.slug}`} className="block">
                                     <Button className="w-full">
                                         <MessageSquare className="h-4 w-4 mr-2" />
                                         Start Conversation

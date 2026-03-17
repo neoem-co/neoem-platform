@@ -1,28 +1,54 @@
-import Link from "next/link";
+"use client";
+
+import { Link } from "@/i18n/routing";
+import { toast } from "sonner";
 
 export function Footer() {
-    const footerLinks = {
-        platform: [
-            { label: "Home", href: "/" },
-            { label: "Search Factories", href: "/factories" },
-            { label: "Factory List", href: "/factories" },
-        ],
-        features: [
-            { label: "Chat Deal Room", href: "/factories" },
-            { label: "Brand Launchpad", href: "/brand-launchpad" },
-            { label: "AI Contract Review", href: "/factories" },
-        ],
-        forFactories: [
-            { label: "Join as OEM", href: "/oem-onboarding" },
-            { label: "Pricing & Plans", href: "/pricing" },
-            { label: "OEM Dashboard", href: "/oem-dashboard" },
-        ],
-        legal: [
-            { label: "Privacy Policy", href: "#" },
-            { label: "Terms of Service", href: "#" },
-            { label: "Contact Us", href: "#" },
-        ],
+    const handleComingSoon = (e: React.MouseEvent) => {
+        e.preventDefault();
+        toast.info("Coming Soon", {
+            description: "This feature is part of our upcoming NEOEM V.4 update.",
+        });
     };
+
+    const footerSections = [
+        {
+            title: "NEOEM",
+            links: [
+                { label: "About Us", href: "/about" },
+                { label: "Contact", href: "/contact" },
+                { label: "Careers", href: "/careers" },
+            ],
+        },
+        {
+            title: "Ecosystem",
+            links: [
+                { label: "Match (Find OEM)", href: "/factories" },
+                { label: "Verify Status", href: "/factories", comingSoon: true },
+                { label: "Protect (AI Middleman)", href: "#", comingSoon: true },
+                { label: "Escrow", href: "#", comingSoon: true },
+                { label: "AI Contracts", href: "/factories" },
+                { label: "Grow (Brand Launchpad)", href: "/brand-launchpad" },
+            ],
+        },
+        {
+            title: "Resources",
+            links: [
+                { label: "Knowledge Base", href: "#", comingSoon: true },
+                { label: "Dispute Resolution", href: "#", comingSoon: true },
+                { label: "SME Guidelines", href: "#", comingSoon: true },
+                { label: "OEM Guidelines", href: "#", comingSoon: true },
+            ],
+        },
+        {
+            title: "Legal",
+            links: [
+                { label: "Terms of Service", href: "/terms" },
+                { label: "Privacy Policy", href: "/privacy" },
+                { label: "Escrow Policy", href: "#", comingSoon: true },
+            ],
+        },
+    ];
 
     return (
         <footer className="bg-card border-t">
@@ -38,73 +64,32 @@ export function Footer() {
                         </p>
                     </div>
 
-                    {/* Platform Links */}
-                    <div>
-                        <h3 className="font-semibold text-foreground mb-4">Platform</h3>
-                        <ul className="space-y-2">
-                            {footerLinks.platform.map((link) => (
-                                <li key={link.label}>
-                                    <Link
-                                        href={link.href}
-                                        className="text-sm text-muted-foreground hover:text-primary transition-colors"
-                                    >
-                                        {link.label}
-                                    </Link>
-                                </li>
-                            ))}
-                        </ul>
-                    </div>
-
-                    {/* Features Links */}
-                    <div>
-                        <h3 className="font-semibold text-foreground mb-4">Features</h3>
-                        <ul className="space-y-2">
-                            {footerLinks.features.map((link) => (
-                                <li key={link.label}>
-                                    <Link
-                                        href={link.href}
-                                        className="text-sm text-muted-foreground hover:text-primary transition-colors"
-                                    >
-                                        {link.label}
-                                    </Link>
-                                </li>
-                            ))}
-                        </ul>
-                    </div>
-
-                    {/* For Factories Links */}
-                    <div>
-                        <h3 className="font-semibold text-foreground mb-4">For Factories</h3>
-                        <ul className="space-y-2">
-                            {footerLinks.forFactories.map((link) => (
-                                <li key={link.label}>
-                                    <Link
-                                        href={link.href}
-                                        className="text-sm text-muted-foreground hover:text-primary transition-colors"
-                                    >
-                                        {link.label}
-                                    </Link>
-                                </li>
-                            ))}
-                        </ul>
-                    </div>
-
-                    {/* Legal Links */}
-                    <div>
-                        <h3 className="font-semibold text-foreground mb-4">Legal</h3>
-                        <ul className="space-y-2">
-                            {footerLinks.legal.map((link) => (
-                                <li key={link.label}>
-                                    <Link
-                                        href={link.href}
-                                        className="text-sm text-muted-foreground hover:text-primary transition-colors"
-                                    >
-                                        {link.label}
-                                    </Link>
-                                </li>
-                            ))}
-                        </ul>
-                    </div>
+                    {footerSections.map((section) => (
+                        <div key={section.title}>
+                            <h3 className="font-semibold text-foreground mb-4">{section.title}</h3>
+                            <ul className="space-y-2">
+{section.links.map((link) => (
+    <li key={link.label}>
+        {link.comingSoon ? (
+            <button
+                onClick={handleComingSoon}
+                className="text-sm text-muted-foreground hover:text-primary transition-colors text-left w-full"
+            >
+                {link.label}
+            </button>
+        ) : (
+            <Link
+                href={link.href as any}
+                className="text-sm text-muted-foreground hover:text-primary transition-colors"
+            >
+                {link.label}
+            </Link>
+        )}
+    </li>
+))}
+                            </ul>
+                        </div>
+                    ))}
                 </div>
 
                 {/* Bottom Bar */}

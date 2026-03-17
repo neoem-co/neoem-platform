@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Bell, User, Menu, ChevronDown, Building2, ShoppingBag, Rocket, MessageSquare, Package, CreditCard, FileCheck, CheckCircle2 } from "lucide-react";
+import { Bell, User, Menu, Building2, ShoppingBag, Rocket, MessageSquare, Package, CreditCard, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import {
@@ -15,6 +16,7 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import neoemLogo from "@/public/assets/neoem-logo.png";
+import { LanguageToggle } from "./LanguageToggle";
 
 const mockNotifications = [
     { id: 1, icon: CheckCircle2, message: "Thai Cosmetics Pro accepted your quote", time: "2 min ago", read: false },
@@ -23,23 +25,28 @@ const mockNotifications = [
 ];
 
 export function Navbar() {
+    const t = useTranslations("Navbar");
     const pathname = usePathname();
     const router = useRouter();
+    const locale = useLocale();
     const [open, setOpen] = useState(false);
     const [notifOpen, setNotifOpen] = useState(false);
     const [readNotifs, setReadNotifs] = useState<number[]>([3]);
 
+    // Normalize pathname (remove /en or /th prefix)
+    const normalizedPathname = pathname.replace(/^\/(en|th)/, "") || "/";
+
     const navLinks = [
-        { href: "/factories", label: "Find Factories", active: pathname === "/factories" },
-        { href: "/brand-launchpad", label: "Brand Launchpad", active: pathname === "/brand-launchpad" },
-        { href: "/dashboard", label: "Dashboard", active: pathname === "/dashboard" },
-        { href: "/pricing", label: "For Factories", active: pathname === "/pricing" },
+        { href: "/factories", label: t("findFactories"), active: normalizedPathname === "/factories" },
+        { href: "/brand-launchpad", label: t("brandLaunchpad"), active: normalizedPathname === "/brand-launchpad" },
+        { href: "/dashboard", label: t("dashboard"), active: normalizedPathname === "/dashboard" },
+        { href: "/pricing", label: t("forFactories"), active: normalizedPathname === "/pricing" },
     ];
 
     const unreadCount = mockNotifications.filter(n => !readNotifs.includes(n.id)).length;
 
     const handleSwitch = (path: string) => {
-        router.push(path);
+        router.push(`/${locale}${path}`);
     };
 
     const handleMarkAllRead = () => {
@@ -49,7 +56,7 @@ export function Navbar() {
     return (
         <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
             <div className="container flex h-14 md:h-16 items-center justify-between">
-                <Link href="/" className="flex items-center gap-2">
+                <Link href={`/${locale}`} className="flex items-center gap-2">
                     <img src={neoemLogo.src} alt="NEOEM" className="h-8 md:h-10 w-auto" />
                 </Link>
 
@@ -58,7 +65,7 @@ export function Navbar() {
                     {navLinks.map((link) => (
                         <Link
                             key={link.href}
-                            href={link.href}
+                            href={`/${locale}${link.href}`}
                             className={`text-sm font-medium transition-colors hover:text-primary ${link.active ? "text-primary" : "text-muted-foreground"
                                 }`}
                         >
@@ -68,9 +75,12 @@ export function Navbar() {
                 </nav>
 
                 <div className="flex items-center gap-2 md:gap-3">
+                    {/* Language Switcher */}
+                    <LanguageToggle />
+
                     {/* Messages Icon */}
-                    <Link href="/messages">
-                        <Button variant="ghost" size="icon" className={`relative ${pathname === "/messages" ? "text-primary" : ""}`}>
+                    <Link href={`/${locale}/messages`}>
+                        <Button variant="ghost" size="icon" className={`relative ${normalizedPathname === "/messages" ? "text-primary" : ""}`}>
                             <MessageSquare className="h-5 w-5" />
                         </Button>
                     </Link>
@@ -89,7 +99,7 @@ export function Navbar() {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-80">
                             <div className="flex items-center justify-between px-3 py-2">
-                                <DropdownMenuLabel className="p-0">Notifications</DropdownMenuLabel>
+                                <DropdownMenuLabel className="p-0">{t("notifications")}</DropdownMenuLabel>
                                 {unreadCount > 0 && (
                                     <Button variant="ghost" size="sm" className="text-xs h-auto py-1 px-2" onClick={handleMarkAllRead}>
                                         Mark all read
@@ -119,7 +129,7 @@ export function Navbar() {
                                 );
                             })}
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem className="justify-center text-sm text-primary cursor-pointer" onClick={() => { setNotifOpen(false); router.push("/dashboard"); }}>
+                            <DropdownMenuItem className="justify-center text-sm text-primary cursor-pointer" onClick={() => { setNotifOpen(false); router.push(`/${locale}/dashboard`); }}>
                                 View all notifications
                             </DropdownMenuItem>
                         </DropdownMenuContent>
@@ -133,29 +143,29 @@ export function Navbar() {
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-56">
-                            <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                            <DropdownMenuLabel>{t("myAccount")}</DropdownMenuLabel>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem>Profile Settings</DropdownMenuItem>
-                            <DropdownMenuItem>Order History</DropdownMenuItem>
+                            <DropdownMenuItem>{t("profileSettings")}</DropdownMenuItem>
+                            <DropdownMenuItem>{t("orderHistory")}</DropdownMenuItem>
                             <DropdownMenuSeparator />
                             <DropdownMenuLabel className="text-xs text-muted-foreground font-normal">
                                 Prototype Menu
                             </DropdownMenuLabel>
                             <DropdownMenuItem onClick={() => handleSwitch("/dashboard")}>
                                 <ShoppingBag className="h-4 w-4 mr-2" />
-                                Switch to SME Dashboard
+                                {t("smeDashboard")}
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => handleSwitch("/oem-dashboard")}>
                                 <Building2 className="h-4 w-4 mr-2" />
-                                Switch to OEM Dashboard
+                                {t("oemDashboard")}
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => handleSwitch("/brand-launchpad")}>
                                 <Rocket className="h-4 w-4 mr-2" />
-                                Brand Launchpad
+                                {t("brandLaunchpad")}
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem className="text-destructive">
-                                Sign Out
+                                {t("signOut")}
                             </DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
@@ -172,7 +182,7 @@ export function Navbar() {
                                 {navLinks.map((link) => (
                                     <Link
                                         key={link.href}
-                                        href={link.href}
+                                        href={`/${locale}${link.href}`}
                                         onClick={() => setOpen(false)}
                                         className={`text-lg font-medium transition-colors hover:text-primary py-2 ${link.active ? "text-primary" : "text-foreground"
                                             }`}
@@ -181,41 +191,41 @@ export function Navbar() {
                                     </Link>
                                 ))}
                                 <Link
-                                    href="/messages"
+                                    href={`/${locale}/messages`}
                                     onClick={() => setOpen(false)}
-                                    className={`text-lg font-medium transition-colors hover:text-primary py-2 flex items-center gap-2 ${pathname === "/messages" ? "text-primary" : "text-foreground"
+                                    className={`text-lg font-medium transition-colors hover:text-primary py-2 flex items-center gap-2 ${normalizedPathname === "/messages" ? "text-primary" : "text-foreground"
                                         }`}
                                 >
                                     <MessageSquare className="h-5 w-5" />
-                                    Messages
+                                    {t("messages")}
                                 </Link>
                                 <hr className="my-4" />
                                 <p className="text-xs text-muted-foreground uppercase tracking-wide">
                                     Prototype Menu
                                 </p>
                                 <Link
-                                    href="/dashboard"
+                                    href={`/${locale}/dashboard`}
                                     onClick={() => setOpen(false)}
                                     className="text-lg font-medium text-foreground hover:text-primary py-2 flex items-center gap-2"
                                 >
                                     <ShoppingBag className="h-5 w-5" />
-                                    SME Dashboard
+                                    {t("smeDashboard")}
                                 </Link>
                                 <Link
-                                    href="/oem-dashboard"
+                                    href={`/${locale}/oem-dashboard`}
                                     onClick={() => setOpen(false)}
                                     className="text-lg font-medium text-foreground hover:text-primary py-2 flex items-center gap-2"
                                 >
                                     <Building2 className="h-5 w-5" />
-                                    OEM Dashboard
+                                    {t("oemDashboard")}
                                 </Link>
                                 <hr className="my-4" />
                                 <Link
-                                    href="/oem-onboarding"
+                                    href={`/${locale}/oem-onboarding`}
                                     onClick={() => setOpen(false)}
                                     className="text-lg font-medium text-foreground hover:text-primary py-2"
                                 >
-                                    Register Your Factory
+                                    {t("registerFactory")}
                                 </Link>
                             </nav>
                         </SheetContent>

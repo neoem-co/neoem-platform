@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import { Star, Trophy, BadgeCheck, DollarSign } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -6,6 +8,7 @@ import factory2 from "@/public/assets/factory-2.jpg";
 import factory3 from "@/public/assets/factory-3.jpg";
 import factory4 from "@/public/assets/factory-4.jpg";
 import factory5 from "@/public/assets/factory-5.jpg";
+import { useLocale, useTranslations } from "next-intl";
 
 const factoryImages: Record<string, any> = {
     "factory-1": factory1,
@@ -33,9 +36,12 @@ interface FactoryCardProps {
         specialties: string[];
     };
     variant?: "horizontal" | "vertical";
+    isRecommended?: boolean;
 }
 
-export function FactoryCard({ factory, variant = "vertical" }: FactoryCardProps) {
+export function FactoryCard({ factory, variant = "vertical", isRecommended = false }: FactoryCardProps) {
+    const t = useTranslations("Factories");
+    const locale = useLocale();
     const imageUrl = factoryImages[factory.image] || factory1;
 
     const PriceIndicator = () => (
@@ -49,13 +55,22 @@ export function FactoryCard({ factory, variant = "vertical" }: FactoryCardProps)
         </span>
     );
 
+    const RecommendedBadge = () => (
+        <div className="absolute top-0 left-0 bg-[#FF7A00] text-white text-[10px] font-bold px-2 py-1 flex items-center gap-1 rounded-br-lg z-10 shadow-sm">
+            <Star className="h-3 w-3 fill-current" />
+            {t("recommended")}
+        </div>
+    );
+
     if (variant === "horizontal") {
         return (
             <Link
-                href={`/factory/${factory.slug}`}
-                className="factory-card flex gap-4 p-4 bg-card border rounded-lg hover:shadow-md"
+                href={`/${locale}/factory/${factory.slug}`}
+                className={`factory-card relative flex gap-4 p-4 bg-card border rounded-lg hover:shadow-md transition-all ${isRecommended ? "border-[#FF7A00] border-2" : "border-border"
+                    }`}
             >
-                <div className="w-48 h-32 flex-shrink-0 rounded-md overflow-hidden">
+                {isRecommended && <RecommendedBadge />}
+                <div className="w-48 h-32 flex-shrink-0 rounded-md overflow-hidden relative">
                     <img
                         src={imageUrl.src || imageUrl}
                         alt={factory.name}
@@ -102,9 +117,11 @@ export function FactoryCard({ factory, variant = "vertical" }: FactoryCardProps)
 
     return (
         <Link
-            href={`/factory/${factory.slug}`}
-            className="factory-card flex flex-col bg-card border rounded-lg overflow-hidden hover:shadow-md"
+            href={`/${locale}/factory/${factory.slug}`}
+            className={`factory-card relative flex flex-col bg-card border rounded-lg overflow-hidden hover:shadow-md transition-all ${isRecommended ? "border-[#FF7A00] border-2" : "border-border"
+                }`}
         >
+            {isRecommended && <RecommendedBadge />}
             <div className="relative h-40 overflow-hidden">
                 <img
                     src={imageUrl.src || imageUrl}

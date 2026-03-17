@@ -1,10 +1,14 @@
 "use client";
 
 import Link from "next/link";
+import { useLocale } from "next-intl";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import factoriesData from "@/data/factories.json";
 
 export function OEMAcquisitionHero() {
+    const locale = useLocale();
+    const t = useTranslations("OEMAcquisitionHero");
     const factories = factoriesData.factories.slice(0, 6);
 
     return (
@@ -31,21 +35,20 @@ export function OEMAcquisitionHero() {
             <div className="container relative z-10">
                 <div className="max-w-2xl mx-auto text-center">
                     <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-primary-foreground mb-4">
-                        Join Thailand&apos;s Top Manufacturers
+                        {t("title")}
                     </h1>
                     <p className="text-lg md:text-xl text-primary-foreground/90 mb-8">
-                        Connect with 10,000+ SMEs ready to build their brands.
-                        Showcase your capabilities and grow your factory.
+                        {t("description")}
                     </p>
                     <Button
                         asChild
                         size="lg"
                         className="bg-background text-primary hover:bg-background/90 font-semibold px-8"
                     >
-                        <Link href="/oem-onboarding">Register Your Factory</Link>
+                        <Link href={`/${locale}/oem-onboarding`}>{t("cta")}</Link>
                     </Button>
                     <p className="text-sm text-primary-foreground/70 mt-4">
-                        Free to start • No credit card required
+                        {t("ctaSubtext")}
                     </p>
                 </div>
             </div>
