@@ -1,3 +1,5 @@
+"use client";
+
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { HeroSearch } from "@/components/home/HeroSearch";
@@ -6,12 +8,14 @@ import { TrustBanners } from "@/components/home/TrustBanners";
 import { FeatureShowcase } from "@/components/home/FeatureShowcase";
 import { DotMatrixBackground } from "@/components/home/DotMatrixBackground";
 import factoriesData from "@/data/factories.json";
-import Link from "next/link";
+import { Link } from "@/i18n/routing";
 import { Rocket, ChevronRight, CheckCircle2, Palette, Shield, Scale } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { useTranslations } from "next-intl";
 
 const Index = () => {
+  const t = useTranslations("HomePage");
   const topFactories = factoriesData.factories.slice(0, 4);
 
   return (
@@ -38,13 +42,13 @@ const Index = () => {
         <div className="container">
           <div className="flex items-center justify-between mb-8">
             <div>
-              <h2 className="text-2xl font-bold text-foreground">Verified Top Picks</h2>
+              <h2 className="text-2xl font-bold text-foreground">{t("verifiedPicks")}</h2>
               <p className="text-muted-foreground mt-1">
-                Handpicked factories with proven track records
+                {t("verifiedPicksDesc")}
               </p>
             </div>
             <Link href="/factories" className="text-sm font-medium text-primary hover:underline">
-              View all →
+              {t("viewAll")} →
             </Link>
           </div>
 
@@ -63,22 +67,22 @@ const Index = () => {
             <div className="text-center mb-10">
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-4">
                 <Rocket className="h-4 w-4" />
-                Brand Launchpad
+                {t("launchpadTitle")}
               </div>
               <h2 className="text-3xl font-bold text-foreground mb-3">
-                Launch Your Brand While You Manufacture
+                {t("launchpadHeading")}
               </h2>
               <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-                Complete your business setup, compliance, and branding in parallel with production.
+                {t("launchpadDesc")}
               </p>
             </div>
 
             <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
               {[
-                { icon: CheckCircle2, title: "Company Registration", desc: "DBD fast-track setup" },
-                { icon: Palette, title: "Brand Design", desc: "Logo & packaging ready" },
-                { icon: Shield, title: "FDA / Trademark", desc: "Legal compliance done" },
-                { icon: Scale, title: "Expert Marketplace", desc: "Lawyers, accountants & more" },
+                { icon: CheckCircle2, title: t("launchpadItems.registration"), desc: t("launchpadItems.registrationDesc") },
+                { icon: Palette, title: t("launchpadItems.brandDesign"), desc: t("launchpadItems.brandDesignDesc") },
+                { icon: Shield, title: t("launchpadItems.compliance"), desc: t("launchpadItems.complianceDesc") },
+                { icon: Scale, title: t("launchpadItems.marketplace"), desc: t("launchpadItems.marketplaceDesc") },
               ].map((item) => (
                 <Card key={item.title} className="bg-card/80 backdrop-blur-sm hover:shadow-md transition-shadow">
                   <CardContent className="p-4 text-center">
@@ -96,7 +100,7 @@ const Index = () => {
               <Link href="/brand-launchpad">
                 <Button size="lg" className="gap-2">
                   <Rocket className="h-5 w-5" />
-                  Explore Brand Launchpad
+                  {t("exploreLaunchpad")}
                   <ChevronRight className="h-4 w-4" />
                 </Button>
               </Link>
@@ -111,19 +115,19 @@ const Index = () => {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
             <div>
               <div className="text-4xl font-bold text-primary">500+</div>
-              <div className="text-muted-foreground mt-1">Verified Factories</div>
+              <div className="text-muted-foreground mt-1">{t("stats.factories")}</div>
             </div>
             <div>
               <div className="text-4xl font-bold text-primary">98%</div>
-              <div className="text-muted-foreground mt-1">On-time Delivery</div>
+              <div className="text-muted-foreground mt-1">{t("stats.onTime")}</div>
             </div>
             <div>
               <div className="text-4xl font-bold text-primary">10K+</div>
-              <div className="text-muted-foreground mt-1">Products Launched</div>
+              <div className="text-muted-foreground mt-1">{t("stats.launched")}</div>
             </div>
             <div>
               <div className="text-4xl font-bold text-primary">24/7</div>
-              <div className="text-muted-foreground mt-1">AI Support</div>
+              <div className="text-muted-foreground mt-1">{t("stats.support")}</div>
             </div>
           </div>
         </div>
@@ -134,17 +138,17 @@ const Index = () => {
         <div className="container">
           <div className="bg-card border rounded-2xl p-8 md:p-12 text-center max-w-3xl mx-auto">
             <h2 className="text-3xl font-bold text-foreground mb-4">
-              Ready to start manufacturing?
+              {t("ctaTitle")}
             </h2>
             <p className="text-muted-foreground mb-8 max-w-xl mx-auto">
-              Join thousands of brands who trust NEOEM to connect them with the right factories.
+              {t("ctaDesc")}
             </p>
             <div className="flex items-center justify-center gap-4 flex-wrap">
               <Link href="/factories" className="inline-flex items-center justify-center h-12 px-8 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition-colors">
-                Find Your Factory
+                {t("ctaFind")}
               </Link>
               <Link href="/pricing" className="inline-flex items-center justify-center h-12 px-8 bg-secondary text-secondary-foreground rounded-lg font-medium hover:bg-secondary/80 transition-colors">
-                List Your Factory
+                {t("ctaList")}
               </Link>
             </div>
           </div>

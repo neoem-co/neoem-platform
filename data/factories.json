@@ -2,8 +2,8 @@
     "factories": [
         {
             "id": "1",
-            "name": "Thai Cosmetics Pro",
-            "slug": "thai-cosmetics-pro",
+            "name": "International Laboratories Corp. Ltd. (ILC)",
+            "slug": "ilc-cosmetics",
             "verified": true,
             "image": "factory-1",
             "location": "Samut Prakan, Thailand",
@@ -12,383 +12,329 @@
                 "ISO 9001",
                 "GMP",
                 "FDA Approved",
-                "Low MOQ"
+                "Premium Support"
             ],
-            "rating": 4.8,
-            "reviewCount": 120,
+            "rating": 4.9,
+            "reviewCount": 245,
             "onTimeDelivery": 98,
-            "priceLevel": 2,
-            "moq": 500,
-            "description": "Leading OEM cosmetics manufacturer specializing in skincare, sunscreen, and beauty products. 15+ years of experience serving international brands.",
+            "priceLevel": 3,
+            "moq": 1000,
+            "description": "With over 51 years of experience, ILC is one of Thailand's most established cosmetic manufacturers. We provide high-end formulation and manufacturing for global brands.",
             "specialties": [
                 "Sunscreen",
-                "Skincare",
-                "Serum",
-                "Cream"
+                "Skin Care",
+                "Base Makeup",
+                "Perfume"
             ],
-            "registeredCapital": 5000000,
-            "financialHealth": "Good",
+            "registeredCapital": 500000000,
+            "financialHealth": "Excellent",
             "revenueHistory": [
                 {
+                    "year": "2021",
+                    "revenue": 1450000000
+                },
+                {
+                    "year": "2022",
+                    "revenue": 1620000000
+                },
+                {
                     "year": "2023",
-                    "revenue": 45000000
-                },
-                {
-                    "year": "2024",
-                    "revenue": 52000000
-                },
-                {
-                    "year": "2025",
-                    "revenue": 68000000
+                    "revenue": 1860000000
                 }
             ],
             "machines": [
                 {
-                    "name": "Vacuum Mixer",
-                    "capacity": "2 Tons/Day",
-                    "image": "mixer"
-                },
-                {
-                    "name": "Filling Line",
-                    "capacity": "10,000 Units/Day",
+                    "name": "Automated Filling Line",
+                    "capacity": "20,000 Units/Day",
                     "image": "filling"
                 },
                 {
-                    "name": "Labeling Machine",
-                    "capacity": "15,000 Units/Day",
-                    "image": "labeling"
+                    "name": "High Volume Mixer",
+                    "capacity": "5 Tons/Day",
+                    "image": "mixer"
                 }
             ],
             "certifications": [
                 "ISO 9001:2015",
                 "GMP",
                 "FDA Thailand",
-                "Halal"
+                "ISO 22716"
             ]
         },
         {
             "id": "2",
-            "name": "Siam Herbal Extract Co., Ltd.",
-            "slug": "siam-herbal-extract",
+            "name": "Milott Laboratories Co., Ltd.",
+            "slug": "milott-laboratories",
             "verified": true,
             "image": "factory-2",
-            "location": "Nakhon Pathom, Thailand",
-            "category": "Supplements",
+            "location": "Samut Prakan, Thailand",
+            "category": "Cosmetics",
             "tags": [
                 "GMP",
-                "HACCP",
-                "Halal",
-                "ISO 22000"
+                "Global Standards",
+                "Innovation",
+                "High Capacity"
             ],
-            "rating": 4.9,
-            "reviewCount": 89,
+            "rating": 4.8,
+            "reviewCount": 189,
             "onTimeDelivery": 96,
-            "priceLevel": 2,
-            "moq": 500,
-            "description": "Specialist in Thai herbal extracts including Andrographis and Turmeric. Premium supplement manufacturing with traditional Thai medicine expertise.",
+            "priceLevel": 3,
+            "moq": 2000,
+            "description": "A leading provider of contract manufacturing for cosmetic and household products. Serving multinational companies with world-class facilities and R&D capabilities.",
             "specialties": [
-                "Herbal Extracts",
-                "Thai Herbs",
-                "Andrographis",
-                "Turmeric"
+                "Skin Care",
+                "Personal Care",
+                "Hair Care",
+                "Make-up"
             ],
-            "registeredCapital": 8000000,
+            "registeredCapital": 55000000,
             "financialHealth": "Excellent",
             "revenueHistory": [
                 {
+                    "year": "2021",
+                    "revenue": 4906839100
+                },
+                {
+                    "year": "2022",
+                    "revenue": 5800000000
+                },
+                {
                     "year": "2023",
-                    "revenue": 78000000
-                },
-                {
-                    "year": "2024",
-                    "revenue": 95000000
-                },
-                {
-                    "year": "2025",
-                    "revenue": 120000000
+                    "revenue": 6300000000
                 }
             ],
             "machines": [
                 {
-                    "name": "Extraction System",
-                    "capacity": "1 Ton/Batch",
-                    "image": "extraction"
+                    "name": "Advanced R&D Equipment",
+                    "capacity": "Full Scale Lab",
+                    "image": "lab"
                 },
                 {
-                    "name": "Spray Dryer",
-                    "capacity": "500 kg/Day",
-                    "image": "dryer"
-                },
-                {
-                    "name": "Capsule Filler",
-                    "capacity": "300,000 Caps/Day",
-                    "image": "capsule"
+                    "name": "High-Tech Packaging",
+                    "capacity": "50,000 Units/Day",
+                    "image": "packaging"
                 }
             ],
             "certifications": [
-                "ISO 22000:2018",
-                "GMP-PIC/S",
-                "Halal",
-                "HACCP"
+                "ISO 9001",
+                "ISO 14001",
+                "GMP",
+                "BCP Certified"
             ]
         },
         {
             "id": "3",
-            "name": "Pure Skin Lab Innovation",
-            "slug": "pure-skin-lab",
+            "name": "S & J International Enterprises PCL",
+            "slug": "sji-cosmetics",
             "verified": true,
             "image": "factory-3",
-            "location": "Bangkok (Ladprao), Thailand",
-            "category": "Skincare",
+            "location": "Bangkok / Chonburi, Thailand",
+            "category": "Cosmetics",
             "tags": [
-                "Cruelty-Free",
-                "Vegan",
-                "Organic Certified",
-                "FDA Approved"
+                "Public Company",
+                "Export Focus",
+                "Sustainability",
+                "R&D Hub"
             ],
             "rating": 4.9,
-            "reviewCount": 156,
+            "reviewCount": 312,
             "onTimeDelivery": 99,
             "priceLevel": 3,
-            "moq": 100,
-            "description": "Startup-friendly skincare lab specializing in Korean-style serums and organic sunscreens. Low MOQ perfect for new brands entering the market.",
+            "moq": 3000,
+            "description": "Established in 1980, S & J International is a premier OEM/ODM manufacturer in Asia. We offer complete supply chain solutions for the beauty industry worldwide.",
             "specialties": [
-                "K-Beauty Serums",
-                "Organic Sunscreen",
-                "Natural Skincare",
-                "Anti-Aging"
+                "Color Cosmetics",
+                "Skin care",
+                "Personal Care",
+                "Sustainability Solutions"
             ],
-            "registeredCapital": 6000000,
+            "registeredCapital": 200000000,
             "financialHealth": "Excellent",
             "revenueHistory": [
                 {
+                    "year": "2022",
+                    "revenue": 5236000000
+                },
+                {
                     "year": "2023",
-                    "revenue": 55000000
+                    "revenue": 6922000000
                 },
                 {
                     "year": "2024",
-                    "revenue": 72000000
+                    "revenue": 6681000000
+                }
+            ],
+            "machines": [
+                {
+                    "name": "Color Matching System",
+                    "capacity": "Digital Accuracy",
+                    "image": "lab"
                 },
                 {
-                    "year": "2025",
+                    "name": "Multi-Line Facility",
+                    "capacity": "Over 1M Units/Month",
+                    "image": "factory"
+                }
+            ],
+            "certifications": [
+                "ISO 9001",
+                "ISO 14001",
+                "GMP",
+                "OHSAS 18001"
+            ]
+        },
+        {
+            "id": "4",
+            "name": "Derma Innovation Co., Ltd.",
+            "slug": "derma-innovation",
+            "verified": true,
+            "image": "factory-4",
+            "location": "Nonthaburi, Thailand",
+            "category": "Skincare",
+            "tags": [
+                "Startup Friendly",
+                "Low MOQ Available",
+                "Clinical Focus"
+            ],
+            "rating": 4.7,
+            "reviewCount": 156,
+            "onTimeDelivery": 95,
+            "priceLevel": 2,
+            "moq": 500,
+            "description": "A modern manufacturer specializing in innovative skincare and dermatologist-formulated products. Popular among indie and premium local brands.",
+            "specialties": [
+                "Serum",
+                "Cosmeceuticals",
+                "Whitening Care",
+                "Acne Treatment"
+            ],
+            "registeredCapital": 80000000,
+            "financialHealth": "Good",
+            "revenueHistory": [
+                {
+                    "year": "2020",
+                    "revenue": 115772778
+                },
+                {
+                    "year": "2021",
+                    "revenue": 120000000
+                },
+                {
+                    "year": "2022",
+                    "revenue": 126000000
+                }
+            ],
+            "machines": [
+                {
+                    "name": "Micro-Filtration",
+                    "capacity": "Clean System",
+                    "image": "mixer"
+                }
+            ],
+            "certifications": [
+                "GMP",
+                "Thai FDA",
+                "ISO 22716"
+            ]
+        },
+        {
+            "id": "5",
+            "name": "Revomed (Thailand) Co., Ltd.",
+            "slug": "revomed-thailand",
+            "verified": true,
+            "image": "factory-5",
+            "location": "Nonthaburi, Thailand",
+            "category": "Supplements",
+            "tags": [
+                "Holistic Beauty",
+                "Dietary Supplements",
+                "Trendy Products"
+            ],
+            "rating": 4.8,
+            "reviewCount": 94,
+            "onTimeDelivery": 94,
+            "priceLevel": 2,
+            "moq": 1000,
+            "description": "OEM/ODM leader for dietary supplements and topical skincare. We bridge the gap between beauty inside and out with innovative functional products.",
+            "specialties": [
+                "Collagen Drinks",
+                "Weight Control",
+                "Vitamins",
+                "Skin Beauty Supplements"
+            ],
+            "registeredCapital": 20000000,
+            "financialHealth": "Good",
+            "revenueHistory": [
+                {
+                    "year": "2021",
+                    "revenue": 85000000
+                },
+                {
+                    "year": "2022",
                     "revenue": 95000000
                 }
             ],
             "machines": [
                 {
-                    "name": "Homogenizer",
-                    "capacity": "1 Ton/Batch",
-                    "image": "homogenizer"
-                },
-                {
-                    "name": "Clean Room",
-                    "capacity": "Class 100,000",
-                    "image": "cleanroom"
-                },
-                {
-                    "name": "Lab Equipment",
-                    "capacity": "R&D Capable",
-                    "image": "lab"
+                    "name": "Powder Sachet Filling",
+                    "capacity": "30,000 Sachet/Day",
+                    "image": "filling"
                 }
             ],
             "certifications": [
-                "ISO 9001:2015",
                 "GMP",
-                "Leaping Bunny",
-                "Vegan Certified"
-            ]
-        },
-        {
-            "id": "4",
-            "name": "EcoPack Solutions",
-            "slug": "ecopack-solutions",
-            "verified": true,
-            "image": "factory-4",
-            "location": "Samut Prakan, Thailand",
-            "category": "Packaging",
-            "tags": [
-                "Biodegradable",
-                "FSC Certified",
-                "Plastic-Free"
-            ],
-            "rating": 4.6,
-            "reviewCount": 67,
-            "onTimeDelivery": 94,
-            "priceLevel": 1,
-            "moq": 1000,
-            "description": "Sustainable packaging solutions including sugarcane paper boxes and biodegradable plastics. Leading the eco-friendly packaging movement in Southeast Asia.",
-            "specialties": [
-                "Sugarcane Boxes",
-                "Biodegradable Plastic",
-                "Eco Labels",
-                "Paper Tubes"
-            ],
-            "registeredCapital": 3000000,
-            "financialHealth": "Good",
-            "revenueHistory": [
-                {
-                    "year": "2023",
-                    "revenue": 25000000
-                },
-                {
-                    "year": "2024",
-                    "revenue": 32000000
-                },
-                {
-                    "year": "2025",
-                    "revenue": 45000000
-                }
-            ],
-            "machines": [
-                {
-                    "name": "Paper Molding",
-                    "capacity": "50,000 Units/Day",
-                    "image": "molding"
-                },
-                {
-                    "name": "Printing Press",
-                    "capacity": "100,000 Labels/Day",
-                    "image": "printing"
-                },
-                {
-                    "name": "Die Cutting",
-                    "capacity": "30,000 Boxes/Day",
-                    "image": "cutting"
-                }
-            ],
-            "certifications": [
-                "ISO 14001:2015",
-                "FSC",
-                "FDA Compliant"
-            ]
-        },
-        {
-            "id": "5",
-            "name": "NextGen Garment Factory",
-            "slug": "nextgen-garment",
-            "verified": true,
-            "image": "factory-5",
-            "location": "Chonburi, Thailand",
-            "category": "Clothing",
-            "tags": [
-                "OEKO-TEX Standard 100",
-                "Fast Production",
-                "Low MOQ"
-            ],
-            "rating": 4.7,
-            "reviewCount": 143,
-            "onTimeDelivery": 92,
-            "priceLevel": 2,
-            "moq": 50,
-            "description": "Corporate uniforms and streetwear fashion manufacturer. Fast turnaround times and low MOQ make us perfect for growing brands.",
-            "specialties": [
-                "Corporate Uniforms",
-                "Streetwear",
-                "T-Shirts",
-                "Activewear"
-            ],
-            "registeredCapital": 4500000,
-            "financialHealth": "Good",
-            "revenueHistory": [
-                {
-                    "year": "2023",
-                    "revenue": 35000000
-                },
-                {
-                    "year": "2024",
-                    "revenue": 42000000
-                },
-                {
-                    "year": "2025",
-                    "revenue": 55000000
-                }
-            ],
-            "machines": [
-                {
-                    "name": "Industrial Sewing",
-                    "capacity": "5,000 Pieces/Day",
-                    "image": "sewing"
-                },
-                {
-                    "name": "Screen Printing",
-                    "capacity": "3,000 Prints/Day",
-                    "image": "printing"
-                },
-                {
-                    "name": "Embroidery",
-                    "capacity": "2,000 Pieces/Day",
-                    "image": "embroidery"
-                }
-            ],
-            "certifications": [
-                "OEKO-TEX Standard 100",
-                "BSCI",
-                "WRAP"
+                "HACCP",
+                "Halal"
             ]
         },
         {
             "id": "6",
-            "name": "Future Food Tech",
-            "slug": "future-food-tech",
+            "name": "Quality Plus Aesthetic International Co., Ltd.",
+            "slug": "quality-plus",
             "verified": true,
             "image": "factory-1",
             "location": "Pathum Thani, Thailand",
-            "category": "Food",
+            "category": "Skincare",
             "tags": [
-                "Plant-Based",
-                "Low Sodium",
-                "R&D Lab"
+                "R&D Excellence",
+                "Natural Ingredients",
+                "Biotechnology"
             ],
             "rating": 4.8,
-            "reviewCount": 78,
-            "onTimeDelivery": 95,
+            "reviewCount": 120,
+            "onTimeDelivery": 97,
             "priceLevel": 3,
-            "moq": 2000,
-            "description": "Innovative food manufacturing specializing in plant-based meat production and functional drinks. State-of-the-art R&D lab for custom formulations.",
+            "moq": 500,
+            "description": "Leading the biotech-skincare revolution in Thailand. We combine advanced research with local agricultural ingredients to create unique, globally-ready formulations.",
             "specialties": [
-                "Plant-Based Meat",
-                "Functional Drinks",
-                "Health Foods",
-                "Protein Bars"
+                "Biotech Serum",
+                "Custom Formulation",
+                "Plant Stem Cell",
+                "Clinical Testing"
             ],
-            "registeredCapital": 12000000,
+            "registeredCapital": 10000000,
             "financialHealth": "Excellent",
             "revenueHistory": [
                 {
-                    "year": "2023",
-                    "revenue": 85000000
-                },
-                {
-                    "year": "2024",
-                    "revenue": 110000000
-                },
-                {
-                    "year": "2025",
+                    "year": "2022",
                     "revenue": 145000000
+                },
+                {
+                    "year": "2023",
+                    "revenue": 180000000
                 }
             ],
             "machines": [
                 {
-                    "name": "Extrusion System",
-                    "capacity": "2 Tons/Hour",
-                    "image": "extrusion"
-                },
-                {
-                    "name": "Mixing Line",
-                    "capacity": "10,000 Units/Day",
-                    "image": "mixing"
-                },
-                {
-                    "name": "R&D Lab",
-                    "capacity": "Full Service",
+                    "name": "Clean Room Cell Culture",
+                    "capacity": "Advanced Lab",
                     "image": "lab"
                 }
             ],
             "certifications": [
-                "ISO 22000",
+                "ISO 9001",
                 "GMP",
-                "HACCP",
-                "Halal"
+                "Thai FDA"
             ]
         }
     ],
@@ -396,43 +342,14 @@
         {
             "id": "1",
             "sender": "user",
-            "message": "Hi, I'm looking for a sunscreen SPF50 product. Can you produce around 1,000 pieces?",
+            "message": "Hi, I'm looking for a premium sunscreen formulation. Can you produce around 1,000 pieces?",
             "timestamp": "2026-01-04T10:30:00Z"
         },
         {
             "id": "2",
             "sender": "factory",
-            "message": "Hello! Yes, we can definitely help with that. Our minimum order for sunscreen is 500 pieces, so 1,000 is perfect. What formulation are you looking for?",
+            "message": "Hello! Yes, we can definitely help with that. Our minimum order for premium sunscreen is 500-1000 pieces depending on the packaging. What formulation are you looking for?",
             "timestamp": "2026-01-04T10:32:00Z"
-        },
-        {
-            "id": "3",
-            "sender": "user",
-            "message": "I want a lightweight mousse texture, waterproof, with natural ingredients.",
-            "timestamp": "2026-01-04T10:35:00Z"
-        },
-        {
-            "id": "4",
-            "sender": "factory",
-            "message": "Great choice! We have a popular mousse formula. For 1,000 units at 50ml each, the total would be 120,000 THB including FDA registration support. Delivery in 4-6 weeks.",
-            "timestamp": "2026-01-04T10:38:00Z"
-        },
-        {
-            "id": "5",
-            "sender": "user",
-            "message": "That sounds good. Can you send me a quotation?",
-            "timestamp": "2026-01-04T10:40:00Z"
-        },
-        {
-            "id": "6",
-            "sender": "factory",
-            "message": "Of course! I've attached the official quotation. Please review and let me know if you'd like to proceed.",
-            "timestamp": "2026-01-04T10:42:00Z",
-            "attachment": {
-                "type": "pdf",
-                "name": "Quotation_Sunscreen_SPF50.pdf",
-                "size": "245 KB"
-            }
         }
     ]
 }

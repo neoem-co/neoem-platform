@@ -1,0 +1,80 @@
+{
+    "Navbar": {
+        "findFactories": "Find Factories",
+        "brandLaunchpad": "Brand Launchpad",
+        "dashboard": "Dashboard",
+        "forFactories": "For Factories",
+        "messages": "Messages",
+        "notifications": "Notifications",
+        "myAccount": "My Account",
+        "profileSettings": "Profile Settings",
+        "orderHistory": "Order History",
+        "signOut": "Sign Out",
+        "smeDashboard": "SME Dashboard",
+        "oemDashboard": "OEM Dashboard",
+        "registerFactory": "Register Your Factory"
+    },
+    "Factories": {
+        "title": "Find the Perfect OEM Factory",
+        "searchPlaceholder": "Search factories, products, categories...",
+        "filters": "Filters",
+        "clearAll": "Clear all",
+        "category": "Category",
+        "location": "Location",
+        "moqRange": "MOQ Range",
+        "certifications": "Certifications",
+        "resultsFor": "Results for \"{query}\"",
+        "allFactories": "All Factories",
+        "factoriesFound": "{count} factories found",
+        "noMatches": "No factories found matching your criteria.",
+        "recommended": "Recommended Factory",
+        "pcs": "pcs"
+    },
+    "HomePage": {
+        "hero": {
+            "title": "The Operating System for",
+            "sequence": {
+                "manufacturing": "Manufacturing",
+                "smeSuccess": "SME Success",
+                "trustedDeals": "Trusted Deals",
+                "futureGrowth": "Future Growth"
+            },
+            "desc": "Connect with verified OEM factories. From idea to production in one intelligent platform.",
+            "placeholder": "Tell us your idea... (e.g., Whitening Cream, MOQ 500 pcs, Budget 50k)",
+            "search": "Search",
+            "popular": "Popular"
+        },
+        "verifiedPicks": "Verified Top Picks",
+        "verifiedPicksDesc": "Handpicked factories with proven track records",
+        "viewAll": "View all",
+        "launchpadTitle": "Brand Launchpad",
+        "launchpadHeading": "Launch Your Brand While You Manufacture",
+        "launchpadDesc": "Complete your business setup, compliance, and branding in parallel with production.",
+        "launchpadItems": {
+            "registration": "Company Registration",
+            "registrationDesc": "DBD fast-track setup",
+            "brandDesign": "Brand Design",
+            "brandDesignDesc": "Logo & packaging ready",
+            "compliance": "FDA / Trademark",
+            "complianceDesc": "Legal compliance done",
+            "marketplace": "Expert Marketplace",
+            "marketplaceDesc": "Lawyers, accountants & more"
+        },
+        "exploreLaunchpad": "Explore Brand Launchpad",
+        "stats": {
+            "factories": "Verified Factories",
+            "onTime": "On-time Delivery",
+            "launched": "Products Launched",
+            "support": "AI Support"
+        },
+        "ctaTitle": "Ready to start manufacturing?",
+        "ctaDesc": "Join thousands of brands who trust NEOEM to connect them with the right factories.",
+        "ctaFind": "Find Your Factory",
+        "ctaList": "List Your Factory"
+    },
+    "Common": {
+        "search": "Search",
+        "comingSoon": "Coming Soon",
+        "comingSoonDesc": "This feature is part of our upcoming NEOEM V.4 update."
+    }
+}

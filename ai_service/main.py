@@ -19,7 +19,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from config import settings
-from routers import risk_check, contract_draft
+from routers import risk_check, contract_draft, search
 
 # ── Logging ──────────────────────────────────────────────────────────────────
 logging.basicConfig(
@@ -57,6 +57,7 @@ app.add_middleware(
 # ── Routers ──────────────────────────────────────────────────────────────────
 app.include_router(risk_check.router)
 app.include_router(contract_draft.router)
+app.include_router(search.router)
 
 
 # ── Startup events ──────────────────────────────────────────────────────────
@@ -98,5 +99,6 @@ async def root():
             "contract_draft_extract": "/api/contract-draft/extract-context",
             "contract_draft_generate": "/api/contract-draft/generate",
             "contract_draft_finalize": "/api/contract-draft/finalize",
+            "semantic_search": "/api/search/semantic",
         },
     }

@@ -10,7 +10,7 @@ services:
     env_file:
       - .env
     environment:
-      - AI_BACKEND_URL=http://ai-service:8000
+      - AI_BACKEND_URL=http://localhost:8000
     depends_on:
       ai-service:
         condition: service_healthy
@@ -18,7 +18,7 @@ services:
       - neoem-network
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      test: [ "CMD", "node", "-e", "fetch('http://127.0.0.1:3000').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))" ]
       interval: 30s
       timeout: 10s
       retries: 5
@@ -38,7 +38,7 @@ services:
       - neoem-network
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health')"]
+      test: [ "CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health')" ]
       interval: 30s
       timeout: 10s
       retries: 5

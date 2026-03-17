@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useMemo } from "react";
+import { useRouter } from "@/i18n/routing";
 import { Search, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { TypeAnimation } from "react-type-animation";
+import { useTranslations } from "next-intl";
 
 const categories = [
     { id: "cosmetics", label: "Cosmetics" },
@@ -16,36 +17,39 @@ const categories = [
 ];
 
 export function HeroSearch() {
+    const t = useTranslations("HomePage");
     const [query, setQuery] = useState("");
     const router = useRouter();
 
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
-        router.push(`/factories${query ? `?q=${encodeURIComponent(query)}` : ""}`);
+        router.push(`/factories${query ? `?q=${encodeURIComponent(query)}` : ""}` as any);
     };
 
     const handleTagClick = (categoryId: string) => {
-        router.push(`/factories?category=${categoryId}`);
+        router.push(`/factories?category=${categoryId}` as any);
     };
+
+    const animationSequence = useMemo(() => [
+        t("hero.sequence.manufacturing"),
+        2000,
+        t("hero.sequence.smeSuccess"),
+        2000,
+        t("hero.sequence.trustedDeals"),
+        2000,
+        t("hero.sequence.futureGrowth"),
+        2000,
+    ], [t]);
 
     return (
         <div className="w-full max-w-3xl mx-auto space-y-6">
             <div className="text-center space-y-4">
                 <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-foreground">
-                    The Operating System for
+                    {t("hero.title")}
                 </h1>
-                <div className="text-4xl md:text-5xl font-bold tracking-tight text-primary">
+                <div className="text-4xl md:text-5xl font-bold tracking-tight text-primary min-h-[1.2em]">
                     <TypeAnimation
-                        sequence={[
-                            "Manufacturing",
-                            2000,
-                            "SME Success",
-                            2000,
-                            "Trusted Deals",
-                            2000,
-                            "Future Growth",
-                            2000,
-                        ]}
+                        sequence={animationSequence}
                         wrapper="span"
                         speed={50}
                         repeat={Infinity}
@@ -53,7 +57,7 @@ export function HeroSearch() {
                     />
                 </div>
                 <p className="text-lg text-muted-foreground max-w-xl mx-auto">
-                    Connect with verified OEM factories. From idea to production in one intelligent platform.
+                    {t("hero.desc")}
                 </p>
             </div>
 
@@ -66,18 +70,18 @@ export function HeroSearch() {
                         type="text"
                         value={query}
                         onChange={(e) => setQuery(e.target.value)}
-                        placeholder="Tell us your idea... (e.g., Whitening Cream, MOQ 500 pcs, Budget 50k)"
+                        placeholder={t("hero.placeholder")}
                         className="flex-1 h-12 bg-transparent text-foreground placeholder:text-muted-foreground focus:outline-none text-base"
                     />
                     <Button type="submit" size="lg" className="h-12 px-6">
                         <Search className="h-5 w-5 mr-2" />
-                        Search
+                        {t("hero.search")}
                     </Button>
                 </div>
             </form>
 
             <div className="flex items-center justify-center gap-2 flex-wrap">
-                <span className="text-sm text-muted-foreground">Popular:</span>
+                <span className="text-sm text-muted-foreground">{t("hero.popular")}:</span>
                 {categories.map((cat) => (
                     <button
                         key={cat.id}

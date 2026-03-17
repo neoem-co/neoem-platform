@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, Suspense } from "react";
+import { useState, useMemo, Suspense, useEffect } from "react";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { Filter, SlidersHorizontal, X, Search } from "lucide-react";
 import { Navbar } from "@/components/layout/Navbar";
@@ -10,12 +10,15 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Slider } from "@/components/ui/slider";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import factoriesData from "@/data/factories.json";
+import { useTranslations } from "next-intl";
 
 const locations = ["Bangkok", "Samut Prakan", "Pathum Thani", "Chonburi", "Nonthaburi"];
 const certifications = ["ISO 9001", "GMP", "FDA Approved", "Halal", "Organic", "OEKO-TEX"];
 const categories = ["Cosmetics", "Supplements", "Packaging", "Clothing", "Skincare"];
 
 const FactoriesContent = () => {
+    const t = useTranslations("Factories");
+    const commonT = useTranslations("Common");
     const searchParams = useSearchParams();
     const router = useRouter();
     const pathname = usePathname();
@@ -30,6 +33,35 @@ const FactoriesContent = () => {
     );
     const [moqRange, setMoqRange] = useState([0, 5000]);
     const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+    const [recommendedIds, setRecommendedIds] = useState<string[]>([]);
+    const [isLoadingAI, setIsLoadingAI] = useState(false);
+
+    // Fetch semantic search recommendations
+    useEffect(() => {
+        const fetchRecommendations = async () => {
+            if (!query) {
+                setRecommendedIds([]);
+                return;
+            }
+
+            setIsLoadingAI(true);
+            try {
+                const res = await fetch(`/api/ai/search/semantic?q=${encodeURIComponent(query)}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    const ids = data.recommended.map((r: any) => r.id);
+                    setRecommendedIds(ids);
+                }
+            } catch (error) {
+                console.error("Failed to fetch semantic search results:", error);
+                setRecommendedIds([]);
+            } finally {
+                setIsLoadingAI(false);
+            }
+        };
+
+        fetchRecommendations();
+    }, [query]);
 
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
@@ -43,7 +75,7 @@ const FactoriesContent = () => {
     };
 
     const filteredFactories = useMemo(() => {
-        return factoriesData.factories.filter((factory) => {
+        const filtered = factoriesData.factories.filter((factory) => {
             if (query) {
                 const searchLower = query.toLowerCase();
                 const matchesSearch =
@@ -74,7 +106,16 @@ const FactoriesContent = () => {
 
             return true;
         });
-    }, [query, selectedCategories, selectedLocations, selectedCertifications, moqRange]);
+
+        // Sort: Recommended first
+        return [...filtered].sort((a, b) => {
+            const aRec = recommendedIds.includes(a.id);
+            const bRec = recommendedIds.includes(b.id);
+            if (aRec && !bRec) return -1;
+            if (!aRec && bRec) return 1;
+            return 0;
+        });
+    }, [query, selectedCategories, selectedLocations, selectedCertifications, moqRange, recommendedIds]);
 
     const toggleFilter = (
         value: string,
@@ -108,18 +149,18 @@ const FactoriesContent = () => {
             <div className="flex items-center justify-between">
                 <h3 className="font-semibold text-foreground flex items-center gap-2">
                     <Filter className="h-4 w-4" />
-                    Filters
+                    {t("filters")}
                 </h3>
                 {hasActiveFilters && (
                     <button onClick={clearFilters} className="text-xs text-primary hover:underline">
-                        Clear all
+                        {t("clearAll")}
                     </button>
                 )}
             </div>
 
             {/* Categories */}
             <div className="space-y-3">
-                <h4 className="text-sm font-medium text-foreground">Category</h4>
+                <h4 className="text-sm font-medium text-foreground">{t("category")}</h4>
                 <div className="space-y-2">
                     {categories.map((cat) => (
                         <label key={cat} className="flex items-center gap-2 cursor-pointer">
@@ -137,7 +178,7 @@ const FactoriesContent = () => {
 
             {/* Location */}
             <div className="space-y-3">
-                <h4 className="text-sm font-medium text-foreground">Location</h4>
+                <h4 className="text-sm font-medium text-foreground">{t("location")}</h4>
                 <div className="space-y-2">
                     {locations.map((loc) => (
                         <label key={loc} className="flex items-center gap-2 cursor-pointer">
@@ -155,7 +196,7 @@ const FactoriesContent = () => {
 
             {/* MOQ Range */}
             <div className="space-y-3">
-                <h4 className="text-sm font-medium text-foreground">MOQ Range</h4>
+                <h4 className="text-sm font-medium text-foreground">{t("moqRange")}</h4>
                 <Slider
                     value={moqRange}
                     onValueChange={setMoqRange}
@@ -165,14 +206,14 @@ const FactoriesContent = () => {
                     className="mt-4"
                 />
                 <div className="flex items-center justify-between text-xs text-muted-foreground">
-                    <span>{moqRange[0]} pcs</span>
-                    <span>{moqRange[1]} pcs</span>
+                    <span>{moqRange[0]} {t("pcs")}</span>
+                    <span>{moqRange[1]} {t("pcs")}</span>
                 </div>
             </div>
 
             {/* Certifications */}
             <div className="space-y-3">
-                <h4 className="text-sm font-medium text-foreground">Certifications</h4>
+                <h4 className="text-sm font-medium text-foreground">{t("certifications")}</h4>
                 <div className="space-y-2">
                     {certifications.map((cert) => (
                         <label key={cert} className="flex items-center gap-2 cursor-pointer">
@@ -204,11 +245,11 @@ const FactoriesContent = () => {
                                 type="text"
                                 value={searchInput}
                                 onChange={(e) => setSearchInput(e.target.value)}
-                                placeholder="Search factories, products, categories..."
+                                placeholder={t("searchPlaceholder")}
                                 className="flex-1 h-10 bg-transparent text-foreground placeholder:text-muted-foreground focus:outline-none text-sm"
                             />
                         </div>
-                        <Button type="submit" size="sm">Search</Button>
+                        <Button type="submit" size="sm">{commonT("search")}</Button>
                         {/* Mobile Filter Button */}
                         <Sheet open={mobileFiltersOpen} onOpenChange={setMobileFiltersOpen}>
                             <SheetTrigger asChild className="lg:hidden">
@@ -223,7 +264,7 @@ const FactoriesContent = () => {
                             </SheetTrigger>
                             <SheetContent side="left" className="w-[300px] overflow-y-auto">
                                 <SheetHeader>
-                                    <SheetTitle>Filters</SheetTitle>
+                                    <SheetTitle>{t("filters")}</SheetTitle>
                                 </SheetHeader>
                                 <div className="mt-6">
                                     <FilterContent />
@@ -239,10 +280,10 @@ const FactoriesContent = () => {
                 <div className="hidden lg:block w-64 flex-shrink-0 overflow-y-auto scrollbar-thin">
                     <div className="mb-4">
                         <h1 className="text-xl font-bold text-foreground">
-                            {query ? `Results for "${query}"` : "All Factories"}
+                            {query ? t("resultsFor", { query }) : t("allFactories")}
                         </h1>
                         <p className="text-sm text-muted-foreground mt-1">
-                            {filteredFactories.length} factories found
+                            {t("factoriesFound", { count: filteredFactories.length })}
                         </p>
                     </div>
                     <div className="bg-card border rounded-lg p-4">
@@ -255,10 +296,10 @@ const FactoriesContent = () => {
                     {/* Mobile header */}
                     <div className="lg:hidden mb-4">
                         <h1 className="text-xl font-bold text-foreground">
-                            {query ? `Results for "${query}"` : "All Factories"}
+                            {query ? t("resultsFor", { query }) : t("allFactories")}
                         </h1>
                         <p className="text-sm text-muted-foreground mt-1">
-                            {filteredFactories.length} factories found
+                            {t("factoriesFound", { count: filteredFactories.length })}
                         </p>
                     </div>
 
@@ -292,15 +333,20 @@ const FactoriesContent = () => {
 
                     {filteredFactories.length === 0 ? (
                         <div className="bg-card border rounded-lg p-8 md:p-12 text-center">
-                            <p className="text-muted-foreground">No factories found matching your criteria.</p>
+                            <p className="text-muted-foreground">{t("noMatches")}</p>
                             <Button variant="link" onClick={clearFilters} className="mt-2">
-                                Clear filters
+                                {t("clearAll")}
                             </Button>
                         </div>
                     ) : (
                         <div className="grid gap-4 md:grid-cols-1">
                             {filteredFactories.map((factory) => (
-                                <FactoryCard key={factory.id} factory={factory} variant="horizontal" />
+                                <FactoryCard
+                                    key={factory.id}
+                                    factory={factory}
+                                    variant="horizontal"
+                                    isRecommended={recommendedIds.includes(factory.id)}
+                                />
                             ))}
                         </div>
                     )}

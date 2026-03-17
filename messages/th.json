@@ -1,0 +1,80 @@
+{
+    "Navbar": {
+        "findFactories": "ค้นหาโรงงาน",
+        "brandLaunchpad": "Brand Launchpad",
+        "dashboard": "แดชบอร์ด",
+        "forFactories": "สำหรับโรงงาน",
+        "messages": "ข้อความ",
+        "notifications": "การแจ้งเตือน",
+        "myAccount": "บัญชีของฉัน",
+        "profileSettings": "ตั้งค่าโปรไฟล์",
+        "orderHistory": "ประวัติการสั่งซื้อ",
+        "signOut": "ออกจากระบบ",
+        "smeDashboard": "แดชบอร์ด SME",
+        "oemDashboard": "แดชบอร์ด OEM",
+        "registerFactory": "ลงทะเบียนโรงงานของคุณ"
+    },
+    "Factories": {
+        "title": "ค้นหาโรงงาน OEM ที่ใช่",
+        "searchPlaceholder": "ค้นหาโรงงาน, ผลิตภัณฑ์, หมวดหมู่...",
+        "filters": "ตัวกรอง",
+        "clearAll": "ล้างทั้งหมด",
+        "category": "หมวดหมู่",
+        "location": "สถานที่",
+        "moqRange": "จำนวนขั้นต่ำ (MOQ)",
+        "certifications": "การรับรอง",
+        "resultsFor": "ผลลัพธ์สำหรับ \"{query}\"",
+        "allFactories": "โรงงานทั้งหมด",
+        "factoriesFound": "พบ {count} โรงงาน",
+        "noMatches": "ไม่พบโรงงานที่ตรงตามเงื่อนไขของคุณ",
+        "recommended": "โรงงานแนะนำ",
+        "pcs": "ชิ้น"
+    },
+    "HomePage": {
+        "hero": {
+            "title": "ระบบปฏิบัติการสำหรับ",
+            "sequence": {
+                "manufacturing": "การผลิต",
+                "smeSuccess": "ความสำเร็จของ SME",
+                "trustedDeals": "ดีลที่น่าเชื่อถือ",
+                "futureGrowth": "การเติบโตในอนาคต"
+            },
+            "desc": "เชื่อมต่อกับโรงงาน OEM ที่ผ่านการตรวจสอบ เริ่มต้นจากไอเดียสู่การผลิตจริงในแพลตฟอร์มอัจฉริยะเดียว",
+            "placeholder": "บอกไอเดียของคุณ... (เช่น ครีมหน้าใส, MOQ 500 ชิ้น, งบ 5 หมื่น)",
+            "search": "ค้นหา",
+            "popular": "ยอดนิยม"
+        },
+        "verifiedPicks": "โรงงานยอดนิยมที่ผ่านการตรวจสอบ",
+        "verifiedPicksDesc": "โรงงานที่คัดสรรมาเป็นอย่างดีพร้อมประวัติที่พิสูจน์แล้ว",
+        "viewAll": "ดูทั้งหมด",
+        "launchpadTitle": "Brand Launchpad",
+        "launchpadHeading": "สร้างแบรนด์ของคุณไปพร้อมกับการผลิต",
+        "launchpadDesc": "ดำเนินการจัดตั้งธุรกิจ การปฏิบัติตามกฎหมาย และการสร้างแบรนด์ให้เสร็จสิ้นควบคู่ไปกับการผลิต",
+        "launchpadItems": {
+            "registration": "จดทะเบียนบริษัท",
+            "registrationDesc": "ตั้งค่าด่วนผ่าน DBD",
+            "brandDesign": "การออกแบบแบรนด์",
+            "brandDesignDesc": "โลโก้และบรรจุภัณฑ์พร้อมใช้งาน",
+            "compliance": "อย. / เครื่องหมายการค้า",
+            "complianceDesc": "จัดการด้านกฎหมายครบวงจร",
+            "marketplace": "แหล่งรวมผู้เชี่ยวชาญ",
+            "marketplaceDesc": "ทนายความ นักบัญชี และอื่นๆ"
+        },
+        "exploreLaunchpad": "สำรวจ Brand Launchpad",
+        "stats": {
+            "factories": "โรงงานที่ตรวจสอบแล้ว",
+            "onTime": "ส่งมอบตรงเวลา",
+            "launched": "ผลิตภัณฑ์ที่เปิดตัวแล้ว",
+            "support": "การสนับสนุน AI"
+        },
+        "ctaTitle": "พร้อมที่จะเริ่มการผลิตหรือยัง?",
+        "ctaDesc": "ร่วมเป็นส่วนหนึ่งกับหลายพันแบรนด์ที่ไว้วางใจให้ NEOEM เชื่อมต่อกับโรงงานที่ใช่",
+        "ctaFind": "ค้นหาโรงงานของคุณ",
+        "ctaList": "ลงทะเบียนโรงงานของคุณ"
+    },
+    "Common": {
+        "search": "ค้นหา",
+        "comingSoon": "Coming Soon",
+        "comingSoonDesc": "ฟีเจอร์นี้เป็นส่วนหนึ่งของการอัปเดต NEOEM V.4 เร็วๆ นี้"
+    }
+}

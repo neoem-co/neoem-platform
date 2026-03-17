@@ -21,6 +21,7 @@ logger = logging.getLogger(__name__)
 
 # ── Singleton ────────────────────────────────────────────────────────────────
 _vector_store: Optional[Chroma] = None
+_factory_store: Optional[Chroma] = None
 
 # Multilingual model with strong Thai support, runs locally, no API key needed
 _EMBEDDING_MODEL = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
@@ -39,7 +40,7 @@ def _get_embeddings() -> HuggingFaceEmbeddings:
 
 
 def get_vector_store() -> Chroma:
-    """Return (or create) the ChromaDB vector store."""
+    """Return (or create) the ChromaDB vector store for legal knowledge."""
     global _vector_store
     if _vector_store is not None:
         return _vector_store
@@ -56,6 +57,24 @@ def get_vector_store() -> Chroma:
     return _vector_store
 
 
+def get_factory_store() -> Chroma:
+    """Return (or create) the ChromaDB vector store for factories."""
+    global _factory_store
+    if _factory_store is not None:
+        return _factory_store
+
+    persist_dir = settings.chroma_persist_dir
+    os.makedirs(persist_dir, exist_ok=True)
+
+    _factory_store = Chroma(
+        collection_name="factories",
+        embedding_function=_get_embeddings(),
+        persist_directory=persist_dir,
+    )
+    logger.info("ChromaDB factory store initialised at %s", persist_dir)
+    return _factory_store
+
+
 # ── Convenience helpers ──────────────────────────────────────────────────────
 
 
@@ -65,11 +84,24 @@ async def similarity_search(query: str, k: int = 5) -> list[Document]:
     return store.similarity_search(query, k=k)
 
 
+async def factory_similarity_search(query: str, k: int = 10) -> list[tuple[Document, float]]:
+    """Search for the most relevant factories for a query with scores."""
+    store = get_factory_store()
+    return store.similarity_search_with_relevance_scores(query, k=k)
+
+
 async def add_documents(docs: list[Document]) -> None:
     """Add documents to the vector store (used during knowledge base ingestion)."""
     store = get_vector_store()
     store.add_documents(docs)
     logger.info("Added %d documents to vector store", len(docs))
+
+
+async def add_factory_documents(docs: list[Document]) -> None:
+    """Add documents to the factory store."""
+    store = get_factory_store()
+    store.add_documents(docs)
+    logger.info("Added %d documents to factory store", len(docs))
 
 
 def seed_thai_legal_knowledge() -> None:

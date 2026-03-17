@@ -1,9 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { Bell, User, Menu, ChevronDown, Building2, ShoppingBag, Rocket, MessageSquare, Package, CreditCard, FileCheck, CheckCircle2 } from "lucide-react";
+import { Link, usePathname, useRouter } from "@/i18n/routing";
+import { Bell, User, Menu, Building2, ShoppingBag, Rocket, MessageSquare, Package, CreditCard, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import {
@@ -15,6 +14,8 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import neoemLogo from "@/public/assets/neoem-logo.png";
+import { useTranslations } from "next-intl";
+import { LanguageToggle } from "./LanguageToggle";
 
 const mockNotifications = [
     { id: 1, icon: CheckCircle2, message: "Thai Cosmetics Pro accepted your quote", time: "2 min ago", read: false },
@@ -23,6 +24,7 @@ const mockNotifications = [
 ];
 
 export function Navbar() {
+    const t = useTranslations("Navbar");
     const pathname = usePathname();
     const router = useRouter();
     const [open, setOpen] = useState(false);
@@ -30,16 +32,16 @@ export function Navbar() {
     const [readNotifs, setReadNotifs] = useState<number[]>([3]);
 
     const navLinks = [
-        { href: "/factories", label: "Find Factories", active: pathname === "/factories" },
-        { href: "/brand-launchpad", label: "Brand Launchpad", active: pathname === "/brand-launchpad" },
-        { href: "/dashboard", label: "Dashboard", active: pathname === "/dashboard" },
-        { href: "/pricing", label: "For Factories", active: pathname === "/pricing" },
+        { href: "/factories", label: t("findFactories"), active: pathname === "/factories" },
+        { href: "/brand-launchpad", label: t("brandLaunchpad"), active: pathname === "/brand-launchpad" },
+        { href: "/dashboard", label: t("dashboard"), active: pathname === "/dashboard" },
+        { href: "/pricing", label: t("forFactories"), active: pathname === "/pricing" },
     ];
 
     const unreadCount = mockNotifications.filter(n => !readNotifs.includes(n.id)).length;
 
     const handleSwitch = (path: string) => {
-        router.push(path);
+        router.push(path as any);
     };
 
     const handleMarkAllRead = () => {
@@ -58,7 +60,7 @@ export function Navbar() {
                     {navLinks.map((link) => (
                         <Link
                             key={link.href}
-                            href={link.href}
+                            href={link.href as any}
                             className={`text-sm font-medium transition-colors hover:text-primary ${link.active ? "text-primary" : "text-muted-foreground"
                                 }`}
                         >
@@ -68,6 +70,9 @@ export function Navbar() {
                 </nav>
 
                 <div className="flex items-center gap-2 md:gap-3">
+                    {/* Language Switcher */}
+                    <LanguageToggle />
+
                     {/* Messages Icon */}
                     <Link href="/messages">
                         <Button variant="ghost" size="icon" className={`relative ${pathname === "/messages" ? "text-primary" : ""}`}>
@@ -89,7 +94,7 @@ export function Navbar() {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-80">
                             <div className="flex items-center justify-between px-3 py-2">
-                                <DropdownMenuLabel className="p-0">Notifications</DropdownMenuLabel>
+                                <DropdownMenuLabel className="p-0">{t("notifications")}</DropdownMenuLabel>
                                 {unreadCount > 0 && (
                                     <Button variant="ghost" size="sm" className="text-xs h-auto py-1 px-2" onClick={handleMarkAllRead}>
                                         Mark all read
@@ -119,7 +124,7 @@ export function Navbar() {
                                 );
                             })}
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem className="justify-center text-sm text-primary cursor-pointer" onClick={() => { setNotifOpen(false); router.push("/dashboard"); }}>
+                            <DropdownMenuItem className="justify-center text-sm text-primary cursor-pointer" onClick={() => { setNotifOpen(false); router.push("/dashboard" as any); }}>
                                 View all notifications
                             </DropdownMenuItem>
                         </DropdownMenuContent>
@@ -133,29 +138,29 @@ export function Navbar() {
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-56">
-                            <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                            <DropdownMenuLabel>{t("myAccount")}</DropdownMenuLabel>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem>Profile Settings</DropdownMenuItem>
-                            <DropdownMenuItem>Order History</DropdownMenuItem>
+                            <DropdownMenuItem>{t("profileSettings")}</DropdownMenuItem>
+                            <DropdownMenuItem>{t("orderHistory")}</DropdownMenuItem>
                             <DropdownMenuSeparator />
                             <DropdownMenuLabel className="text-xs text-muted-foreground font-normal">
                                 Prototype Menu
                             </DropdownMenuLabel>
                             <DropdownMenuItem onClick={() => handleSwitch("/dashboard")}>
                                 <ShoppingBag className="h-4 w-4 mr-2" />
-                                Switch to SME Dashboard
+                                {t("smeDashboard")}
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => handleSwitch("/oem-dashboard")}>
                                 <Building2 className="h-4 w-4 mr-2" />
-                                Switch to OEM Dashboard
+                                {t("oemDashboard")}
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => handleSwitch("/brand-launchpad")}>
                                 <Rocket className="h-4 w-4 mr-2" />
-                                Brand Launchpad
+                                {t("brandLaunchpad")}
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem className="text-destructive">
-                                Sign Out
+                                {t("signOut")}
                             </DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
@@ -172,7 +177,7 @@ export function Navbar() {
                                 {navLinks.map((link) => (
                                     <Link
                                         key={link.href}
-                                        href={link.href}
+                                        href={link.href as any}
                                         onClick={() => setOpen(false)}
                                         className={`text-lg font-medium transition-colors hover:text-primary py-2 ${link.active ? "text-primary" : "text-foreground"
                                             }`}
@@ -187,7 +192,7 @@ export function Navbar() {
                                         }`}
                                 >
                                     <MessageSquare className="h-5 w-5" />
-                                    Messages
+                                    {t("messages")}
                                 </Link>
                                 <hr className="my-4" />
                                 <p className="text-xs text-muted-foreground uppercase tracking-wide">
@@ -199,7 +204,7 @@ export function Navbar() {
                                     className="text-lg font-medium text-foreground hover:text-primary py-2 flex items-center gap-2"
                                 >
                                     <ShoppingBag className="h-5 w-5" />
-                                    SME Dashboard
+                                    {t("smeDashboard")}
                                 </Link>
                                 <Link
                                     href="/oem-dashboard"
@@ -207,7 +212,7 @@ export function Navbar() {
                                     className="text-lg font-medium text-foreground hover:text-primary py-2 flex items-center gap-2"
                                 >
                                     <Building2 className="h-5 w-5" />
-                                    OEM Dashboard
+                                    {t("oemDashboard")}
                                 </Link>
                                 <hr className="my-4" />
                                 <Link
@@ -215,7 +220,7 @@ export function Navbar() {
                                     onClick={() => setOpen(false)}
                                     className="text-lg font-medium text-foreground hover:text-primary py-2"
                                 >
-                                    Register Your Factory
+                                    {t("registerFactory")}
                                 </Link>
                             </nav>
                         </SheetContent>
