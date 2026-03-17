@@ -32,7 +32,7 @@ from models.contract_draft import (
     ProductInfo,
     TemplateType,
 )
-from services.llm.typhoon_client import typhoon_invoke
+from services.llm.gemini_client import gemini_invoke
 from services.llm.prompts import (
     ARTICLE_GENERATION_SYSTEM,
     ARTICLE_GENERATION_USER,
@@ -73,12 +73,14 @@ async def extract_context(request: ExtractContextRequest) -> ExtractContextRespo
     if not chat_text:
         chat_text = "(ไม่มีข้อความในแชท)"
 
-    response_text = await typhoon_invoke(
+    response_text = await gemini_invoke(
         system_prompt=CONTEXT_EXTRACTION_SYSTEM,
-        user_prompt=CONTEXT_EXTRACTION_USER.format(
-            chat_history=chat_text,
-            factory_name=request.factory_name or "ไม่ทราบ",
-            factory_id=request.factory_id or "N/A",
+        user_prompt = CONTEXT_EXTRACTION_USER.replace(
+            "{chat_history}", chat_text
+        ).replace(
+            "{factory_name}", request.factory_name or "ไม่ทราบ"
+        ).replace(
+            "{factory_id}", request.factory_id or "N/A"
         ),
         temperature=0.1,
     )
@@ -200,7 +202,7 @@ async def generate_draft(request: GenerateDraftRequest) -> GenerateDraftResponse
             for key, val in subs.items():
                 user_prompt = user_prompt.replace(key, str(val))
 
-            response_text = await typhoon_invoke(
+            response_text = await gemini_invoke(
                 system_prompt=TEMPLATE_ARTICLE_GENERATION_SYSTEM,
                 user_prompt=user_prompt,
                 temperature=0.15,
@@ -214,14 +216,19 @@ async def generate_draft(request: GenerateDraftRequest) -> GenerateDraftResponse
     if not use_template:
         # Fallback: original prompt without template
         logger.info("Using generic prompt for %s", request.template_type.value)
-        response_text = await typhoon_invoke(
+        user_prompt = ARTICLE_GENERATION_USER
+        subs = {
+            "{template_type}": request.template_type.value,
+            "{deal_sheet}": deal_sheet_json,
+            "{parties}": parties_json,
+            "{product}": product_json,
+        }
+        for key, val in subs.items():
+            user_prompt = user_prompt.replace(key, str(val))
+
+        response_text = await gemini_invoke(
             system_prompt=ARTICLE_GENERATION_SYSTEM,
-            user_prompt=ARTICLE_GENERATION_USER.format(
-                template_type=request.template_type.value,
-                deal_sheet=deal_sheet_json,
-                parties=parties_json,
-                product=product_json,
-            ),
+            user_prompt=user_prompt,
             temperature=0.15,
         )
 
@@ -286,12 +293,13 @@ async def _polish_articles(articles: list[ContractArticle]) -> list[ContractArti
         if len(article.body_th) < 20:
             return article
         try:
-            resp = await typhoon_invoke(
+            user_prompt = LINGUISTIC_POLISH_USER.replace(
+                "{article_title}", article.title_th
+            ).replace("{article_body}", article.body_th)
+
+            resp = await gemini_invoke(
                 system_prompt=LINGUISTIC_POLISH_SYSTEM,
-                user_prompt=LINGUISTIC_POLISH_USER.format(
-                    article_title=article.title_th,
-                    article_body=article.body_th,
-                ),
+                user_prompt=user_prompt,
                 temperature=0.05,
             )
             data = _parse_json_response(resp)

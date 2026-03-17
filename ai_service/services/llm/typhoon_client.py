@@ -29,8 +29,10 @@ logger = logging.getLogger(__name__)
 _CONTEXT_WINDOW = 40_000
 # Reserve some tokens for the completion so the model can actually respond.
 _MIN_COMPLETION_BUDGET = 1024
-# Default max_tokens — leaves room for prompts up to ~36K tokens.
-_DEFAULT_MAX_TOKENS = _CONTEXT_WINDOW - _MIN_COMPLETION_BUDGET  # 38976
+# Default max_tokens — conservative completion budget.
+# Contracts rarely exceed 4-8K tokens. Setting this too high
+# causes 400 errors on some providers if total context exceeds limits.
+_DEFAULT_MAX_TOKENS = 8192
 
 
 def get_typhoon_llm(

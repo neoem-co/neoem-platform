@@ -35,20 +35,17 @@ export function TOSModal({ open, onAccept }: TOSModalProps) {
 
                 <div className="space-y-4">
                     <div className="bg-secondary/50 rounded-lg p-4 text-sm text-muted-foreground max-h-48 overflow-y-auto">
-                        <h4 className="font-semibold text-foreground mb-2">Trade Secrets Protection</h4>
+                        <h4 className="font-semibold text-foreground mb-2">{t("chat.tosModal.tradeSecrets")}</h4>
                         <p className="mb-3">
-                            By using NEOEM's messaging platform, you agree to protect all trade secrets,
-                            formulations, pricing information, and business strategies shared during negotiations.
+                            {t("chat.tosModal.tradeSecretsDesc")}
                         </p>
-                        <h4 className="font-semibold text-foreground mb-2">Confidentiality</h4>
+                        <h4 className="font-semibold text-foreground mb-2">{t("chat.tosModal.confidentiality")}</h4>
                         <p className="mb-3">
-                            All information exchanged through this platform is confidential and shall not be
-                            disclosed to third parties without written consent.
+                            {t("chat.tosModal.confidentialityDesc")}
                         </p>
-                        <h4 className="font-semibold text-foreground mb-2">Platform Rules</h4>
+                        <h4 className="font-semibold text-foreground mb-2">{t("chat.tosModal.platformRules")}</h4>
                         <p>
-                            Users must conduct business in good faith and not use information gained
-                            through negotiations to circumvent the platform.
+                            {t("chat.tosModal.platformRulesDesc")}
                         </p>
                     </div>
 
@@ -62,7 +59,7 @@ export function TOSModal({ open, onAccept }: TOSModalProps) {
                             htmlFor="tos"
                             className="text-sm text-foreground leading-relaxed cursor-pointer"
                         >
-                            I agree to NEOEM's Terms of Service & NDA Policy regarding trade secrets protection
+                            {t("chat.tosModal.agree")}
                         </label>
                     </div>
 
@@ -71,7 +68,7 @@ export function TOSModal({ open, onAccept }: TOSModalProps) {
                         disabled={!agreed}
                         onClick={onAccept}
                     >
-                        Accept & Start Chatting
+                        {t("chat.tosModal.accept")}
                     </Button>
                 </div>
             </DialogContent>

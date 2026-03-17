@@ -16,6 +16,12 @@ class Settings(BaseSettings):
         default="typhoon-v2.5-30b-a3b-instruct", alias="TYPHOON_MODEL"
     )
 
+    # ── Gemini LLM ──────────────────────────────────
+    gemini_api_key: str = Field(default="", alias="GEMINI_API_KEY")
+    gemini_model: str = Field(
+        default="gemini-2.5-flash-lite", alias="GEMINI_MODEL"
+    )
+
     # ── iApp Technology ──────────────────────────────
     iapp_api_key: str = Field(default="", alias="IAPP_API_KEY")
     iapp_ocr_url: str = Field(
