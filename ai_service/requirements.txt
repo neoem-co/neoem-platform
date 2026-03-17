@@ -12,6 +12,7 @@ pydantic-settings==2.7.1
 # LangChain & AI
 langchain==0.3.14
 langchain-openai==0.3.0
+openai==1.58.1
 langchain-community==0.3.14
 langchain-core==0.3.29
 langgraph==0.2.60
