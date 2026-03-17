@@ -19,7 +19,7 @@ class Settings(BaseSettings):
     # ── Gemini LLM ──────────────────────────────────
     gemini_api_key: str = Field(default="", alias="GEMINI_API_KEY")
     gemini_model: str = Field(
-        default="gemini-2.5-flash-lite", alias="GEMINI_MODEL"
+        default="gemini-1.5-flash", alias="GEMINI_MODEL"
     )
 
     # ── iApp Technology ──────────────────────────────

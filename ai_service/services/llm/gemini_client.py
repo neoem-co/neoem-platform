@@ -34,6 +34,13 @@ async def gemini_invoke(
     """
     Fire a single system+user message pair to Gemini and return the text.
     """
+    model_name = settings.gemini_model
+    logger.info("Gemini Invocation: model=%s, temp=%.2f", model_name, temperature)
+    
+    if not settings.gemini_api_key:
+        logger.error("GEMINI_API_KEY is not set in environment variables")
+        raise ValueError("GEMINI_API_KEY is missing")
+
     llm = get_gemini_llm(temperature=temperature)
     messages = [
         SystemMessage(content=system_prompt),
@@ -56,16 +63,8 @@ async def gemini_invoke(
                 t_tokens = getattr(usage, "total_tokens", 0)
                 
             logger.info("Gemini Usage: Prompt=%d, Completion=%d, Total=%d", p_tokens, c_tokens, t_tokens)
-        elif "usage" in response.response_metadata:
-            u = response.response_metadata["usage"]
-            logger.info(
-                "Gemini Usage: Prompt=%d, Completion=%d, Total=%d",
-                u.get("prompt_tokens", 0),
-                u.get("completion_tokens", 0),
-                u.get("total_tokens", 0)
-            )
             
         return response.content
     except Exception as e:
-        logger.error("Gemini invocation failed: %s", str(e))
+        logger.error("Gemini invocation failed (%s): %s", model_name, str(e))
         raise
