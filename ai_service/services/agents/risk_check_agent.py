@@ -33,7 +33,7 @@ from models.risk_check import (
     RiskLevel,
     StructuredContract,
 )
-from services.llm.typhoon_client import get_typhoon_llm, typhoon_invoke
+from services.llm.gemini_client import gemini_invoke
 from services.llm.thanoy_client import ThanoyClient
 from services.llm.prompts import (
     CHAT_SUMMARY_SYSTEM,
@@ -62,9 +62,9 @@ async def structure_contract(raw_text: str) -> StructuredContract:
     # Truncate if extremely long (LLM context limit)
     truncated = raw_text[:12000] if len(raw_text) > 12000 else raw_text
 
-    response_text = await typhoon_invoke(
+    response_text = await gemini_invoke(
         system_prompt=CLAUSE_STRUCTURING_SYSTEM,
-        user_prompt=CLAUSE_STRUCTURING_USER.format(raw_text=truncated),
+        user_prompt=CLAUSE_STRUCTURING_USER.replace("{raw_text}", truncated),
         temperature=0.05,
     )
 
@@ -124,9 +124,9 @@ async def aggregate_context(
     if not chat_text:
         chat_text = "(ไม่มีข้อความในแชท)"
 
-    response_text = await typhoon_invoke(
+    response_text = await gemini_invoke(
         system_prompt=CHAT_SUMMARY_SYSTEM,
-        user_prompt=CHAT_SUMMARY_USER.format(chat_history=chat_text),
+        user_prompt=CHAT_SUMMARY_USER.replace("{chat_history}", chat_text),
         temperature=0.1,
     )
 
@@ -243,14 +243,19 @@ async def analyse_risks(
         f"- {ref.law_name} {ref.section}: {ref.summary}" for ref in legal_refs
     )
 
-    response_text = await typhoon_invoke(
+    user_prompt = RISK_ANALYSIS_USER.replace(
+        "{structured_contract}", contract_json
+    ).replace(
+        "{deal_context}", context_json
+    ).replace(
+        "{legal_references}", legal_text or "(ไม่พบข้อกฎหมายที่เกี่ยวข้องใน knowledge base)"
+    ).replace(
+        "{thanoy_analysis}", thanoy_analysis or "(Thanoy ไม่สามารถวิเคราะห์ได้)"
+    )
+
+    response_text = await gemini_invoke(
         system_prompt=RISK_ANALYSIS_SYSTEM,
-        user_prompt=RISK_ANALYSIS_USER.format(
-            structured_contract=contract_json,
-            deal_context=context_json,
-            legal_references=legal_text or "(ไม่พบข้อกฎหมายที่เกี่ยวข้องใน knowledge base)",
-            thanoy_analysis=thanoy_analysis or "(Thanoy ไม่สามารถวิเคราะห์ได้)",
-        ),
+        user_prompt=user_prompt,
         temperature=0.1,
     )
 

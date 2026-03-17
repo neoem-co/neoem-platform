@@ -197,5 +197,19 @@
         "requestAPhysicalAudit": "Request a Physical Audit",
         "theNEOEMTeamWillVisitYourFactoryToVerifyOperationsEquipmentAndCertificationsBoostYourCredibilityBy300": "The NEOEM team will visit your factory to verify operations, equipment, and certifications. Boost your credibility by 300%!",
         "upgradeToPremiumToUnlock": "Upgrade to Premium to Unlock"
+    },
+    "chat": {
+        "tosModal": {
+            "title": "Terms of Service",
+            "description": "Please review and accept our platform terms before starting negotiations.",
+            "tradeSecrets": "Trade Secrets Protection",
+            "confidentiality": "Confidentiality",
+            "platformRules": "Platform Rules",
+            "tradeSecretsDesc": "By using NEOEM's messaging platform, you agree to protect all trade secrets, formulations, pricing information, and business strategies shared during negotiations.",
+            "confidentialityDesc": "All information exchanged through this platform is confidential and shall not be disclosed to third parties without written consent.",
+            "platformRulesDesc": "Users must conduct business in good faith and not use information gained through negotiations to circumvent the platform.",
+            "agree": "I agree to NEOEM's Terms of Service & NDA Policy regarding trade secrets protection",
+            "accept": "Accept & Start Chatting"
+        }
     }
 }
