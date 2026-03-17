@@ -12,6 +12,7 @@ langchain-openai==0.3.0
 langchain-community==0.3.14
 langchain-core==0.3.29
 langgraph==0.2.60
+langchain-google-genai==2.0.9
 
 # Vector Store (dev: ChromaDB, prod: pgvector)
 chromadb==0.5.23
@@ -21,6 +22,8 @@ sentence-transformers==3.3.1
 PyMuPDF==1.25.2
 python-docx==1.1.2
 reportlab==4.2.5
+fpdf2==2.8.2
+uharfbuzz==0.44.0
 
 # Utilities
 python-dotenv==1.0.1
