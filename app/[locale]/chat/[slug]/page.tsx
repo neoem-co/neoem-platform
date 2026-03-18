@@ -83,6 +83,7 @@ const DealRoom = () => {
     }
 
     const imageUrl = factoryImages[factory.image] || factory1;
+    const imageSrc = typeof imageUrl === "string" ? imageUrl : imageUrl.src;
 
     const handleSend = () => {
         if (!inputValue.trim() || !tosAccepted) return;
@@ -195,7 +196,7 @@ const DealRoom = () => {
                     <div className="flex items-center gap-3">
                         <Link href={`/${locale}/factory/${slug}`}><Button variant="ghost" size="icon"><ArrowLeft className="h-5 w-5" /></Button></Link>
                         <div className="flex items-center gap-2">
-                            <div className="w-8 h-8 rounded-full overflow-hidden"><img src={imageUrl.src || imageUrl} alt={factory.name} className="w-full h-full object-cover" /></div>
+                            <div className="w-8 h-8 rounded-full overflow-hidden"><img src={imageSrc} alt={factory.name} className="w-full h-full object-cover" /></div>
                             <div>
                                 <h2 className="font-semibold text-foreground text-sm">{factory.name}</h2>
                                 <p className="text-[10px] text-success">● Online</p>
@@ -230,7 +231,7 @@ const DealRoom = () => {
                     {/* Desktop Chat Header */}
                     <div className="hidden lg:flex p-4 border-b items-center justify-between bg-card">
                         <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-full overflow-hidden"><img src={imageUrl.src || imageUrl} alt={factory.name} className="w-full h-full object-cover" /></div>
+                            <div className="w-10 h-10 rounded-full overflow-hidden"><img src={imageSrc} alt={factory.name} className="w-full h-full object-cover" /></div>
                             <div>
                                 <h2 className="font-semibold text-foreground">{factory.name}</h2>
                                 <p className="text-xs text-success">● Online</p>
