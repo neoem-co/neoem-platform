@@ -38,6 +38,8 @@ export function RiskPdfViewer({
   const [numPages, setNumPages] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [containerWidth, setContainerWidth] = useState(800);
+  const [docError, setDocError] = useState<string | null>(null);
+  const [pageError, setPageError] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -49,7 +51,11 @@ export function RiskPdfViewer({
     if (!fileUrl) {
       setNumPages(0);
       setCurrentPage(1);
+      setDocError(null);
+      setPageError(null);
+      return;
     }
+    console.info("[RiskPdfViewer] loading file", { fileUrl });
   }, [fileUrl]);
 
   useEffect(() => {
@@ -59,6 +65,9 @@ export function RiskPdfViewer({
     };
 
     updateWidth();
+    console.info("[RiskPdfViewer] pdfjs worker configured", {
+      workerSrc: pdfjs.GlobalWorkerOptions.workerSrc,
+    });
     window.addEventListener("resize", updateWidth);
     return () => window.removeEventListener("resize", updateWidth);
   }, []);
@@ -95,15 +104,36 @@ export function RiskPdfViewer({
       </div>
 
       <div ref={containerRef} className="flex-1 overflow-auto p-2 bg-secondary/10">
+        {(docError || pageError) && (
+          <div className="mb-2 rounded border border-destructive/30 bg-destructive/10 p-2 text-xs text-destructive">
+            PDF render issue: {docError || pageError}
+          </div>
+        )}
         <div className="mx-auto relative w-fit">
           <Document
             file={fileUrl}
             onLoadSuccess={({ numPages: loaded }) => {
+              console.info("[RiskPdfViewer] document loaded", {
+                numPages: loaded,
+                containerWidth,
+              });
               setNumPages(loaded);
               setCurrentPage((p) => Math.min(Math.max(1, p), loaded));
+              setDocError(null);
+              setPageError(null);
+            }}
+            onLoadError={(error) => {
+              const message = error instanceof Error ? error.message : String(error);
+              console.error("[RiskPdfViewer] document load error", error);
+              setDocError(message);
+            }}
+            onSourceError={(error) => {
+              const message = error instanceof Error ? error.message : String(error);
+              console.error("[RiskPdfViewer] document source error", error);
+              setDocError(message);
             }}
             loading={<div className="text-sm text-muted-foreground p-4">Loading PDF...</div>}
-            error={<div className="text-sm text-destructive p-4">Failed to render PDF.</div>}
+            error={<div className="text-sm text-destructive p-4">Failed to render PDF. Check browser console logs.</div>}
           >
             <div className="relative">
               <Page
@@ -111,6 +141,22 @@ export function RiskPdfViewer({
                 width={containerWidth}
                 renderAnnotationLayer={false}
                 renderTextLayer={false}
+                onRenderSuccess={() => {
+                  console.info("[RiskPdfViewer] page rendered", {
+                    currentPage,
+                    containerWidth,
+                  });
+                  setPageError(null);
+                }}
+                onRenderError={(error) => {
+                  const message = error instanceof Error ? error.message : String(error);
+                  console.error("[RiskPdfViewer] page render error", {
+                    currentPage,
+                    containerWidth,
+                    error,
+                  });
+                  setPageError(message);
+                }}
               />
 
               <div className="absolute inset-0 pointer-events-none">

@@ -176,12 +176,6 @@ const mockSignHistory = [
     { id: "s2", fileName: "NDA_BeautyBrand.pdf", date: "2025-01-05", signedBy: "Buyer Only", status: "pending" },
 ];
 
-const auditors = [
-    { name: "Katun Thangho", role: "Brand Launchpad" },
-    { name: "Canal Wiata", role: "Revili Locontam" },
-    { name: "Resena Don", role: "Reviti Locontam" },
-];
-
 export function AILegalWorkspace({
     open,
     onClose,
@@ -976,23 +970,6 @@ function RiskPanel({
                                 </CardContent>
                             </Card>
                         ))}
-                    </div>
-
-                    <div className="pt-2">
-                        <p className="text-sm font-semibold text-foreground mb-2">Auditor</p>
-                        <div className="space-y-2">
-                            {auditors.map((a) => (
-                                <div key={a.name} className="flex items-center gap-2">
-                                    <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold text-primary">
-                                        {a.name.charAt(0)}
-                                    </div>
-                                    <div>
-                                        <p className="text-xs font-medium text-foreground">{a.name}</p>
-                                        <p className="text-[10px] text-muted-foreground">{a.role}</p>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
                     </div>
 
                     <Button variant="outline" className="w-full" onClick={() => { setResults(null); setFile(null); }}>
