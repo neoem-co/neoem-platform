@@ -102,6 +102,7 @@ async def step4_finalize(request: FinalizeRequest):
 
 
 @router.get("/contracts/{contract_id}/download/{format}")
+@router.get("/ai/contract-draft/contracts/{contract_id}/download/{format}")
 async def download_contract(contract_id: str, format: str):
     """Download a finalized contract file (pdf or docx)."""
     if format not in ("pdf", "docx"):
