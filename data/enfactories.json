@@ -1,0 +1,1494 @@
+{
+    "factories": [
+        {
+            "id": "1",
+            "name": "ILC Public Company Limited",
+            "slug": "ilc-cosmetics",
+            "verified": true,
+            "image": "factory-1",
+            "location": "Bangkok, Thailand",
+            "category": "Cosmetics",
+            "tags": [
+                "Industry Leader",
+                "50+ Years",
+                "Global Scale"
+            ],
+            "rating": 4.9,
+            "reviewCount": 310,
+            "onTimeDelivery": 99,
+            "priceLevel": 4,
+            "moq": 1000,
+            "description": "With over 51 years of experience, ILC is Thailand's most established cosmetic manufacturer, providing high-end formulation and global scale manufacturing. ",
+            "specialties": [
+                "Skin Care",
+                "Personal Care",
+                "Hair Care",
+                "Make-up"
+            ],
+            "registeredCapital": 500000000,
+            "financialHealth": "Excellent",
+            "revenueHistory": [
+                {
+                    "year": "2021",
+                    "revenue": 2020000000
+                },
+                {
+                    "year": "2022",
+                    "revenue": 1940000000
+                },
+                {
+                    "year": "2023",
+                    "revenue": 1860000000
+                }
+            ],
+            "machines": [
+                {
+                    "name": "Automated Filling Line",
+                    "capacity": "20,000 Units/Day",
+                    "image": "filling"
+                },
+                {
+                    "name": "High Volume Mixer",
+                    "capacity": "5 Tons/Day",
+                    "image": "mixer"
+                }
+            ],
+            "certifications": [
+                "ISO 9001",
+                "ISO 14001"
+            ]
+        },
+        {
+            "id": "2",
+            "name": "MPC Innovation Lab Co., Ltd.",
+            "slug": "mpc-innovation",
+            "verified": true,
+            "image": "factory-2",
+            "location": "Bangkok, Thailand",
+            "category": "Cosmetics",
+            "tags": [
+                "Innovation-Driven",
+                "High-Performance",
+                "Trend-Based"
+            ],
+            "rating": 4.8,
+            "reviewCount": 185,
+            "onTimeDelivery": 97,
+            "priceLevel": 3,
+            "moq": 500,
+            "description": "A leading innovation-driven OEM focused on high-performance skincare and trend-based product development for modern brands. [1, 7]",
+            "specialties": [
+                "Skin Care",
+                "Personal Care",
+                "Hair Care",
+                "Make-up"
+            ],
+            "registeredCapital": 20000000,
+            "financialHealth": "Strong",
+            "revenueHistory": [
+                {
+                    "year": "2021",
+                    "revenue": 120000000
+                },
+                {
+                    "year": "2022",
+                    "revenue": 145000000
+                },
+                {
+                    "year": "2023",
+                    "revenue": 178000000
+                }
+            ],
+            "machines": [
+                {
+                    "name": "Automated Filling Line",
+                    "capacity": "20,000 Units/Day",
+                    "image": "filling"
+                },
+                {
+                    "name": "High Volume Mixer",
+                    "capacity": "5 Tons/Day",
+                    "image": "mixer"
+                }
+            ],
+            "certifications": [
+                "ISO 9001"
+            ]
+        },
+        {
+            "id": "3",
+            "name": "Life Plus Pharmaceutical Co., Ltd.",
+            "slug": "life-plus-pharma",
+            "verified": true,
+            "image": "factory-3",
+            "location": "Bangkok, Thailand",
+            "category": "Cosmetics",
+            "tags": [
+                "Cosmeceuticals",
+                "Pharmaceutical Grade",
+                "Award-Winning"
+            ],
+            "rating": 4.7,
+            "reviewCount": 220,
+            "onTimeDelivery": 96,
+            "priceLevel": 3,
+            "moq": 1000,
+            "description": "Specializes in cosmeceuticals and supplements with standard pharmaceutical grade facilities and multiple industry awards. ",
+            "specialties": [
+                "Skin Care",
+                "Supplements",
+                "Personal Care",
+                "Hair Care"
+            ],
+            "registeredCapital": 50000000,
+            "financialHealth": "Excellent",
+            "revenueHistory": [
+                {
+                    "year": "2021",
+                    "revenue": 350000000
+                },
+                {
+                    "year": "2022",
+                    "revenue": 380000000
+                },
+                {
+                    "year": "2023",
+                    "revenue": 420000000
+                }
+            ],
+            "certifications": [
+                "ISO 9001"
+            ],
+            "machines": [
+                {
+                    "name": "Pharmaceutical Mixing Vessel",
+                    "capacity": "3 Tons/Batch",
+                    "image": "mixer"
+                },
+                {
+                    "name": "Cosmeceutical Filling Line",
+                    "capacity": "18,000 Units/Day",
+                    "image": "filling"
+                }
+            ]
+        },
+        {
+            "id": "4",
+            "name": "Revomed (Thailand) Co., Ltd.",
+            "slug": "revomed-oem",
+            "verified": true,
+            "image": "factory-4",
+            "location": "Nonthaburi, Thailand",
+            "category": "Cosmetics",
+            "tags": [
+                "Premium Service",
+                "International Export",
+                "World-Class"
+            ],
+            "rating": 4.9,
+            "reviewCount": 150,
+            "onTimeDelivery": 98,
+            "priceLevel": 5,
+            "moq": 3000,
+            "description": "Providing one-stop service for premium beauty brands, focusing on international export quality and world-class manufacturing. ",
+            "specialties": [],
+            "registeredCapital": 20000000,
+            "financialHealth": "Very Strong",
+            "revenueHistory": [
+                {
+                    "year": "2021",
+                    "revenue": 500000000
+                },
+                {
+                    "year": "2022",
+                    "revenue": 580000000
+                },
+                {
+                    "year": "2023",
+                    "revenue": 650000000
+                }
+            ],
+            "certifications": [],
+            "machines": [
+                {
+                    "name": "Vacuum Emulsifying Mixer",
+                    "capacity": "4 Tons/Batch",
+                    "image": "mixer"
+                },
+                {
+                    "name": "High-Speed Filling & Capping Line",
+                    "capacity": "25,000 Units/Day",
+                    "image": "filling"
+                }
+            ]
+        },
+        {
+            "id": "5",
+            "name": "Prima Care International Co., Ltd.",
+            "slug": "prima-care",
+            "verified": true,
+            "image": "factory-5",
+            "location": "Bangkok, Thailand",
+            "category": "Cosmetics",
+            "tags": [],
+            "rating": 4.6,
+            "reviewCount": 275,
+            "onTimeDelivery": 95,
+            "priceLevel": 3,
+            "moq": 500,
+            "description": "A trusted partner for entrepreneurs, offering flexible manufacturing solutions for skincare and cosmetic products. [1, 4]",
+            "specialties": [],
+            "registeredCapital": 10000000,
+            "financialHealth": "Stable",
+            "revenueHistory": [
+                {
+                    "year": "2021",
+                    "revenue": 85000000
+                },
+                {
+                    "year": "2022",
+                    "revenue": 92000000
+                },
+                {
+                    "year": "2023",
+                    "revenue": 105000000
+                }
+            ],
+            "certifications": [],
+            "machines": [
+                {
+                    "name": "Pilot Formulation Mixer",
+                    "capacity": "1.5 Tons/Batch",
+                    "image": "mixer"
+                },
+                {
+                    "name": "Flexible Packaging Line",
+                    "capacity": "12,000 Units/Day",
+                    "image": "packaging"
+                }
+            ]
+        },
+        {
+            "id": "6",
+            "name": "Nutrix Production Co., Ltd.",
+            "slug": "nutrix-food",
+            "verified": true,
+            "image": "factory-6",
+            "location": "Pathum Thani, Thailand",
+            "category": "Food",
+            "tags": [
+                "GMP",
+                "ISO 9001"
+            ],
+            "rating": 4.8,
+            "reviewCount": 190,
+            "onTimeDelivery": 98,
+            "priceLevel": 3,
+            "moq": 2000,
+            "description": "Expert in dietary supplements and functional food production with world-class cleanroom facilities. [3, 4]",
+            "specialties": [],
+            "registeredCapital": 40000000,
+            "financialHealth": "Excellent",
+            "revenueHistory": [
+                {
+                    "year": "2021",
+                    "revenue": 210000000
+                },
+                {
+                    "year": "2022",
+                    "revenue": 245000000
+                },
+                {
+                    "year": "2023",
+                    "revenue": 290000000
+                }
+            ],
+            "certifications": [],
+            "machines": [
+                {
+                    "name": "Supplement Blending System",
+                    "capacity": "6 Tons/Day",
+                    "image": "mixer"
+                },
+                {
+                    "name": "Sachet Filling Machine",
+                    "capacity": "80,000 Sachets/Day",
+                    "image": "filling"
+                }
+            ]
+        },
+        {
+            "id": "7",
+            "name": "NR Instant Produce PCL (NRF)",
+            "slug": "nrf-food",
+            "verified": true,
+            "image": "factory-7",
+            "location": "Samut Sakhon, Thailand",
+            "category": "Food",
+            "tags": [],
+            "rating": 4.8,
+            "reviewCount": 420,
+            "onTimeDelivery": 98,
+            "priceLevel": 4,
+            "moq": 10000,
+            "description": "A global leader in ethnic and plant-based food manufacturing, focusing on sustainability. [9, 8]",
+            "specialties": [],
+            "registeredCapital": 1417660000,
+            "financialHealth": "Excellent",
+            "revenueHistory": [
+                {
+                    "year": "2021",
+                    "revenue": 2180000000
+                },
+                {
+                    "year": "2022",
+                    "revenue": 2420000000
+                },
+                {
+                    "year": "2023",
+                    "revenue": 3040000000
+                }
+            ],
+            "certifications": [],
+            "machines": [
+                {
+                    "name": "Retort Sterilization Line",
+                    "capacity": "40,000 Packs/Day",
+                    "image": "factory"
+                },
+                {
+                    "name": "Automated Pouch Packing Line",
+                    "capacity": "60,000 Units/Day",
+                    "image": "packaging"
+                }
+            ]
+        },
+        {
+            "id": "8",
+            "name": "Butterfly Organic Co., Ltd.",
+            "slug": "butterfly-organic",
+            "verified": true,
+            "image": "factory-8",
+            "location": "Bangkok, Thailand",
+            "category": "Food",
+            "tags": [
+                "Organic",
+                "Dairy",
+                "Plant Milk",
+                "Organic Ice Cream"
+            ],
+            "rating": 4.9,
+            "reviewCount": 110,
+            "onTimeDelivery": 99,
+            "priceLevel": 4,
+            "moq": 100,
+            "description": "Thailand's first organic dairy OEM, specializing in high-quality organic yogurt and plant milk. ",
+            "specialties": [
+                "Organic Yogurt",
+                "Plant Milk",
+                "Organic Ice Cream"
+            ],
+            "registeredCapital": 25000000,
+            "financialHealth": "Strong",
+            "revenueHistory": [
+                {
+                    "year": "2021",
+                    "revenue": 115000000
+                },
+                {
+                    "year": "2022",
+                    "revenue": 130000000
+                },
+                {
+                    "year": "2023",
+                    "revenue": 155000000
+                }
+            ],
+            "certifications": [],
+            "machines": [
+                {
+                    "name": "Fermentation Tank System",
+                    "capacity": "10,000 Liters/Batch",
+                    "image": "mixer"
+                },
+                {
+                    "name": "Aseptic Bottling Line",
+                    "capacity": "15,000 Bottles/Day",
+                    "image": "filling"
+                }
+            ]
+        },
+        {
+            "id": "9",
+            "name": "V.Thai Food Product Co., Ltd.",
+            "slug": "vthai-food",
+            "verified": true,
+            "image": "factory-9",
+            "location": "Samut Prakan, Thailand",
+            "category": "Food",
+            "tags": [
+                "Sauces",
+                "Seasonings",
+                "Curry Pastes",
+                "Marinades"
+            ],
+            "rating": 4.7,
+            "reviewCount": 140,
+            "onTimeDelivery": 97,
+            "priceLevel": 3,
+            "moq": 5000,
+            "description": "A leading exporter of sauces and seasonings, providing high-quality OEM services globally. ",
+            "specialties": [
+                "Sauces",
+                "Seasonings",
+                "Curry Pastes",
+                "Marinades"
+            ],
+            "registeredCapital": 20000000,
+            "financialHealth": "Very Strong",
+            "revenueHistory": [
+                {
+                    "year": "2021",
+                    "revenue": 450000000
+                },
+                {
+                    "year": "2022",
+                    "revenue": 480000000
+                },
+                {
+                    "year": "2023",
+                    "revenue": 520000000
+                }
+            ],
+            "certifications": [],
+            "machines": [
+                {
+                    "name": "Sauce Cooking Kettle",
+                    "capacity": "5 Tons/Batch",
+                    "image": "mixer"
+                },
+                {
+                    "name": "Hot-Fill Bottle Line",
+                    "capacity": "22,000 Units/Day",
+                    "image": "filling"
+                }
+            ]
+        },
+        {
+            "id": "10",
+            "name": "Nature Best Food Co., Ltd.",
+            "slug": "nbf-food",
+            "verified": true,
+            "image": "factory-10",
+            "location": "Samut Prakan, Thailand",
+            "category": "Food",
+            "tags": [
+                "Seaweed Snacks",
+                "Healthy Snacks",
+                "Rice Crackers",
+                "Rice Paper"
+            ],
+            "rating": 4.7,
+            "reviewCount": 165,
+            "onTimeDelivery": 96,
+            "priceLevel": 3,
+            "moq": 1000,
+            "description": "First seaweed manufacturer in Thailand, specializing in healthy snacks with advanced technology. ",
+            "specialties": [
+                "Seaweed Snacks",
+                "Healthy Snacks",
+                "Rice Crackers",
+                "Rice Paper"
+            ],
+            "registeredCapital": 30000000,
+            "financialHealth": "Stable",
+            "revenueHistory": [
+                {
+                    "year": "2021",
+                    "revenue": 180000000
+                },
+                {
+                    "year": "2022",
+                    "revenue": 195000000
+                },
+                {
+                    "year": "2023",
+                    "revenue": 220000000
+                }
+            ],
+            "certifications": [],
+            "machines": [
+                {
+                    "name": "Continuous Roasting Oven",
+                    "capacity": "3 Tons/Day",
+                    "image": "factory"
+                },
+                {
+                    "name": "Snack Seasoning Drum",
+                    "capacity": "10,000 Packs/Shift",
+                    "image": "mixer"
+                }
+            ]
+        },
+        {
+            "id": "11",
+            "name": "Mitmongkol Industry Co., Ltd.",
+            "slug": "mmk-household",
+            "verified": true,
+            "image": "factory-11",
+            "location": "Bangkok, Thailand",
+            "category": "Household",
+            "tags": [
+                "Cleaning Products",
+                "Personal Care Products",
+                "Household Products"
+            ],
+            "rating": 4.8,
+            "reviewCount": 130,
+            "onTimeDelivery": 98,
+            "priceLevel": 3,
+            "moq": 2000,
+            "description": "Specializing in cleaning and personal care products with advanced SCADA production systems. ",
+            "specialties": [
+                "Cleaning Products",
+                "Personal Care Products",
+                "Household Products"
+            ],
+            "registeredCapital": 80000000,
+            "financialHealth": "Very Strong",
+            "revenueHistory": [
+                {
+                    "year": "2021",
+                    "revenue": 1140000000
+                },
+                {
+                    "year": "2022",
+                    "revenue": 1210000000
+                },
+                {
+                    "year": "2023",
+                    "revenue": 1280000000
+                }
+            ],
+            "certifications": [],
+            "machines": [
+                {
+                    "name": "Liquid Blending Tank",
+                    "capacity": "8 Tons/Batch",
+                    "image": "mixer"
+                },
+                {
+                    "name": "Household Bottle Filling Line",
+                    "capacity": "30,000 Units/Day",
+                    "image": "filling"
+                }
+            ]
+        },
+        {
+            "id": "12",
+            "name": "PAUS (Thailand) Co., Ltd.",
+            "slug": "paus-household",
+            "verified": true,
+            "image": "factory-12",
+            "location": "Rayong, Thailand",
+            "category": "Household",
+            "tags": [],
+            "rating": 4.7,
+            "reviewCount": 95,
+            "onTimeDelivery": 97,
+            "priceLevel": 4,
+            "moq": 500,
+            "description": "Manufacturing high-quality kitchen and interior components with precision engineering. ",
+            "specialties": [
+                "Kitchen Components",
+                "Interior Components",
+                "Precision Engineering"
+            ],
+            "registeredCapital": 20000000,
+            "financialHealth": "Stable",
+            "revenueHistory": [
+                {
+                    "year": "2021",
+                    "revenue": 85000000
+                },
+                {
+                    "year": "2022",
+                    "revenue": 98000000
+                },
+                {
+                    "year": "2023",
+                    "revenue": 115000000
+                }
+            ],
+            "certifications": [],
+            "machines": [
+                {
+                    "name": "CNC Component Line",
+                    "capacity": "Precision Batch Production",
+                    "image": "factory"
+                },
+                {
+                    "name": "Powder Coating System",
+                    "capacity": "2,500 Parts/Day",
+                    "image": "packaging"
+                }
+            ]
+        },
+        {
+            "id": "13",
+            "name": "Cavaltis (Thailand) Co., Ltd.",
+            "slug": "cavaltis-household",
+            "verified": true,
+            "image": "factory-13",
+            "location": "Bangkok, Thailand",
+            "category": "Household",
+            "tags": [],
+            "rating": 4.6,
+            "reviewCount": 75,
+            "onTimeDelivery": 96,
+            "priceLevel": 3,
+            "moq": 1000,
+            "description": "Providing specialized hygiene and disinfectant solutions for residential and industrial use. [9, 1]",
+            "specialties": [],
+            "registeredCapital": 15000000,
+            "financialHealth": "Good",
+            "revenueHistory": [
+                {
+                    "year": "2021",
+                    "revenue": 65000000
+                },
+                {
+                    "year": "2022",
+                    "revenue": 72000000
+                },
+                {
+                    "year": "2023",
+                    "revenue": 88000000
+                }
+            ],
+            "certifications": [],
+            "machines": [
+                {
+                    "name": "Metal Forming Press",
+                    "capacity": "4,000 Parts/Day",
+                    "image": "factory"
+                },
+                {
+                    "name": "Surface Finishing Line",
+                    "capacity": "Continuous Flow",
+                    "image": "packaging"
+                }
+            ]
+        },
+        {
+            "id": "14",
+            "name": "K. Rattanagrit Co., Ltd.",
+            "slug": "k-rattanagrit",
+            "verified": true,
+            "image": "factory-14",
+            "location": "Bangkok, Thailand",
+            "category": "Household",
+            "tags": [
+                "Plastic Expert",
+                "Mass Production",
+                "Food Grade"
+            ],
+            "rating": 4.5,
+            "reviewCount": 88,
+            "onTimeDelivery": 95,
+            "priceLevel": 2,
+            "moq": 5000,
+            "description": "Manufacturer of high-volume plastic household items, focusing on durability and food safety. [9, 1]",
+            "specialties": [],
+            "registeredCapital": 10000000,
+            "financialHealth": "Stable",
+            "revenueHistory": [
+                {
+                    "year": "2021",
+                    "revenue": 45000000
+                },
+                {
+                    "year": "2022",
+                    "revenue": 52000000
+                },
+                {
+                    "year": "2023",
+                    "revenue": 58000000
+                }
+            ],
+            "certifications": [],
+            "machines": [
+                {
+                    "name": "Injection Molding Machine",
+                    "capacity": "6,000 Pieces/Day",
+                    "image": "factory"
+                },
+                {
+                    "name": "Assembly Conveyor Line",
+                    "capacity": "10,000 Units/Shift",
+                    "image": "filling"
+                }
+            ]
+        },
+        {
+            "id": "15",
+            "name": "Lion (Thailand) Co., Ltd.",
+            "slug": "lion-thailand",
+            "verified": true,
+            "image": "factory-15",
+            "location": "Chonburi, Thailand",
+            "category": "Household",
+            "tags": [],
+            "rating": 4.9,
+            "reviewCount": 550,
+            "onTimeDelivery": 99,
+            "priceLevel": 4,
+            "moq": 10000,
+            "description": "World-class manufacturer of household care products, leading in sustainability and scale. ",
+            "specialties": [
+                "Personal Care",
+                "Cleaning Agents",
+                "Laundry Products"
+            ],
+            "registeredCapital": 350000000,
+            "financialHealth": "Excellent",
+            "revenueHistory": [
+                {
+                    "year": "2021",
+                    "revenue": 3182000000
+                },
+                {
+                    "year": "2022",
+                    "revenue": 2970000000
+                },
+                {
+                    "year": "2023",
+                    "revenue": 2857000000
+                }
+            ],
+            "certifications": [],
+            "machines": [
+                {
+                    "name": "Detergent Mixing Reactor",
+                    "capacity": "12 Tons/Batch",
+                    "image": "mixer"
+                },
+                {
+                    "name": "High-Speed Cartoning Line",
+                    "capacity": "45,000 Units/Day",
+                    "image": "packaging"
+                }
+            ]
+        },
+        {
+            "id": "16",
+            "name": "SNC Former PCL",
+            "slug": "snc-electrical",
+            "verified": true,
+            "image": "factory-16",
+            "location": "Samut Prakan, Thailand",
+            "category": "Electrical",
+            "tags": [],
+            "rating": 4.9,
+            "reviewCount": 480,
+            "onTimeDelivery": 99,
+            "priceLevel": 4,
+            "moq": 1000,
+            "description": "Leading provider of components and assembly for air conditioners with robotic production. ",
+            "specialties": [],
+            "registeredCapital": 362220439,
+            "financialHealth": "Excellent",
+            "revenueHistory": [
+                {
+                    "year": "2021",
+                    "revenue": 15398000000
+                },
+                {
+                    "year": "2022",
+                    "revenue": 19071000000
+                },
+                {
+                    "year": "2023",
+                    "revenue": 9333000000
+                }
+            ],
+            "certifications": [],
+            "machines": [
+                {
+                    "name": "CNC Stamping Line",
+                    "capacity": "5,000 Components/Day",
+                    "image": "factory"
+                },
+                {
+                    "name": "Automated Assembly Cell",
+                    "capacity": "12,000 Units/Shift",
+                    "image": "filling"
+                }
+            ]
+        },
+        {
+            "id": "17",
+            "name": "Kang Yong Electric PCL (KYE)",
+            "slug": "kye-mitsubishi",
+            "verified": true,
+            "image": "factory-17",
+            "location": "Samut Prakan, Thailand",
+            "category": "Electrical",
+            "tags": [],
+            "rating": 4.8,
+            "reviewCount": 320,
+            "onTimeDelivery": 98,
+            "priceLevel": 4,
+            "moq": 5000,
+            "description": "Premier manufacturer of home appliances specializing in refrigerators and electric fans. ",
+            "specialties": [],
+            "registeredCapital": 198000000,
+            "financialHealth": "Very Strong",
+            "revenueHistory": [
+                {
+                    "year": "2021",
+                    "revenue": 8341000000
+                },
+                {
+                    "year": "2022",
+                    "revenue": 7965000000
+                },
+                {
+                    "year": "2023",
+                    "revenue": 8465000000
+                }
+            ],
+            "certifications": [],
+            "machines": [
+                {
+                    "name": "Motor Winding Machine",
+                    "capacity": "3,500 Units/Day",
+                    "image": "factory"
+                },
+                {
+                    "name": "Electrical Safety Test Bench",
+                    "capacity": "100% End-of-Line QC",
+                    "image": "lab"
+                }
+            ]
+        },
+        {
+            "id": "18",
+            "name": "Kulthorn Kirby PCL",
+            "slug": "kkc-compressor",
+            "verified": true,
+            "image": "factory-18",
+            "location": "Bangkok, Thailand",
+            "category": "Electrical",
+            "tags": [],
+            "rating": 4.7,
+            "reviewCount": 210,
+            "onTimeDelivery": 97,
+            "priceLevel": 4,
+            "moq": 2000,
+            "description": "The center of cooling technology in Thailand, specializing in compressors and condensing units. ",
+            "specialties": [],
+            "registeredCapital": 150000000,
+            "financialHealth": "Stable",
+            "revenueHistory": [
+                {
+                    "year": "2021",
+                    "revenue": 6714000000
+                },
+                {
+                    "year": "2022",
+                    "revenue": 6097000000
+                },
+                {
+                    "year": "2023",
+                    "revenue": 3191000000
+                }
+            ],
+            "certifications": [],
+            "machines": [
+                {
+                    "name": "Compressor Coil Winder",
+                    "capacity": "2,800 Units/Day",
+                    "image": "factory"
+                },
+                {
+                    "name": "Leak Testing Station",
+                    "capacity": "Continuous Inspection",
+                    "image": "lab"
+                }
+            ]
+        },
+        {
+            "id": "19",
+            "name": "NPE Industry (Thailand) Co., Ltd.",
+            "slug": "npe-audio",
+            "verified": true,
+            "image": "factory-19",
+            "location": "Bangkok, Thailand",
+            "category": "Electrical",
+            "tags": [],
+            "rating": 4.6,
+            "reviewCount": 155,
+            "onTimeDelivery": 96,
+            "priceLevel": 3,
+            "moq": 100,
+            "description": "Expert in audio equipment and precision sheet metal work, providing high-quality custom enclosures. [14, 18]",
+            "specialties": [],
+            "registeredCapital": 5000000,
+            "financialHealth": "Good",
+            "revenueHistory": [
+                {
+                    "year": "2021",
+                    "revenue": 180000000
+                },
+                {
+                    "year": "2022",
+                    "revenue": 210000000
+                },
+                {
+                    "year": "2023",
+                    "revenue": 240000000
+                }
+            ],
+            "certifications": [],
+            "machines": [
+                {
+                    "name": "PCB Assembly Line",
+                    "capacity": "20,000 Boards/Day",
+                    "image": "factory"
+                },
+                {
+                    "name": "Audio Calibration Lab",
+                    "capacity": "Full Functional Testing",
+                    "image": "lab"
+                }
+            ]
+        },
+        {
+            "id": "20",
+            "name": "Siam Intercool Co., Ltd.",
+            "slug": "siam-intercool",
+            "verified": true,
+            "image": "factory-20",
+            "location": "Bangkok, Thailand",
+            "category": "Electrical",
+            "tags": [],
+            "rating": 4.8,
+            "reviewCount": 125,
+            "onTimeDelivery": 97,
+            "priceLevel": 4,
+            "moq": 50,
+            "description": "Leading commercial refrigeration OEM with a focus on custom design and energy efficiency. [5, 8]",
+            "specialties": [],
+            "registeredCapital": 20000000,
+            "financialHealth": "Strong",
+            "revenueHistory": [
+                {
+                    "year": "2021",
+                    "revenue": 320000000
+                },
+                {
+                    "year": "2022",
+                    "revenue": 380000000
+                },
+                {
+                    "year": "2023",
+                    "revenue": 450000000
+                }
+            ],
+            "certifications": [],
+            "machines": [
+                {
+                    "name": "Fin Press Machine",
+                    "capacity": "4,500 Coil Sets/Day",
+                    "image": "factory"
+                },
+                {
+                    "name": "Refrigeration Performance Test Room",
+                    "capacity": "Batch Validation",
+                    "image": "lab"
+                }
+            ]
+        },
+        {
+            "id": "21",
+            "name": "Freedom Flow Company",
+            "slug": "freedom-flow",
+            "verified": true,
+            "image": "factory-21",
+            "location": "Maha Sarakham, Thailand",
+            "category": "Clothing",
+            "tags": [],
+            "rating": 4.8,
+            "reviewCount": 145,
+            "onTimeDelivery": 98,
+            "priceLevel": 3,
+            "moq": 100,
+            "description": "Comprehensive OEM garment factory specializing in high-quality sportswear and modern apparel. [15, 14]",
+            "specialties": [],
+            "registeredCapital": 10000000,
+            "financialHealth": "Strong",
+            "revenueHistory": [
+                {
+                    "year": "2021",
+                    "revenue": 55000000
+                },
+                {
+                    "year": "2022",
+                    "revenue": 68000000
+                },
+                {
+                    "year": "2023",
+                    "revenue": 82000000
+                }
+            ],
+            "certifications": [],
+            "machines": [
+                {
+                    "name": "Industrial Sewing Line",
+                    "capacity": "1,200 Garments/Day",
+                    "image": "factory"
+                },
+                {
+                    "name": "Heat Transfer Printing Machine",
+                    "capacity": "2,500 Prints/Day",
+                    "image": "packaging"
+                }
+            ]
+        },
+        {
+            "id": "22",
+            "name": "Winnaar Garment Co., Ltd.",
+            "slug": "winnaar-garment",
+            "verified": true,
+            "image": "factory-22",
+            "location": "Bangkok, Thailand",
+            "category": "Clothing",
+            "tags": [],
+            "rating": 4.9,
+            "reviewCount": 210,
+            "onTimeDelivery": 99,
+            "priceLevel": 3,
+            "moq": 1,
+            "description": "Leading digital textile printing factory focused on speed and flexibility without MOQ limits. [19, 23]",
+            "specialties": [],
+            "registeredCapital": 5000000,
+            "financialHealth": "Excellent",
+            "revenueHistory": [
+                {
+                    "year": "2021",
+                    "revenue": 35000000
+                },
+                {
+                    "year": "2022",
+                    "revenue": 48000000
+                },
+                {
+                    "year": "2023",
+                    "revenue": 65000000
+                }
+            ],
+            "certifications": [],
+            "machines": [
+                {
+                    "name": "Automatic Fabric Cutter",
+                    "capacity": "3,000 Pieces/Day",
+                    "image": "factory"
+                },
+                {
+                    "name": "Embroidery Machine Set",
+                    "capacity": "1,500 Logos/Day",
+                    "image": "lab"
+                }
+            ]
+        },
+        {
+            "id": "23",
+            "name": "PMK Polomaker Co., Ltd.",
+            "slug": "pmk-polo",
+            "verified": true,
+            "image": "factory-23",
+            "location": "Bangkok, Thailand",
+            "category": "Clothing",
+            "tags": [
+                "Uniform Expert",
+                "Embroidery",
+                "Corporate Hub"
+            ],
+            "rating": 4.7,
+            "reviewCount": 380,
+            "onTimeDelivery": 97,
+            "priceLevel": 2,
+            "moq": 30,
+            "description": "Thailand's leading corporate uniform manufacturer with a full-service approach from pattern to embroidery. ",
+            "specialties": [],
+            "registeredCapital": 14000000,
+            "financialHealth": "Very Strong",
+            "revenueHistory": [
+                {
+                    "year": "2021",
+                    "revenue": 280000000
+                },
+                {
+                    "year": "2022",
+                    "revenue": 310000000
+                },
+                {
+                    "year": "2023",
+                    "revenue": 350000000
+                }
+            ],
+            "certifications": [],
+            "machines": [
+                {
+                    "name": "Polo Shirt Sewing Line",
+                    "capacity": "1,800 Pieces/Day",
+                    "image": "factory"
+                },
+                {
+                    "name": "Screen Printing Carousel",
+                    "capacity": "2,000 Prints/Day",
+                    "image": "packaging"
+                }
+            ]
+        },
+        {
+            "id": "24",
+            "name": "Circularoem (Circular Club)",
+            "slug": "circular-club",
+            "verified": true,
+            "image": "factory-24",
+            "location": "Bangkok, Thailand",
+            "category": "Clothing",
+            "tags": [],
+            "rating": 4.9,
+            "reviewCount": 85,
+            "onTimeDelivery": 98,
+            "priceLevel": 4,
+            "moq": 50,
+            "description": "Sustainable garment factory specializing in recycled textiles and waterless production methods. [16, 7]",
+            "specialties": [],
+            "registeredCapital": 10000000,
+            "financialHealth": "Stable",
+            "revenueHistory": [
+                {
+                    "year": "2021",
+                    "revenue": 25000000
+                },
+                {
+                    "year": "2022",
+                    "revenue": 42000000
+                },
+                {
+                    "year": "2023",
+                    "revenue": 58000000
+                }
+            ],
+            "certifications": [],
+            "machines": [
+                {
+                    "name": "Recycled Textile Sorting Line",
+                    "capacity": "2 Tons/Day",
+                    "image": "factory"
+                },
+                {
+                    "name": "Small-Batch Sewing Cell",
+                    "capacity": "600 Pieces/Day",
+                    "image": "filling"
+                }
+            ]
+        },
+        {
+            "id": "25",
+            "name": "Tailor Studio BKK",
+            "slug": "tailor-studio",
+            "verified": true,
+            "image": "factory-25",
+            "location": "Bangkok, Thailand",
+            "category": "Clothing",
+            "tags": [],
+            "rating": 4.8,
+            "reviewCount": 65,
+            "onTimeDelivery": 96,
+            "priceLevel": 5,
+            "moq": 30,
+            "description": "Specializing in high-end fashion production for luxury boutiques and independent designers. [16, 7]",
+            "specialties": [],
+            "registeredCapital": 5000000,
+            "financialHealth": "Stable",
+            "revenueHistory": [
+                {
+                    "year": "2021",
+                    "revenue": 18000000
+                },
+                {
+                    "year": "2022",
+                    "revenue": 22000000
+                },
+                {
+                    "year": "2023",
+                    "revenue": 28000000
+                }
+            ],
+            "certifications": [
+                "Excellence in Craftsmanship"
+            ],
+            "machines": [
+                {
+                    "name": "Pattern Cutting Table",
+                    "capacity": "Custom Small Runs",
+                    "image": "lab"
+                },
+                {
+                    "name": "Tailoring Sewing Station",
+                    "capacity": "150 Pieces/Week",
+                    "image": "factory"
+                }
+            ]
+        },
+        {
+            "id": "26",
+            "name": "Wima Packaging Co., Ltd.",
+            "slug": "wima-pkg",
+            "verified": true,
+            "image": "factory-26",
+            "location": "Samut Sakhon, Thailand",
+            "category": "Packaging",
+            "tags": [],
+            "rating": 4.8,
+            "reviewCount": 115,
+            "onTimeDelivery": 98,
+            "priceLevel": 4,
+            "moq": 1000,
+            "description": "Comprehensive manufacturer of luxury cosmetic packaging, from mold design to screen printing. [20, 22]",
+            "specialties": [],
+            "registeredCapital": 1000000,
+            "financialHealth": "Strong",
+            "revenueHistory": [
+                {
+                    "year": "2021",
+                    "revenue": 45000000
+                },
+                {
+                    "year": "2022",
+                    "revenue": 58000000
+                },
+                {
+                    "year": "2023",
+                    "revenue": 72000000
+                }
+            ],
+            "certifications": [],
+            "machines": [
+                {
+                    "name": "Flexographic Printing Press",
+                    "capacity": "120,000 Labels/Day",
+                    "image": "packaging"
+                },
+                {
+                    "name": "Laminating Line",
+                    "capacity": "18,000 Sheets/Shift",
+                    "image": "factory"
+                }
+            ]
+        },
+        {
+            "id": "27",
+            "name": "Nakhonchai Plastic Co., Ltd.",
+            "slug": "nkc-plastic",
+            "verified": true,
+            "image": "factory-27",
+            "location": "Samut Sakhon, Thailand",
+            "category": "Packaging",
+            "tags": [],
+            "rating": 4.6,
+            "reviewCount": 92,
+            "onTimeDelivery": 97,
+            "priceLevel": 2,
+            "moq": 150,
+            "description": "Specializing in the manufacturing of high-quality plastic bags for industrial purposes. [22, 19]",
+            "specialties": [],
+            "registeredCapital": 5000000,
+            "financialHealth": "Stable",
+            "revenueHistory": [
+                {
+                    "year": "2021",
+                    "revenue": 28000000
+                },
+                {
+                    "year": "2022",
+                    "revenue": 32000000
+                },
+                {
+                    "year": "2023",
+                    "revenue": 38000000
+                }
+            ],
+            "certifications": [],
+            "machines": [
+                {
+                    "name": "Blow Molding Machine",
+                    "capacity": "25,000 Bottles/Day",
+                    "image": "factory"
+                },
+                {
+                    "name": "Injection Molding Press",
+                    "capacity": "18,000 Parts/Day",
+                    "image": "mixer"
+                }
+            ]
+        },
+        {
+            "id": "28",
+            "name": "Yuenyong (YYE) Co., Ltd.",
+            "slug": "yye-packaging",
+            "verified": true,
+            "image": "factory-28",
+            "location": "Samut Prakan, Thailand",
+            "category": "Packaging",
+            "tags": [],
+            "rating": 4.7,
+            "reviewCount": 105,
+            "onTimeDelivery": 96,
+            "priceLevel": 3,
+            "moq": 500,
+            "description": "A leader in vacuum-formed plastic packaging for the food and bakery sectors. [21, 17]",
+            "specialties": [],
+            "registeredCapital": 200000000,
+            "financialHealth": "Strong",
+            "revenueHistory": [
+                {
+                    "year": "2021",
+                    "revenue": 62000000
+                },
+                {
+                    "year": "2022",
+                    "revenue": 75000000
+                },
+                {
+                    "year": "2023",
+                    "revenue": 88000000
+                }
+            ],
+            "certifications": [],
+            "machines": [
+                {
+                    "name": "Offset Printing Press",
+                    "capacity": "90,000 Cartons/Day",
+                    "image": "packaging"
+                },
+                {
+                    "name": "Die Cutting Machine",
+                    "capacity": "35,000 Sheets/Day",
+                    "image": "factory"
+                }
+            ]
+        },
+        {
+            "id": "29",
+            "name": "Hong Thai Packaging Co., Ltd.",
+            "slug": "hongthai-pkg",
+            "verified": true,
+            "image": "factory-29",
+            "location": "Bangkok, Thailand",
+            "category": "Packaging",
+            "tags": [],
+            "rating": 4.8,
+            "reviewCount": 240,
+            "onTimeDelivery": 98,
+            "priceLevel": 3,
+            "moq": 500,
+            "description": "Provider of high-quality corrugated cardboard solutions with a focus on recyclability. [9, 1]",
+            "specialties": [],
+            "registeredCapital": 40000000,
+            "financialHealth": "Very Strong",
+            "revenueHistory": [
+                {
+                    "year": "2021",
+                    "revenue": 210000000
+                },
+                {
+                    "year": "2022",
+                    "revenue": 245000000
+                },
+                {
+                    "year": "2023",
+                    "revenue": 280000000
+                }
+            ],
+            "certifications": [],
+            "machines": [
+                {
+                    "name": "Paper Bag Forming Line",
+                    "capacity": "40,000 Bags/Day",
+                    "image": "packaging"
+                },
+                {
+                    "name": "Food-Grade Printing Line",
+                    "capacity": "High-Speed Roll Feed",
+                    "image": "factory"
+                }
+            ]
+        },
+        {
+            "id": "30",
+            "name": "Indraporn Pack Co., Ltd.",
+            "slug": "indraporn-pkg",
+            "verified": true,
+            "image": "factory-30",
+            "location": "Bangkok, Thailand",
+            "category": "Packaging",
+            "tags": [],
+            "rating": 4.6,
+            "reviewCount": 78,
+            "onTimeDelivery": 96,
+            "priceLevel": 3,
+            "moq": 3000,
+            "description": "Specializing in multi-layer laminated films and pouches for food preservation. [9, 1]",
+            "specialties": [],
+            "registeredCapital": 20000000,
+            "financialHealth": "Stable",
+            "revenueHistory": [
+                {
+                    "year": "2021",
+                    "revenue": 95000000
+                },
+                {
+                    "year": "2022",
+                    "revenue": 110000000
+                },
+                {
+                    "year": "2023",
+                    "revenue": 125000000
+                }
+            ],
+            "certifications": [],
+            "machines": [
+                {
+                    "name": "Corrugated Box Line",
+                    "capacity": "28,000 Boxes/Day",
+                    "image": "packaging"
+                },
+                {
+                    "name": "Auto Folder Gluer",
+                    "capacity": "22,000 Units/Day",
+                    "image": "factory"
+                }
+            ]
+        }
+    ],
+    "chatHistory": [
+        {
+            "id": "1",
+            "sender": "user",
+            "message": "Hi, I'm looking for a premium sunscreen formulation. Can you produce around 1,000 pieces?",
+            "timestamp": "2026-01-04T10:30:00Z"
+        },
+        {
+            "id": "2",
+            "sender": "factory",
+            "message": "Hello! Yes, we can definitely help with that. Our minimum order for premium sunscreen is 500-1000 pieces depending on the packaging. What formulation are you looking for?",
+            "timestamp": "2026-01-04T10:32:00Z"
+        }
+    ]
+}

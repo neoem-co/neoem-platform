@@ -4,12 +4,12 @@ import Link from "next/link";
 import { useLocale } from "next-intl";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
-import factoriesData from "@/data/factories.json";
+import { getFactories } from "@/lib/factory-data";
 
 export function OEMAcquisitionHero() {
     const locale = useLocale();
     const t = useTranslations("OEMAcquisitionHero");
-    const factories = factoriesData.factories.slice(0, 6);
+    const factories = getFactories(locale).slice(0, 6);
 
     return (
         <section className="relative overflow-hidden py-16 md:py-24 bg-gradient-to-r from-primary via-primary/90 to-amber-500">

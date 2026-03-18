@@ -22,12 +22,16 @@
         "category": "Category",
         "location": "Location",
         "moqRange": "MOQ Range",
+        "rating": "Rating",
         "certifications": "Certifications",
         "resultsFor": "Results for \"{query}\"",
         "allFactories": "All Factories",
         "factoriesFound": "{count} factories found",
         "noMatches": "No factories found matching your criteria.",
         "recommended": "Recommended Factory",
+        "smartMatchTitle": "Smart Match Recommendations",
+        "smartMatchDescription": "Top AI matches based on search intent, factory quality, and positive review sentiment.",
+        "otherResults": "All Matching Factories",
         "pcs": "pcs"
     },
     "HomePage": {

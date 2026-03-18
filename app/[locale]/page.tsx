@@ -7,7 +7,7 @@ import { FactoryCard } from "@/components/home/FactoryCard";
 import { TrustBanners } from "@/components/home/TrustBanners";
 import { FeatureShowcase } from "@/components/home/FeatureShowcase";
 import { DotMatrixBackground } from "@/components/home/DotMatrixBackground";
-import factoriesData from "@/data/factories.json";
+import { getFactories } from "@/lib/factory-data";
 import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
 import { Rocket, ChevronRight, CheckCircle2, Palette, Shield, Scale } from "lucide-react";
@@ -17,7 +17,7 @@ import { Card, CardContent } from "@/components/ui/card";
 const Index = () => {
   const t = useTranslations("HomePage");
   const locale = useLocale();
-  const topFactories = factoriesData.factories.slice(0, 4);
+  const topFactories = getFactories(locale).slice(0, 4);
 
   return (
     <div className="min-h-screen bg-background flex flex-col">

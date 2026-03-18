@@ -1,0 +1,355 @@
+{
+    "factories": [
+        {
+            "id": "1",
+            "name": "International Laboratories Corp. Ltd. (ILC)",
+            "slug": "ilc-cosmetics",
+            "verified": true,
+            "image": "factory-1",
+            "location": "Samut Prakan, Thailand",
+            "category": "Cosmetics",
+            "tags": [
+                "ISO 9001",
+                "GMP",
+                "FDA Approved",
+                "Premium Support"
+            ],
+            "rating": 4.9,
+            "reviewCount": 245,
+            "onTimeDelivery": 98,
+            "priceLevel": 3,
+            "moq": 1000,
+            "description": "With over 51 years of experience, ILC is one of Thailand's most established cosmetic manufacturers. We provide high-end formulation and manufacturing for global brands.",
+            "specialties": [
+                "Sunscreen",
+                "Skin Care",
+                "Base Makeup",
+                "Perfume"
+            ],
+            "registeredCapital": 500000000,
+            "financialHealth": "Excellent",
+            "revenueHistory": [
+                {
+                    "year": "2021",
+                    "revenue": 1450000000
+                },
+                {
+                    "year": "2022",
+                    "revenue": 1620000000
+                },
+                {
+                    "year": "2023",
+                    "revenue": 1860000000
+                }
+            ],
+            "machines": [
+                {
+                    "name": "Automated Filling Line",
+                    "capacity": "20,000 Units/Day",
+                    "image": "filling"
+                },
+                {
+                    "name": "High Volume Mixer",
+                    "capacity": "5 Tons/Day",
+                    "image": "mixer"
+                }
+            ],
+            "certifications": [
+                "ISO 9001:2015",
+                "GMP",
+                "FDA Thailand",
+                "ISO 22716"
+            ]
+        },
+        {
+            "id": "2",
+            "name": "Milott Laboratories Co., Ltd.",
+            "slug": "milott-laboratories",
+            "verified": true,
+            "image": "factory-2",
+            "location": "Samut Prakan, Thailand",
+            "category": "Cosmetics",
+            "tags": [
+                "GMP",
+                "Global Standards",
+                "Innovation",
+                "High Capacity"
+            ],
+            "rating": 4.8,
+            "reviewCount": 189,
+            "onTimeDelivery": 96,
+            "priceLevel": 3,
+            "moq": 2000,
+            "description": "A leading provider of contract manufacturing for cosmetic and household products. Serving multinational companies with world-class facilities and R&D capabilities.",
+            "specialties": [
+                "Skin Care",
+                "Personal Care",
+                "Hair Care",
+                "Make-up"
+            ],
+            "registeredCapital": 55000000,
+            "financialHealth": "Excellent",
+            "revenueHistory": [
+                {
+                    "year": "2021",
+                    "revenue": 4906839100
+                },
+                {
+                    "year": "2022",
+                    "revenue": 5800000000
+                },
+                {
+                    "year": "2023",
+                    "revenue": 6300000000
+                }
+            ],
+            "machines": [
+                {
+                    "name": "Advanced R&D Equipment",
+                    "capacity": "Full Scale Lab",
+                    "image": "lab"
+                },
+                {
+                    "name": "High-Tech Packaging",
+                    "capacity": "50,000 Units/Day",
+                    "image": "packaging"
+                }
+            ],
+            "certifications": [
+                "ISO 9001",
+                "ISO 14001",
+                "GMP",
+                "BCP Certified"
+            ]
+        },
+        {
+            "id": "3",
+            "name": "S & J International Enterprises PCL",
+            "slug": "sji-cosmetics",
+            "verified": true,
+            "image": "factory-3",
+            "location": "Bangkok / Chonburi, Thailand",
+            "category": "Cosmetics",
+            "tags": [
+                "Public Company",
+                "Export Focus",
+                "Sustainability",
+                "R&D Hub"
+            ],
+            "rating": 4.9,
+            "reviewCount": 312,
+            "onTimeDelivery": 99,
+            "priceLevel": 3,
+            "moq": 3000,
+            "description": "Established in 1980, S & J International is a premier OEM/ODM manufacturer in Asia. We offer complete supply chain solutions for the beauty industry worldwide.",
+            "specialties": [
+                "Color Cosmetics",
+                "Skin care",
+                "Personal Care",
+                "Sustainability Solutions"
+            ],
+            "registeredCapital": 200000000,
+            "financialHealth": "Excellent",
+            "revenueHistory": [
+                {
+                    "year": "2022",
+                    "revenue": 5236000000
+                },
+                {
+                    "year": "2023",
+                    "revenue": 6922000000
+                },
+                {
+                    "year": "2024",
+                    "revenue": 6681000000
+                }
+            ],
+            "machines": [
+                {
+                    "name": "Color Matching System",
+                    "capacity": "Digital Accuracy",
+                    "image": "lab"
+                },
+                {
+                    "name": "Multi-Line Facility",
+                    "capacity": "Over 1M Units/Month",
+                    "image": "factory"
+                }
+            ],
+            "certifications": [
+                "ISO 9001",
+                "ISO 14001",
+                "GMP",
+                "OHSAS 18001"
+            ]
+        },
+        {
+            "id": "4",
+            "name": "Derma Innovation Co., Ltd.",
+            "slug": "derma-innovation",
+            "verified": true,
+            "image": "factory-4",
+            "location": "Nonthaburi, Thailand",
+            "category": "Skincare",
+            "tags": [
+                "Startup Friendly",
+                "Low MOQ Available",
+                "Clinical Focus"
+            ],
+            "rating": 4.7,
+            "reviewCount": 156,
+            "onTimeDelivery": 95,
+            "priceLevel": 2,
+            "moq": 500,
+            "description": "A modern manufacturer specializing in innovative skincare and dermatologist-formulated products. Popular among indie and premium local brands.",
+            "specialties": [
+                "Serum",
+                "Cosmeceuticals",
+                "Whitening Care",
+                "Acne Treatment"
+            ],
+            "registeredCapital": 80000000,
+            "financialHealth": "Good",
+            "revenueHistory": [
+                {
+                    "year": "2020",
+                    "revenue": 115772778
+                },
+                {
+                    "year": "2021",
+                    "revenue": 120000000
+                },
+                {
+                    "year": "2022",
+                    "revenue": 126000000
+                }
+            ],
+            "machines": [
+                {
+                    "name": "Micro-Filtration",
+                    "capacity": "Clean System",
+                    "image": "mixer"
+                }
+            ],
+            "certifications": [
+                "GMP",
+                "Thai FDA",
+                "ISO 22716"
+            ]
+        },
+        {
+            "id": "5",
+            "name": "Revomed (Thailand) Co., Ltd.",
+            "slug": "revomed-thailand",
+            "verified": true,
+            "image": "factory-5",
+            "location": "Nonthaburi, Thailand",
+            "category": "Supplements",
+            "tags": [
+                "Holistic Beauty",
+                "Dietary Supplements",
+                "Trendy Products"
+            ],
+            "rating": 4.8,
+            "reviewCount": 94,
+            "onTimeDelivery": 94,
+            "priceLevel": 2,
+            "moq": 1000,
+            "description": "OEM/ODM leader for dietary supplements and topical skincare. We bridge the gap between beauty inside and out with innovative functional products.",
+            "specialties": [
+                "Collagen Drinks",
+                "Weight Control",
+                "Vitamins",
+                "Skin Beauty Supplements"
+            ],
+            "registeredCapital": 20000000,
+            "financialHealth": "Good",
+            "revenueHistory": [
+                {
+                    "year": "2021",
+                    "revenue": 85000000
+                },
+                {
+                    "year": "2022",
+                    "revenue": 95000000
+                }
+            ],
+            "machines": [
+                {
+                    "name": "Powder Sachet Filling",
+                    "capacity": "30,000 Sachet/Day",
+                    "image": "filling"
+                }
+            ],
+            "certifications": [
+                "GMP",
+                "HACCP",
+                "Halal"
+            ]
+        },
+        {
+            "id": "6",
+            "name": "Quality Plus Aesthetic International Co., Ltd.",
+            "slug": "quality-plus",
+            "verified": true,
+            "image": "factory-1",
+            "location": "Pathum Thani, Thailand",
+            "category": "Skincare",
+            "tags": [
+                "R&D Excellence",
+                "Natural Ingredients",
+                "Biotechnology"
+            ],
+            "rating": 4.8,
+            "reviewCount": 120,
+            "onTimeDelivery": 97,
+            "priceLevel": 3,
+            "moq": 500,
+            "description": "Leading the biotech-skincare revolution in Thailand. We combine advanced research with local agricultural ingredients to create unique, globally-ready formulations.",
+            "specialties": [
+                "Biotech Serum",
+                "Custom Formulation",
+                "Plant Stem Cell",
+                "Clinical Testing"
+            ],
+            "registeredCapital": 10000000,
+            "financialHealth": "Excellent",
+            "revenueHistory": [
+                {
+                    "year": "2022",
+                    "revenue": 145000000
+                },
+                {
+                    "year": "2023",
+                    "revenue": 180000000
+                }
+            ],
+            "machines": [
+                {
+                    "name": "Clean Room Cell Culture",
+                    "capacity": "Advanced Lab",
+                    "image": "lab"
+                }
+            ],
+            "certifications": [
+                "ISO 9001",
+                "GMP",
+                "Thai FDA"
+            ]
+        }
+    ],
+    "chatHistory": [
+        {
+            "id": "1",
+            "sender": "user",
+            "message": "Hi, I'm looking for a premium sunscreen formulation. Can you produce around 1,000 pieces?",
+            "timestamp": "2026-01-04T10:30:00Z"
+        },
+        {
+            "id": "2",
+            "sender": "factory",
+            "message": "Hello! Yes, we can definitely help with that. Our minimum order for premium sunscreen is 500-1000 pieces depending on the packaging. What formulation are you looking for?",
+            "timestamp": "2026-01-04T10:32:00Z"
+        }
+    ]
+}

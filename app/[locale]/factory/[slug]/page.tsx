@@ -14,7 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Tooltip } from "recharts";
-import factoriesData from "@/data/factories.json";
+import { getFactoryBySlug } from "@/lib/factory-data";
 
 const factoryImages: Record<string, string> = {
     "factory-1": "/assets/factory-1.jpg",
@@ -27,7 +27,7 @@ const factoryImages: Record<string, string> = {
 export default function FactoryDetail({ params }: { params: Promise<{ slug: string }> }) {
     const { slug } = use(params);
     const locale = useLocale();
-    const factory = factoriesData.factories.find((f) => f.slug === slug);
+    const factory = getFactoryBySlug(slug, locale);
 
     if (!factory) {
         return (
@@ -170,7 +170,7 @@ export default function FactoryDetail({ params }: { params: Promise<{ slug: stri
                                                                 borderRadius: "8px",
                                                                 fontSize: "12px"
                                                             }}
-                                                            formatter={(value: any) => [`฿${value}M`, "Revenue"] as any}
+                                                            formatter={(value: number | string | undefined) => [`฿${value ?? 0}M`, "Revenue"]}
                                                         />
                                                         <Bar dataKey="revenue" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
                                                     </BarChart>

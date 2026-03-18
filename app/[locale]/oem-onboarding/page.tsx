@@ -78,7 +78,7 @@ const OEMOnboarding = () => {
         setLoading(true);
         await new Promise((resolve) => setTimeout(resolve, 2000));
         setLoading(false);
-        router.push(`${locale}/oem-dashboard`);
+        router.push(`/${locale}/oem-dashboard`);
     };
 
     const canProceed = () => {
