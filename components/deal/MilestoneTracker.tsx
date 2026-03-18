@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useLocale } from "next-intl";
 import {
     MessageSquare, Handshake, FileText, Search, PenTool,
     CreditCard, Factory, DollarSign, CheckCircle2, Rocket,
@@ -110,6 +111,8 @@ function withCompletedActions(milestones: Milestone[], completedActions: string[
 }
 
 export function MilestoneTracker({ onAction, storageKey, riskAlert, depositPaid = false, completedActions = [] }: MilestoneTrackerProps) {
+    const locale = useLocale();
+    const isThai = locale.startsWith("th");
     const [milestones, setMilestones] = useState<Milestone[]>(() => getInitialMilestones(storageKey));
     const [expanded, setExpanded] = useState(true);
     const effectiveMilestones = useMemo(
@@ -186,7 +189,9 @@ export function MilestoneTracker({ onAction, storageKey, riskAlert, depositPaid 
                     hasHighRisk ? "border-destructive/30 bg-destructive/10 text-destructive" : "border-warning/30 bg-warning/10 text-warning"
                 }`}>
                     <p className="font-semibold">
-                        {hasHighRisk ? "High-risk contract issues found" : "Risk review completed"}
+                        {hasHighRisk
+                            ? (isThai ? "พบประเด็นความเสี่ยงสูงในสัญญา" : "High-risk contract issues found")
+                            : (isThai ? "ตรวจสอบความเสี่ยงเรียบร้อยแล้ว" : "Risk review completed")}
                     </p>
                     <p className="mt-1 leading-relaxed">
                         {riskAlert.summary}
@@ -291,7 +296,9 @@ export function MilestoneTracker({ onAction, storageKey, riskAlert, depositPaid 
                                 {milestone.id === "m6" && hasHighRisk && (
                                     <div className="mt-2 rounded-md border border-destructive/20 bg-destructive/10 px-2.5 py-2">
                                         <p className="text-[10px] font-medium text-destructive">
-                                            Resolve the high-risk clauses before paying the deposit.
+                                            {isThai
+                                                ? "ควรแก้ไขข้อสัญญาที่มีความเสี่ยงสูงก่อนชำระเงินมัดจำ"
+                                                : "Resolve the high-risk clauses before paying the deposit."}
                                         </p>
                                     </div>
                                 )}

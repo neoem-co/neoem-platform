@@ -1,4 +1,5 @@
 import { AlertTriangle, FileWarning, FileSearch, CreditCard } from "lucide-react";
+import { useLocale } from "next-intl";
 import { Button } from "@/components/ui/button";
 import {
     Dialog,
@@ -18,6 +19,8 @@ interface ContractWarningModalProps {
 }
 
 export function ContractWarningModal({ open, onClose, onSkip, onReview, riskLevel, riskSummary }: ContractWarningModalProps) {
+    const locale = useLocale();
+    const isThai = locale.startsWith("th");
     const isHighRisk = riskLevel === "critical" || riskLevel === "high";
 
     return (
@@ -30,12 +33,18 @@ export function ContractWarningModal({ open, onClose, onSkip, onReview, riskLeve
                         ) : (
                             <FileWarning className="h-5 w-5 text-warning" />
                         )}
-                        {isHighRisk ? "High-Risk Contract Detected" : "Review Contract before Payment?"}
+                        {isHighRisk
+                            ? (isThai ? "ตรวจพบสัญญาที่มีความเสี่ยงสูง" : "High-Risk Contract Detected")
+                            : (isThai ? "ตรวจสัญญาก่อนชำระเงินดีไหม?" : "Review Contract before Payment?")}
                     </DialogTitle>
                     <DialogDescription>
                         {isHighRisk
-                            ? "Our AI review found high-risk issues. Please resolve them before releasing payment."
-                            : "This deal includes a legal contract. We recommend using our AI Reviewer to check for risks."}
+                            ? (isThai
+                                ? "AI พบประเด็นความเสี่ยงสูงในสัญญา กรุณาแก้ไขก่อนปล่อยชำระเงิน"
+                                : "Our AI review found high-risk issues. Please resolve them before releasing payment.")
+                            : (isThai
+                                ? "ดีลนี้มีสัญญากฎหมาย เราแนะนำให้ใช้ AI Reviewer เพื่อตรวจหาความเสี่ยงก่อน"
+                                : "This deal includes a legal contract. We recommend using our AI Reviewer to check for risks.")}
                     </DialogDescription>
                 </DialogHeader>
 
@@ -49,15 +58,21 @@ export function ContractWarningModal({ open, onClose, onSkip, onReview, riskLeve
                         <ul className="text-sm text-muted-foreground space-y-2">
                             <li className="flex items-start gap-2">
                                 <span className={isHighRisk ? "text-destructive" : "text-warning"}>•</span>
-                                {isHighRisk ? "Critical clauses need attention before money is released" : "AI can identify risky clauses and missing protections"}
+                                {isHighRisk
+                                    ? (isThai ? "มีข้อสัญญาสำคัญที่ควรแก้ไขก่อนปล่อยเงิน" : "Critical clauses need attention before money is released")
+                                    : (isThai ? "AI ช่วยตรวจหาข้อสัญญาเสี่ยงและการคุ้มครองที่ขาดหายไป" : "AI can identify risky clauses and missing protections")}
                             </li>
                             <li className="flex items-start gap-2">
                                 <span className={isHighRisk ? "text-destructive" : "text-warning"}>•</span>
-                                {isHighRisk ? "Review the AI recommendations and update unfair terms" : "Get recommendations for better terms"}
+                                {isHighRisk
+                                    ? (isThai ? "ดูคำแนะนำจาก AI และปรับเงื่อนไขที่ไม่เป็นธรรม" : "Review the AI recommendations and update unfair terms")
+                                    : (isThai ? "รับคำแนะนำเพื่อปรับปรุงเงื่อนไขสัญญาให้ดีขึ้น" : "Get recommendations for better terms")}
                             </li>
                             <li className="flex items-start gap-2">
                                 <span className={isHighRisk ? "text-destructive" : "text-warning"}>•</span>
-                                {isHighRisk ? "You can still proceed, but the deal will carry unresolved legal risk" : "Takes less than 30 seconds"}
+                                {isHighRisk
+                                    ? (isThai ? "คุณยังดำเนินการต่อได้ แต่ดีลนี้จะยังมีความเสี่ยงทางกฎหมายค้างอยู่" : "You can still proceed, but the deal will carry unresolved legal risk")
+                                    : (isThai ? "ใช้เวลาไม่ถึง 30 วินาที" : "Takes less than 30 seconds")}
                             </li>
                         </ul>
                     </div>
@@ -65,11 +80,15 @@ export function ContractWarningModal({ open, onClose, onSkip, onReview, riskLeve
                     <div className="flex flex-col gap-3">
                         <Button onClick={onReview} className="w-full">
                             <FileSearch className="h-4 w-4 mr-2" />
-                            {isHighRisk ? "Review High-Risk Issues" : "Review Contract with AI"}
+                            {isHighRisk
+                                ? (isThai ? "ตรวจประเด็นความเสี่ยงสูง" : "Review High-Risk Issues")
+                                : (isThai ? "ตรวจสัญญาด้วย AI" : "Review Contract with AI")}
                         </Button>
                         <Button variant="outline" onClick={onSkip} className="w-full">
                             <CreditCard className="h-4 w-4 mr-2" />
-                            {isHighRisk ? "Pay Anyway" : "Skip & Pay Now"}
+                            {isHighRisk
+                                ? (isThai ? "ชำระต่อแม้มีความเสี่ยง" : "Pay Anyway")
+                                : (isThai ? "ข้ามและชำระเลย" : "Skip & Pay Now")}
                         </Button>
                     </div>
                 </div>

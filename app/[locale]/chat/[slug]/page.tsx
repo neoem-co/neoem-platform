@@ -80,6 +80,7 @@ const DealRoom = () => {
     const slug = params.slug as string;
     const router = useRouter();
     const locale = useLocale();
+    const isThai = locale.startsWith("th");
     const factory = getFactoryBySlug(slug, locale);
     const [showTOS, setShowTOS] = useState(() => !loadDealRoomState(slug).tosAccepted);
     const [tosAccepted, setTosAccepted] = useState(() => loadDealRoomState(slug).tosAccepted);
@@ -223,11 +224,15 @@ const DealRoom = () => {
                     <Card className="border-destructive/30 bg-destructive/5">
                         <CardHeader className="py-3">
                             <CardTitle className="text-sm flex items-center gap-2 text-destructive">
-                                <AlertTriangle className="h-4 w-4" /> Payment Warning
+                                <AlertTriangle className="h-4 w-4" /> {isThai ? "คำเตือนก่อนชำระเงิน" : "Payment Warning"}
                             </CardTitle>
                         </CardHeader>
                         <CardContent className="py-3 text-sm text-muted-foreground">
-                            <p className="text-destructive font-medium">High-risk clauses were detected in the contract review.</p>
+                            <p className="text-destructive font-medium">
+                                {isThai
+                                    ? "ตรวจพบข้อสัญญาที่มีความเสี่ยงสูงจากการรีวิวสัญญา"
+                                    : "High-risk clauses were detected in the contract review."}
+                            </p>
                             <p className="mt-1">{riskAlert.summary}</p>
                         </CardContent>
                     </Card>
@@ -285,7 +290,9 @@ const DealRoom = () => {
                 onPay={handlePayDeposit}
                 warningMessage={
                     riskAlert && (riskAlert.level === "critical" || riskAlert.level === "high")
-                        ? "High-risk contract issues found. Review the legal warnings before releasing payment."
+                        ? (isThai
+                            ? "พบประเด็นความเสี่ยงสูงในสัญญา กรุณาตรวจคำเตือนทางกฎหมายก่อนชำระเงิน"
+                            : "High-risk contract issues found. Review the legal warnings before releasing payment.")
                         : null
                 }
             />
