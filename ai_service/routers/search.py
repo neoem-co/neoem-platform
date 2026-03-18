@@ -13,7 +13,7 @@ from services.rag.vector_store import get_factory_store, factory_similarity_sear
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/api/search", tags=["search"])
+router = APIRouter(prefix="/api/ai/search", tags=["search"])
 
 FACTORIES_DATA_PATH = "../data/factories.json"
 

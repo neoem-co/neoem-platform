@@ -360,7 +360,7 @@ async def finalize_contract(request: FinalizeRequest) -> FinalizeResponse:
             # Save locally
             local_path = f"./data/{pdf_path}"
             _save_file(local_path, pdf_bytes)
-            pdf_url = f"/api/contract-draft/contracts/{contract_id}/download/pdf"
+            pdf_url = f"/api/ai/contract-draft/contracts/{contract_id}/download/pdf"
 
     if request.output_format in ("docx", "both"):
         from services.document.docx_generator import generate_contract_docx
@@ -381,7 +381,7 @@ async def finalize_contract(request: FinalizeRequest) -> FinalizeResponse:
             # Save locally
             local_path = f"./data/{docx_path}"
             _save_file(local_path, docx_bytes)
-            docx_url = f"/api/contract-draft/contracts/{contract_id}/download/docx"
+            docx_url = f"/api/ai/contract-draft/contracts/{contract_id}/download/docx"
 
     # Save deal sheet JSON for future risk check comparison (History Check)
     if request.deal_sheet:

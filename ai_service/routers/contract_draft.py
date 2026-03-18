@@ -28,7 +28,7 @@ from services.agents.contract_draft_agent import (
 from templates.contract_templates import get_template, list_templates
 
 logger = logging.getLogger(__name__)
-router = APIRouter(prefix="/api/contract-draft", tags=["Contract Draft"])
+router = APIRouter(prefix="/api/ai/contract-draft", tags=["Contract Draft"])
 
 
 # ── Step 0: Get available templates ──────────────────────────────────────────
