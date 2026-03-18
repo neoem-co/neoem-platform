@@ -163,3 +163,49 @@ def upload_contract_file(file_path: str, file_bytes: bytes | bytearray, bucket: 
         )
 
     return public_url
+
+
+def list_contract_history(bucket: str = "contracts") -> list[dict[str, Any]]:
+    """List grouped contract artifacts from Supabase Storage."""
+    ensure_storage_config()
+    supabase = get_supabase()
+    results = supabase.storage.from_(bucket).list(
+        "contracts",
+        {"limit": 200, "sortBy": {"column": "created_at", "order": "desc"}},
+    )
+
+    grouped: dict[str, dict[str, Any]] = {}
+    for item in results or []:
+        name = item.get("name", "")
+        if not name.startswith("CTR-"):
+            continue
+
+        contract_id = name.split(".")[0].replace("_deal_sheet", "")
+        created_at = item.get("created_at") or item.get("updated_at") or ""
+        object_path = f"contracts/{name}"
+        public_url = _normalize_public_url(
+            supabase.storage.from_(bucket).get_public_url(object_path)
+        )
+
+        existing = grouped.get(contract_id) or {
+            "id": contract_id,
+            "contract_id": contract_id,
+            "base_name": contract_id,
+            "created_at": created_at,
+            "pdf_url": None,
+            "docx_url": None,
+            "has_deal_sheet": False,
+        }
+
+        if created_at and created_at > existing["created_at"]:
+            existing["created_at"] = created_at
+        if name.endswith(".pdf"):
+            existing["pdf_url"] = public_url
+        elif name.endswith(".docx"):
+            existing["docx_url"] = public_url
+        elif name.endswith("_deal_sheet.json"):
+            existing["has_deal_sheet"] = True
+
+        grouped[contract_id] = existing
+
+    return sorted(grouped.values(), key=lambda item: item["created_at"], reverse=True)

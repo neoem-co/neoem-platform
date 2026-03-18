@@ -211,6 +211,16 @@ export interface FinalizeResponse {
   saved_to_history: boolean;
 }
 
+export interface ContractHistoryItem {
+  id: string;
+  contract_id: string;
+  base_name: string;
+  created_at: string;
+  pdf_url: string | null;
+  docx_url: string | null;
+  has_deal_sheet: boolean;
+}
+
 export interface TemplateInfo {
   type: string;
   name_th: string;
@@ -303,6 +313,24 @@ export async function finalizeContract(payload: {
     ...result,
     pdf_url: normalizeAiUrl(result.pdf_url),
     docx_url: normalizeAiUrl(result.docx_url),
+  };
+}
+
+export async function getContractHistory(): Promise<{ contracts: ContractHistoryItem[] }> {
+  const res = await fetch(`${AI_BASE}/contract-draft/history`, {
+    signal: AbortSignal.timeout(AI_TIMEOUT),
+  });
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`Contract history failed (${res.status}): ${err}`);
+  }
+  const result: { contracts: ContractHistoryItem[] } = await res.json();
+  return {
+    contracts: result.contracts.map((item) => ({
+      ...item,
+      pdf_url: normalizeAiUrl(item.pdf_url),
+      docx_url: normalizeAiUrl(item.docx_url),
+    })),
   };
 }
 
