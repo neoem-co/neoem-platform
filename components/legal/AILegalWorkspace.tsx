@@ -318,8 +318,8 @@ function DraftPanel({
                 output_format: "both",
             });
             setDownloadUrls({
-                pdf_url: result.pdf_url ? result.pdf_url.replace("/api/", "/api/ai/") : null,
-                docx_url: result.docx_url ? result.docx_url.replace("/api/", "/api/ai/") : null,
+                pdf_url: result.pdf_url,
+                docx_url: result.docx_url,
             });
             setStep(4);
         } catch (err) {

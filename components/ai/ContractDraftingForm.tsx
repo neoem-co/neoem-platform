@@ -134,7 +134,7 @@ export function ContractDraftingForm({ factoryName, onGenerate, onClose, initial
                         <p className="text-xs text-muted-foreground">{finalizeResult?.message_th || "Generated just now"}</p>
                     </div>
                     {finalizeResult?.pdf_url && (
-                        <a href={finalizeResult.pdf_url.replace("/api/", "/api/ai/")} download>
+                        <a href={finalizeResult.pdf_url} download>
                             <Button variant="outline" className="w-full" size="sm">
                                 <Download className="h-4 w-4 mr-2" />
                                 Download Contract PDF
@@ -142,7 +142,7 @@ export function ContractDraftingForm({ factoryName, onGenerate, onClose, initial
                         </a>
                     )}
                     {finalizeResult?.docx_url && (
-                        <a href={finalizeResult.docx_url.replace("/api/", "/api/ai/")} download>
+                        <a href={finalizeResult.docx_url} download>
                             <Button variant="outline" className="w-full" size="sm">
                                 <Download className="h-4 w-4 mr-2" />
                                 Download Contract Word

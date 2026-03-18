@@ -8,6 +8,14 @@ const AI_BASE = "/api/ai";
 /** 5 minutes — LLM calls are slow on free tier */
 const AI_TIMEOUT = 300_000;
 
+function normalizeAiUrl(url: string | null): string | null {
+  if (!url) return null;
+  if (/^https?:\/\//.test(url)) return url;
+  if (url.startsWith(`${AI_BASE}/`)) return url;
+  if (url.startsWith("/api/")) return url.replace(/^\/api\//, `${AI_BASE}/`);
+  return url;
+}
+
 // ─── Risk Check ──────────────────────────────────────────────────────────────
 
 export interface RiskItemResult {
@@ -289,7 +297,12 @@ export async function finalizeContract(payload: {
   });
 
   if (!res.ok) throw new Error(`Finalization failed (${res.status})`);
-  return res.json();
+  const result: FinalizeResponse = await res.json();
+  return {
+    ...result,
+    pdf_url: normalizeAiUrl(result.pdf_url),
+    docx_url: normalizeAiUrl(result.docx_url),
+  };
 }
 
 /**
