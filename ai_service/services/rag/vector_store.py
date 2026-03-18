@@ -12,6 +12,7 @@ import os
 from typing import Optional
 
 from config import settings
+from services.rag.gemini_embeddings import GeminiRESTEmbeddings
 
 logger = logging.getLogger(__name__)
 
@@ -27,51 +28,13 @@ def _get_embeddings():
     """
     if settings.vector_store_provider == "supabase" or settings.app_env == "production":
         if settings.gemini_api_key:
-            from langchain_google_genai import GoogleGenerativeAIEmbeddings
-            logger.info("Using Google Gemini Embeddings (Multi-Model Fallback)")
-            
-            # We try multiple names because different regions/API versions 
-            # have different requirements for prefixes and versions.
-            models_to_try = [
-                "models/text-embedding-004",  # Newest
-                "models/embedding-001",       # Standard
-                "text-embedding-004",         # No prefix
-                "embedding-001",              # No prefix
-            ]
-            
-            # Since LangChain creates the object immediately, we'll return
-            # a wrapper that handles the error during the first actual call.
-            class RobustEmbeddings(GoogleGenerativeAIEmbeddings):
-                def embed_documents(self, texts):
-                    last_error = None
-                    for model_name in models_to_try:
-                        try:
-                            self.model = model_name
-                            return super().embed_documents(texts)
-                        except Exception as e:
-                            last_error = e
-                            if "404" in str(e) or "400" in str(e):
-                                continue
-                            raise e
-                    raise last_error
-
-                def embed_query(self, text):
-                    last_error = None
-                    for model_name in models_to_try:
-                        try:
-                            self.model = model_name
-                            return super().embed_query(text)
-                        except Exception as e:
-                            last_error = e
-                            if "404" in str(e) or "400" in str(e):
-                                continue
-                            raise e
-                    raise last_error
-
-            return RobustEmbeddings(
-                model=models_to_try[0],
-                google_api_key=settings.gemini_api_key,
-                task_type="retrieval_document"
+            logger.info(
+                "Initializing Gemini REST embeddings: %s",
+                settings.gemini_embedding_model,
+            )
+            return GeminiRESTEmbeddings(
+                model=settings.gemini_embedding_model,
+                api_key=settings.gemini_api_key,
             )
     
     from langchain_community.embeddings import HuggingFaceEmbeddings
@@ -357,5 +320,13 @@ def seed_thai_legal_knowledge() -> None:
         ),
     ]
 
-    store.add_documents(legal_docs)
-    logger.info("Seeded %d Thai legal knowledge documents", len(legal_docs))
+    # Adding documents one by one to avoid Batch 400 errors and identifying which one fails
+    for i, doc in enumerate(legal_docs):
+        try:
+            store.add_documents([doc])
+            logger.info("Seeded legal document %d/%d", i + 1, len(legal_docs))
+        except Exception as e:
+            logger.error("Failed to seed document %d: %s", i + 1, str(e))
+            raise e
+
+    logger.info("Successfully seeded all %d Thai legal knowledge documents", len(legal_docs))

@@ -21,6 +21,9 @@ class Settings(BaseSettings):
     gemini_model: str = Field(
         default="gemini-1.5-flash", alias="GEMINI_MODEL"
     )
+    gemini_embedding_model: str = Field(
+        default="gemini-embedding-001", alias="GEMINI_EMBEDDING_MODEL"
+    )
 
     # ── iApp Technology ──────────────────────────────
     iapp_api_key: str = Field(default="", alias="IAPP_API_KEY")
