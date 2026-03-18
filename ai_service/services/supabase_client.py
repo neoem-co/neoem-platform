@@ -107,12 +107,14 @@ def get_supabase() -> Client:
     _supabase = create_client(settings.supabase_url, settings.supabase_key)
     return _supabase
 
-def upload_contract_file(file_path: str, file_bytes: bytes, bucket: str = "contracts") -> str:
+def upload_contract_file(file_path: str, file_bytes: bytes | bytearray, bucket: str = "contracts") -> str:
     """
     Upload a file to Supabase Storage and return the public URL.
     """
     ensure_storage_config()
     supabase = get_supabase()
+    if isinstance(file_bytes, bytearray):
+        file_bytes = bytes(file_bytes)
 
     content_type = mimetypes.guess_type(file_path)[0] or "application/octet-stream"
     logger.info(
