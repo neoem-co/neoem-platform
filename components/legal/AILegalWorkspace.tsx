@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import {
     FileText, Search, FolderClock, X, Upload, Loader2,
     AlertTriangle, CheckCircle2, XCircle, Download, Eye,
-    BadgeDollarSign, Sparkles, ChevronRight, History, PenTool,
+    BadgeDollarSign, Sparkles, History, PenTool,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -20,6 +20,7 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { ESignaturePanel } from "@/components/legal/ESignaturePanel";
+import { createClient as createSupabaseClient } from "@/utils/supabase/client";
 import {
     analyzeContractRisk,
     downloadFile,
@@ -89,16 +90,20 @@ const mockRisks: RiskItem[] = [
     { id: "5", type: "low", clause: "Delivery Timeline – Clause 6.1", description: "Delivery described as 'approximately 4-6 weeks'.", page: 3, recommendation: "Specify exact date. Add penalty for late delivery." },
 ];
 
-const mockHistory = [
-    { id: "h1", fileName: "Contract_SkincarePlus_v2.pdf", date: "2025-01-15", version: "V2", riskLevel: "medium" as const, risksCount: 3 },
-    { id: "h2", fileName: "Contract_SkincarePlus_v1.pdf", date: "2025-01-10", version: "V1", riskLevel: "high" as const, risksCount: 5 },
-    { id: "h3", fileName: "MOU_BeautyFactory.pdf", date: "2024-12-20", version: "V1", riskLevel: "low" as const, risksCount: 1 },
-];
-
 const mockSignHistory = [
     { id: "s1", fileName: "Contract_SkincarePlus_v2.pdf", date: "2025-01-16", signedBy: "Both Parties", status: "completed" },
     { id: "s2", fileName: "NDA_BeautyBrand.pdf", date: "2025-01-05", signedBy: "Buyer Only", status: "pending" },
 ];
+
+interface StorageContractFile {
+    id: string;
+    contractId: string;
+    baseName: string;
+    createdAt: string;
+    pdfUrl: string | null;
+    docxUrl: string | null;
+    hasDealSheet: boolean;
+}
 
 const auditors = [
     { name: "Katun Thangho", role: "Brand Launchpad" },
@@ -128,7 +133,7 @@ export function AILegalWorkspace({
                 </div>
                 <div className="flex items-center gap-2">
                     <Button variant="ghost" size="sm" className="text-xs gap-1" onClick={() => setActiveTab("history")}>
-                        <History className="h-3.5 w-3.5" /> History ({mockHistory.length})
+                        <History className="h-3.5 w-3.5" /> History
                     </Button>
                     <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onClose}>
                         <X className="h-4 w-4" />
@@ -546,6 +551,7 @@ function DraftPanel({
                     <div className="flex gap-3 max-w-sm mx-auto">
                         {downloadUrls?.pdf_url ? (
                             <Button
+                                type="button"
                                 className="w-full flex-1"
                                 size="lg"
                                 onClick={() => downloadFile(downloadUrls.pdf_url!, `${draftResult?.contract_filename || "contract"}.pdf`)}
@@ -559,6 +565,7 @@ function DraftPanel({
                         )}
                         {downloadUrls?.docx_url ? (
                             <Button
+                                type="button"
                                 variant="outline"
                                 className="w-full flex-1"
                                 size="lg"
@@ -837,6 +844,83 @@ function RiskPanel({
 // HISTORY PANEL (includes signing history)
 // ══════════════════════════════════════════════════
 function HistoryPanel() {
+    const [contracts, setContracts] = useState<StorageContractFile[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+
+    useEffect(() => {
+        let active = true;
+
+        const loadContracts = async () => {
+            try {
+                setLoading(true);
+                setError(null);
+
+                const supabase = createSupabaseClient();
+                const bucket = process.env.NEXT_PUBLIC_SUPABASE_STORAGE_BUCKET || "contracts";
+                const { data, error } = await supabase.storage.from(bucket).list("contracts", {
+                    limit: 200,
+                    sortBy: { column: "created_at", order: "desc" },
+                });
+
+                if (error) {
+                    throw error;
+                }
+
+                const grouped = new Map<string, StorageContractFile>();
+                for (const item of data || []) {
+                    const name = item.name || "";
+                    if (!name.startsWith("CTR-")) continue;
+
+                    const contractId = name.split(".")[0].replace("_deal_sheet", "");
+                    const createdAt = item.created_at || item.updated_at || new Date().toISOString();
+                    const objectPath = `contracts/${name}`;
+                    const { data: publicData } = supabase.storage.from(bucket).getPublicUrl(objectPath);
+                    const publicUrl = publicData?.publicUrl || null;
+
+                    const existing = grouped.get(contractId) || {
+                        id: contractId,
+                        contractId,
+                        baseName: contractId,
+                        createdAt,
+                        pdfUrl: null,
+                        docxUrl: null,
+                        hasDealSheet: false,
+                    };
+
+                    existing.createdAt = existing.createdAt > createdAt ? existing.createdAt : createdAt;
+                    if (name.endsWith(".pdf")) {
+                        existing.pdfUrl = publicUrl;
+                    } else if (name.endsWith(".docx")) {
+                        existing.docxUrl = publicUrl;
+                    } else if (name.endsWith("_deal_sheet.json")) {
+                        existing.hasDealSheet = true;
+                    }
+
+                    grouped.set(contractId, existing);
+                }
+
+                const results = Array.from(grouped.values()).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+                if (active) {
+                    setContracts(results);
+                }
+            } catch (err) {
+                if (active) {
+                    setError(err instanceof Error ? err.message : "Failed to load contract history");
+                }
+            } finally {
+                if (active) {
+                    setLoading(false);
+                }
+            }
+        };
+
+        loadContracts();
+        return () => {
+            active = false;
+        };
+    }, []);
+
     return (
         <div className="max-w-2xl mx-auto p-6 space-y-6">
             <h2 className="text-lg font-semibold text-foreground">Legal Hub — Contract History</h2>
@@ -847,19 +931,54 @@ function HistoryPanel() {
                     <FileText className="h-4 w-4 text-primary" /> Drafts & Reviews
                 </h3>
                 <div className="space-y-2">
-                    {mockHistory.map((entry) => (
-                        <div key={entry.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-secondary/50 cursor-pointer transition-colors bg-card">
+                    {loading && (
+                        <div className="p-4 border rounded-lg bg-card text-sm text-muted-foreground flex items-center gap-2">
+                            <Loader2 className="h-4 w-4 animate-spin" /> Loading contract history...
+                        </div>
+                    )}
+                    {!loading && error && (
+                        <div className="p-4 border rounded-lg bg-card text-sm text-destructive">
+                            {error}
+                        </div>
+                    )}
+                    {!loading && !error && contracts.length === 0 && (
+                        <div className="p-4 border rounded-lg bg-card text-sm text-muted-foreground">
+                            No drafted contracts found in Supabase Storage yet.
+                        </div>
+                    )}
+                    {!loading && !error && contracts.map((entry) => (
+                        <div key={entry.id} className="flex items-center justify-between p-4 border rounded-lg transition-colors bg-card">
                             <div className="flex items-center gap-3">
-                                <div className={`w-2.5 h-2.5 rounded-full ${entry.riskLevel === "high" ? "bg-destructive" : entry.riskLevel === "medium" ? "bg-warning" : "bg-success"
-                                    }`} />
+                                <div className={`w-2.5 h-2.5 rounded-full ${entry.pdfUrl && entry.docxUrl ? "bg-success" : "bg-warning"}`} />
                                 <div>
-                                    <p className="text-sm font-medium text-foreground">{entry.fileName}</p>
-                                    <p className="text-xs text-muted-foreground">{entry.date} · {entry.risksCount} risks found</p>
+                                    <p className="text-sm font-medium text-foreground">{entry.baseName}</p>
+                                    <p className="text-xs text-muted-foreground">
+                                        {new Date(entry.createdAt).toLocaleString()} {entry.hasDealSheet ? "· Deal sheet saved" : ""}
+                                    </p>
                                 </div>
                             </div>
                             <div className="flex items-center gap-2">
-                                <Badge variant="outline">{entry.version}</Badge>
-                                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                                {entry.pdfUrl && (
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => downloadFile(entry.pdfUrl!, `${entry.contractId}.pdf`)}
+                                    >
+                                        <Download className="h-4 w-4 mr-1" /> PDF
+                                    </Button>
+                                )}
+                                {entry.docxUrl && (
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => downloadFile(entry.docxUrl!, `${entry.contractId}.docx`)}
+                                    >
+                                        <Download className="h-4 w-4 mr-1" /> Word
+                                    </Button>
+                                )}
+                                <Badge variant="outline">{entry.contractId}</Badge>
                             </div>
                         </div>
                     ))}

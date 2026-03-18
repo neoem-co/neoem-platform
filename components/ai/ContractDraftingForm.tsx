@@ -136,6 +136,7 @@ export function ContractDraftingForm({ factoryName, onGenerate, onClose, initial
                     </div>
                     {finalizeResult?.pdf_url && (
                         <Button
+                            type="button"
                             variant="outline"
                             className="w-full"
                             size="sm"
@@ -147,6 +148,7 @@ export function ContractDraftingForm({ factoryName, onGenerate, onClose, initial
                     )}
                     {finalizeResult?.docx_url && (
                         <Button
+                            type="button"
                             variant="outline"
                             className="w-full"
                             size="sm"
