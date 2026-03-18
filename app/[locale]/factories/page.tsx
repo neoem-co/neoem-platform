@@ -2,7 +2,7 @@
 
 import { useState, useMemo, Suspense, useEffect } from "react";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
-import { Filter, SlidersHorizontal, X, Search } from "lucide-react";
+import { Filter, SlidersHorizontal, X, Search, Sparkles, Star } from "lucide-react";
 import { Navbar } from "@/components/layout/Navbar";
 import { FactoryCard } from "@/components/home/FactoryCard";
 import { Button } from "@/components/ui/button";
@@ -36,6 +36,7 @@ const FactoriesContent = () => {
     const [selectedCertifications, setSelectedCertifications] = useState<string[]>([]);
     const [selectedCategories, setSelectedCategories] = useState<string[] | null>(null);
     const [moqRange, setMoqRange] = useState([0, 5000]);
+    const [minRating, setMinRating] = useState(0);
     const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
     const [recommendedIds, setRecommendedIds] = useState<string[]>([]);
     const activeSelectedCategories = selectedCategories ?? initialCategorySelection;
@@ -125,19 +126,22 @@ const FactoriesContent = () => {
             }
 
             if (factory.moq < moqRange[0] || factory.moq > moqRange[1]) return false;
+            if (factory.rating < minRating) return false;
 
             return true;
         });
+        return filtered;
+    }, [activeSelectedCategories, factories, locale, minRating, query, selectedLocations, selectedCertifications, moqRange]);
 
-        // Sort: Recommended first
-        return [...filtered].sort((a, b) => {
-            const aRec = recommendedIds.includes(a.id);
-            const bRec = recommendedIds.includes(b.id);
-            if (aRec && !bRec) return -1;
-            if (!aRec && bRec) return 1;
-            return 0;
-        });
-    }, [activeSelectedCategories, factories, locale, query, selectedLocations, selectedCertifications, moqRange, recommendedIds]);
+    const recommendedFactories = useMemo(
+        () => filteredFactories.filter((factory) => recommendedIds.includes(factory.id)).slice(0, 3),
+        [filteredFactories, recommendedIds]
+    );
+
+    const standardFactories = useMemo(
+        () => filteredFactories.filter((factory) => !recommendedIds.includes(factory.id)),
+        [filteredFactories, recommendedIds]
+    );
 
     const toggleFilter = (
         value: string,
@@ -164,14 +168,22 @@ const FactoriesContent = () => {
         setSelectedCertifications([]);
         setSelectedCategories([]);
         setMoqRange([0, 5000]);
+        setMinRating(0);
     };
 
     const hasActiveFilters =
         selectedLocations.length > 0 ||
         selectedCertifications.length > 0 ||
         activeSelectedCategories.length > 0 ||
+        minRating > 0 ||
         moqRange[0] > 0 ||
         moqRange[1] < 5000;
+
+    const activeFilterCount =
+        activeSelectedCategories.length +
+        selectedLocations.length +
+        selectedCertifications.length +
+        (minRating > 0 ? 1 : 0);
 
     const filterContent = (
         <div className="space-y-6">
@@ -238,6 +250,27 @@ const FactoriesContent = () => {
                 </div>
             </div>
 
+            {/* Rating */}
+            <div className="space-y-3">
+                <h4 className="text-sm font-medium text-foreground">{t("rating")}</h4>
+                <Slider
+                    value={[minRating]}
+                    onValueChange={(value) => setMinRating(value[0] ?? 0)}
+                    min={0}
+                    max={5}
+                    step={0.5}
+                    className="mt-4"
+                />
+                <div className="flex items-center justify-between text-xs text-muted-foreground">
+                    <span>0</span>
+                    <span className="inline-flex items-center gap-1 font-medium text-foreground">
+                        <Star className="h-3.5 w-3.5 fill-[#FF7A00] text-[#FF7A00]" />
+                        {minRating.toFixed(1)}+
+                    </span>
+                    <span>5.0</span>
+                </div>
+            </div>
+
             {/* Certifications */}
             <div className="space-y-3">
                 <h4 className="text-sm font-medium text-foreground">{t("certifications")}</h4>
@@ -284,7 +317,7 @@ const FactoriesContent = () => {
                                     <SlidersHorizontal className="h-4 w-4" />
                                     {hasActiveFilters && (
                                         <span className="ml-1 w-5 h-5 rounded-full bg-primary text-primary-foreground text-xs flex items-center justify-center">
-                                            {activeSelectedCategories.length + selectedLocations.length + selectedCertifications.length}
+                                            {activeFilterCount}
                                         </span>
                                     )}
                                 </Button>
@@ -355,6 +388,15 @@ const FactoriesContent = () => {
                                     </button>
                                 </span>
                             ))}
+                            {minRating > 0 && (
+                                <span className="inline-flex items-center gap-1 px-3 py-1 bg-[#FF7A00]/10 text-[#FF7A00] rounded-full text-sm">
+                                    <Star className="h-3 w-3 fill-current" />
+                                    {t("rating")} {minRating.toFixed(1)}+
+                                    <button onClick={() => setMinRating(0)}>
+                                        <X className="h-3 w-3" />
+                                    </button>
+                                </span>
+                            )}
                         </div>
                     )}
 
@@ -366,15 +408,50 @@ const FactoriesContent = () => {
                             </Button>
                         </div>
                     ) : (
-                        <div className="grid gap-4 md:grid-cols-1">
-                            {filteredFactories.map((factory) => (
-                                <FactoryCard
-                                    key={factory.id}
-                                    factory={factory}
-                                    variant="horizontal"
-                                    isRecommended={recommendedIds.includes(factory.id)}
-                                />
-                            ))}
+                        <div className="space-y-6">
+                            {recommendedFactories.length > 0 && (
+                                <section className="rounded-2xl border-2 border-[#FF7A00] bg-gradient-to-br from-[#FF7A00]/10 via-background to-background p-4 md:p-5">
+                                    <div className="flex items-start gap-3 mb-4">
+                                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#FF7A00] text-white shadow-sm">
+                                            <Sparkles className="h-5 w-5" />
+                                        </div>
+                                        <div>
+                                            <h2 className="text-lg font-bold text-foreground">{t("smartMatchTitle")}</h2>
+                                            <p className="text-sm text-muted-foreground">{t("smartMatchDescription")}</p>
+                                        </div>
+                                    </div>
+                                    <div className="grid gap-4 md:grid-cols-1">
+                                        {recommendedFactories.map((factory) => (
+                                            <FactoryCard
+                                                key={factory.id}
+                                                factory={factory}
+                                                variant="horizontal"
+                                                isRecommended={true}
+                                            />
+                                        ))}
+                                    </div>
+                                </section>
+                            )}
+
+                            {standardFactories.length > 0 && (
+                                <section className="space-y-4">
+                                    {recommendedFactories.length > 0 && (
+                                        <div>
+                                            <h2 className="text-lg font-semibold text-foreground">{t("otherResults")}</h2>
+                                            <p className="text-sm text-muted-foreground">{t("factoriesFound", { count: standardFactories.length })}</p>
+                                        </div>
+                                    )}
+                                    <div className="grid gap-4 md:grid-cols-1">
+                                        {standardFactories.map((factory) => (
+                                            <FactoryCard
+                                                key={factory.id}
+                                                factory={factory}
+                                                variant="horizontal"
+                                            />
+                                        ))}
+                                    </div>
+                                </section>
+                            )}
                         </div>
                     )}
                 </main>
