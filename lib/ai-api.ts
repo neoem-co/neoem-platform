@@ -11,6 +11,7 @@ const AI_TIMEOUT = 300_000;
 function normalizeAiUrl(url: string | null): string | null {
   if (!url) return null;
   if (/^https?:\/\//.test(url)) return url;
+  url = url.replace(/^\/api\/ai\/ai\//, "/api/ai/");
   if (url.startsWith(`${AI_BASE}/`)) return url;
   if (url.startsWith("/api/")) return url.replace(/^\/api\//, `${AI_BASE}/`);
   return url;

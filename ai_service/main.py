@@ -20,6 +20,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from config import settings
 from routers import risk_check, contract_draft, search
+from services.document.storage_paths import get_contracts_dir
 
 # ── Logging ──────────────────────────────────────────────────────────────────
 logging.basicConfig(
@@ -65,12 +66,13 @@ app.include_router(search.router)
 async def startup():
     logger.info("NeoEM AI Service starting (env=%s)", settings.app_env)
 
-    # Create data directories (careful on serverless)
-    try:
-        os.makedirs("./data/contracts", exist_ok=True)
-        os.makedirs("./data/chroma_db", exist_ok=True)
-    except Exception as e:
-        logger.warning("Could not create local data directories (likely serverless): %s", str(e))
+    # Create local data directories only when they are actually writable/needed.
+    if settings.app_env != "production" and not os.getenv("VERCEL"):
+        try:
+            os.makedirs(get_contracts_dir(), exist_ok=True)
+            os.makedirs("./data/chroma_db", exist_ok=True)
+        except Exception as e:
+            logger.warning("Could not create local data directories: %s", str(e))
 
     # Seed the legal knowledge vector store
     try:
