@@ -92,6 +92,7 @@ const DealRoom = () => {
     const [depositPaid, setDepositPaid] = useState(() => loadDealRoomState(slug).depositPaid);
     const [riskAlert, setRiskAlert] = useState<RiskAlertState | null>(() => loadDealRoomState(slug).riskAlert);
     const [completedActions, setCompletedActions] = useState<string[]>(() => loadDealRoomState(slug).completedActions);
+    const [trackerResetKey, setTrackerResetKey] = useState(0);
     const [showLegalWorkspace, setShowLegalWorkspace] = useState(false);
     const [legalWorkspaceTab, setLegalWorkspaceTab] = useState<"draft" | "risk" | "history" | "esign">("draft");
     const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -117,6 +118,18 @@ const DealRoom = () => {
 
     const markActionCompleted = (action: string) => {
         setCompletedActions((prev) => (prev.includes(action) ? prev : [...prev, action]));
+    };
+
+    const resetDealProgress = () => {
+        if (typeof window !== "undefined") {
+            window.localStorage.removeItem(`neoem:milestones:${slug}`);
+        }
+        setDepositPaid(false);
+        setRiskAlert(null);
+        setCompletedActions([]);
+        setShowPaymentModal(false);
+        setShowContractWarning(false);
+        setTrackerResetKey((prev) => prev + 1);
     };
 
     const handleTOSAccept = () => { setTosAccepted(true); setShowTOS(false); };
@@ -198,6 +211,7 @@ const DealRoom = () => {
         <div className="flex-1 flex flex-col overflow-hidden">
             <div className="flex-1 p-4 space-y-4 overflow-y-auto scrollbar-thin">
                 <MilestoneTracker
+                    key={trackerResetKey}
                     onAction={handleMilestoneAction}
                     storageKey={`neoem:milestones:${slug}`}
                     riskAlert={riskAlert}
@@ -246,11 +260,20 @@ const DealRoom = () => {
                     </Button>
                 </div>
 
-                <Card className="bg-secondary/30">
-                    <CardContent className="py-3">
+                <Card className="bg-secondary/30 border-dashed">
+                    <CardContent className="py-3 space-y-3">
                         <p className="text-xs text-muted-foreground">
                             💡 <strong>Tip:</strong> Both you and the factory see the same milestone status in real-time — full transparency.
                         </p>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="w-full justify-center text-xs"
+                            onClick={resetDealProgress}
+                        >
+                            Reset Demo to Step 3
+                        </Button>
                     </CardContent>
                 </Card>
             </div>
