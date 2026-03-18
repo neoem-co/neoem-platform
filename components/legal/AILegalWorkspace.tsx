@@ -22,6 +22,7 @@ import {
 import { ESignaturePanel } from "@/components/legal/ESignaturePanel";
 import {
     analyzeContractRisk,
+    downloadFile,
     extractContext,
     finalizeContract,
     generateDraft,
@@ -544,22 +545,27 @@ function DraftPanel({
                     </div>
                     <div className="flex gap-3 max-w-sm mx-auto">
                         {downloadUrls?.pdf_url ? (
-                            <a href={downloadUrls.pdf_url} download className="flex-1">
-                                <Button className="w-full" size="lg">
-                                    <Download className="h-5 w-5 mr-2" /> PDF
-                                </Button>
-                            </a>
+                            <Button
+                                className="w-full flex-1"
+                                size="lg"
+                                onClick={() => downloadFile(downloadUrls.pdf_url!, `${draftResult?.contract_filename || "contract"}.pdf`)}
+                            >
+                                <Download className="h-5 w-5 mr-2" /> PDF
+                            </Button>
                         ) : (
                             <Button className="flex-1" size="lg" disabled>
                                 <Download className="h-5 w-5 mr-2" /> PDF
                             </Button>
                         )}
                         {downloadUrls?.docx_url ? (
-                            <a href={downloadUrls.docx_url} download className="flex-1">
-                                <Button variant="outline" className="w-full" size="lg">
-                                    <Download className="h-5 w-5 mr-2" /> Word
-                                </Button>
-                            </a>
+                            <Button
+                                variant="outline"
+                                className="w-full flex-1"
+                                size="lg"
+                                onClick={() => downloadFile(downloadUrls.docx_url!, `${draftResult?.contract_filename || "contract"}.docx`)}
+                            >
+                                <Download className="h-5 w-5 mr-2" /> Word
+                            </Button>
                         ) : (
                             <Button variant="outline" className="flex-1" size="lg" disabled>
                                 <Download className="h-5 w-5 mr-2" /> Word

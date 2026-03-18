@@ -313,6 +313,23 @@ export function getContractDownloadUrl(contractId: string, format: "pdf" | "docx
   return `${AI_BASE}/contract-draft/contracts/${contractId}/download/${format}`;
 }
 
+export async function downloadFile(url: string, filename?: string): Promise<void> {
+  const res = await fetch(url);
+  if (!res.ok) {
+    throw new Error(`Download failed (${res.status})`);
+  }
+
+  const blob = await res.blob();
+  const objectUrl = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = objectUrl;
+  link.download = filename || "download";
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(objectUrl);
+}
+
 /**
  * Health check — is AI service running?
  */

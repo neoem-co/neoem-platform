@@ -13,6 +13,7 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import {
+    downloadFile,
     generateDraft,
     finalizeContract,
     type DealSheet,
@@ -134,20 +135,26 @@ export function ContractDraftingForm({ factoryName, onGenerate, onClose, initial
                         <p className="text-xs text-muted-foreground">{finalizeResult?.message_th || "Generated just now"}</p>
                     </div>
                     {finalizeResult?.pdf_url && (
-                        <a href={finalizeResult.pdf_url} download>
-                            <Button variant="outline" className="w-full" size="sm">
-                                <Download className="h-4 w-4 mr-2" />
-                                Download Contract PDF
-                            </Button>
-                        </a>
+                        <Button
+                            variant="outline"
+                            className="w-full"
+                            size="sm"
+                            onClick={() => downloadFile(finalizeResult.pdf_url!, `${finalizeResult.contract_id}.pdf`)}
+                        >
+                            <Download className="h-4 w-4 mr-2" />
+                            Download Contract PDF
+                        </Button>
                     )}
                     {finalizeResult?.docx_url && (
-                        <a href={finalizeResult.docx_url} download>
-                            <Button variant="outline" className="w-full" size="sm">
-                                <Download className="h-4 w-4 mr-2" />
-                                Download Contract Word
-                            </Button>
-                        </a>
+                        <Button
+                            variant="outline"
+                            className="w-full"
+                            size="sm"
+                            onClick={() => downloadFile(finalizeResult.docx_url!, `${finalizeResult.contract_id}.docx`)}
+                        >
+                            <Download className="h-4 w-4 mr-2" />
+                            Download Contract Word
+                        </Button>
                     )}
                     {!finalizeResult && (
                         <Button variant="outline" className="w-full" size="sm">
