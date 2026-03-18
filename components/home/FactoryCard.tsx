@@ -44,6 +44,7 @@ export function FactoryCard({ factory, variant = "vertical", isRecommended = fal
     const t = useTranslations("Factories");
     const locale = useLocale();
     const imageUrl = factoryImages[factory.image] || factory1;
+    const imageSrc = typeof imageUrl === "string" ? imageUrl : imageUrl.src;
     const priceIndicator = (
         <span className="flex items-center text-muted-foreground">
             {Array.from({ length: 3 }).map((_, i) => (
@@ -71,7 +72,7 @@ export function FactoryCard({ factory, variant = "vertical", isRecommended = fal
                 {isRecommended && recommendedBadge}
                 <div className="w-full sm:w-48 h-40 sm:h-32 flex-shrink-0 rounded-md overflow-hidden relative">
                     <img
-                        src={imageUrl.src || imageUrl}
+                        src={imageSrc}
                         alt={factory.name}
                         className="w-full h-full object-cover"
                     />
@@ -123,7 +124,7 @@ export function FactoryCard({ factory, variant = "vertical", isRecommended = fal
             {isRecommended && recommendedBadge}
             <div className="relative h-40 overflow-hidden">
                 <img
-                    src={imageUrl.src || imageUrl}
+                    src={imageSrc}
                     alt={factory.name}
                     className="w-full h-full object-cover"
                 />
