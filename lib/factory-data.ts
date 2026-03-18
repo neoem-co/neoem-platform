@@ -3,7 +3,10 @@
 import enFactoriesData from "@/data/enfactories.json";
 import thFactoriesData from "@/data/thfactories.json";
 
-type FactoryDataFile = typeof enFactoriesData;
+type FactoryDataFile = {
+    factories: typeof enFactoriesData.factories;
+    chatHistory: typeof enFactoriesData.chatHistory;
+};
 
 export type FactoryRecord = FactoryDataFile["factories"][number];
 export type FactoryChatMessage = NonNullable<FactoryDataFile["chatHistory"]>[number];
@@ -25,7 +28,14 @@ export function isThaiLocale(locale?: string) {
 }
 
 export function getFactoriesData(locale?: string): FactoryDataFile {
-    return isThaiLocale(locale) ? thFactoriesData : enFactoriesData;
+    if (isThaiLocale(locale)) {
+        return {
+            factories: thFactoriesData.factories,
+            chatHistory: [],
+        };
+    }
+
+    return enFactoriesData;
 }
 
 export function getFactories(locale?: string): FactoryRecord[] {
