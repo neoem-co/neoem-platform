@@ -21,6 +21,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from config import settings
 from routers import risk_check, contract_draft, search
 from services.document.storage_paths import get_contracts_dir
+from services.supabase_client import (
+    check_storage_bucket_access,
+    ensure_storage_config,
+)
 
 # ── Logging ──────────────────────────────────────────────────────────────────
 logging.basicConfig(
@@ -106,6 +110,28 @@ async def seed_db(key: str = ""):
         return {"status": "success", "message": "Legal knowledge seeded"}
     except Exception as e:
         logger.error("Seeding failed: %s", str(e))
+        return {"status": "error", "message": str(e)}
+
+
+@app.get("/api/ai/storage-health")
+async def storage_health(key: str = ""):
+    """Check whether Supabase Storage is configured and readable."""
+    if settings.app_env == "production" and key != settings.gemini_api_key[:5]:
+        return {"error": "Unauthorized"}
+
+    try:
+        ensure_storage_config()
+        bucket = settings.supabase_storage_bucket
+        readable = check_storage_bucket_access(bucket)
+        return {
+            "status": "ok",
+            "bucket": bucket,
+            "supabase_url_present": bool(settings.supabase_url),
+            "supabase_key_present": bool(settings.supabase_key),
+            "bucket_list_access": readable,
+        }
+    except Exception as e:
+        logger.error("Storage health check failed: %s", str(e))
         return {"status": "error", "message": str(e)}
 
 

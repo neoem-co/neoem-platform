@@ -17,7 +17,11 @@ from typing import Optional
 
 from config import settings
 from services.document.storage_paths import get_contracts_dir
-from services.supabase_client import upload_contract_file
+from services.supabase_client import (
+    ensure_storage_config,
+    is_production_runtime,
+    upload_contract_file,
+)
 
 from models.contract_draft import (
     ChatMessage,
@@ -334,6 +338,13 @@ async def finalize_contract(request: FinalizeRequest) -> FinalizeResponse:
     Step 4/4 in the UI prototype.
     """
     logger.info("Step 4: Finalizing contract '%s'", request.contract_title)
+    production_storage_required = is_production_runtime()
+    if production_storage_required:
+        try:
+            ensure_storage_config()
+        except Exception as e:
+            logger.error("Supabase Storage not configured for production finalize: %s", str(e))
+            raise RuntimeError(str(e)) from e
 
     contract_id = f"CTR-{uuid.uuid4().hex[:8].upper()}"
 
@@ -354,15 +365,13 @@ async def finalize_contract(request: FinalizeRequest) -> FinalizeResponse:
 
             pdf_path = f"contracts/{contract_id}.pdf"
 
-            if settings.supabase_url and settings.supabase_key:
+            if production_storage_required or (settings.supabase_url and settings.supabase_key):
                 # Upload to Supabase Storage
                 pdf_url = upload_contract_file(
                     pdf_path,
                     pdf_bytes,
                     bucket=settings.supabase_storage_bucket,
                 )
-                if not pdf_url:
-                    raise RuntimeError("Supabase upload returned no PDF URL")
                 logger.info("Uploaded PDF to Supabase: %s", pdf_url)
             else:
                 # Save locally
@@ -385,15 +394,13 @@ async def finalize_contract(request: FinalizeRequest) -> FinalizeResponse:
 
             docx_path = f"contracts/{contract_id}.docx"
 
-            if settings.supabase_url and settings.supabase_key:
+            if production_storage_required or (settings.supabase_url and settings.supabase_key):
                 # Upload to Supabase Storage
                 docx_url = upload_contract_file(
                     docx_path,
                     docx_bytes,
                     bucket=settings.supabase_storage_bucket,
                 )
-                if not docx_url:
-                    raise RuntimeError("Supabase upload returned no DOCX URL")
                 logger.info("Uploaded DOCX to Supabase: %s", docx_url)
             else:
                 # Save locally
@@ -414,15 +421,13 @@ async def finalize_contract(request: FinalizeRequest) -> FinalizeResponse:
             ensure_ascii=False,
             indent=2,
         ).encode("utf-8")
-        if settings.supabase_url and settings.supabase_key:
+        if production_storage_required or (settings.supabase_url and settings.supabase_key):
             history_path = f"contracts/{contract_id}_deal_sheet.json"
-            uploaded = upload_contract_file(
+            upload_contract_file(
                 history_path,
                 history_bytes,
                 bucket=settings.supabase_storage_bucket,
             )
-            if not uploaded:
-                logger.warning("Failed to upload deal sheet JSON for %s", contract_id)
         else:
             history_path = str(get_contracts_dir() / f"{contract_id}_deal_sheet.json")
             _save_file(history_path, history_bytes)
@@ -431,16 +436,8 @@ async def finalize_contract(request: FinalizeRequest) -> FinalizeResponse:
         pdf_url=pdf_url,
         docx_url=docx_url,
         contract_id=contract_id,
-        message_th=(
-            "สัญญาแบบร่างของคุณพร้อมแล้ว บันทึกไปยังประวัติสัญญาและ Deal Room แล้ว"
-            if not generation_errors else
-            "สร้างสัญญาแบบร่างสำเร็จบางส่วน กรุณาตรวจสอบไฟล์ที่พร้อมดาวน์โหลด"
-        ),
-        message_en=(
-            "Your draft contract is ready. Saved to Contract History and Deal Room."
-            if not generation_errors else
-            "Draft contract generated partially. Please check the available download files."
-        ),
+        message_th="สัญญาแบบร่างของคุณพร้อมแล้ว บันทึกไปยังประวัติสัญญาและ Deal Room แล้ว",
+        message_en="Your draft contract is ready. Saved to Contract History and Deal Room.",
         saved_to_history=True,
     )
 
