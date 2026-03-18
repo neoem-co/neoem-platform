@@ -79,9 +79,20 @@ def verify_storage_object(file_path: str, bucket: str) -> bool:
 
 def check_storage_bucket_access(bucket: str) -> bool:
     """Check that the bucket can be listed with current credentials."""
-    supabase = get_supabase()
-    supabase.storage.from_(bucket).list("")
-    return True
+    try:
+        supabase = get_supabase()
+        supabase.storage.from_(bucket).list("")
+        return True
+    except Exception as e:
+        message = str(e)
+        if "Invalid API key" in message:
+            raise RuntimeError(
+                "Supabase Storage authentication failed: invalid SUPABASE_KEY. "
+                "Use the Supabase service-role key, not the anon key."
+            ) from e
+        raise RuntimeError(
+            f"Supabase Storage bucket access failed for '{bucket}': {message}"
+        ) from e
 
 def get_supabase() -> Client:
     """Return the Supabase client."""
@@ -112,14 +123,25 @@ def upload_contract_file(file_path: str, file_bytes: bytes, bucket: str = "contr
         len(file_bytes),
     )
 
-    supabase.storage.from_(bucket).upload(
-        path=file_path,
-        file=file_bytes,
-        file_options={
-            "content-type": content_type,
-            "upsert": "true",
-        },
-    )
+    try:
+        supabase.storage.from_(bucket).upload(
+            path=file_path,
+            file=file_bytes,
+            file_options={
+                "content-type": content_type,
+                "upsert": "true",
+            },
+        )
+    except Exception as e:
+        message = str(e)
+        if "Invalid API key" in message:
+            raise RuntimeError(
+                "Supabase Storage authentication failed: invalid SUPABASE_KEY. "
+                "Use the Supabase service-role key, not the anon key."
+            ) from e
+        raise RuntimeError(
+            f"Supabase upload failed for {bucket}/{file_path}: {message}"
+        ) from e
     logger.info("Supabase upload completed: bucket=%s path=%s", bucket, file_path)
 
     url_res = supabase.storage.from_(bucket).get_public_url(file_path)

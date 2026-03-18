@@ -18,6 +18,7 @@ from typing import Optional
 from config import settings
 from services.document.storage_paths import get_contracts_dir
 from services.supabase_client import (
+    check_storage_bucket_access,
     ensure_storage_config,
     is_production_runtime,
     upload_contract_file,
@@ -342,6 +343,7 @@ async def finalize_contract(request: FinalizeRequest) -> FinalizeResponse:
     if production_storage_required:
         try:
             ensure_storage_config()
+            check_storage_bucket_access(settings.supabase_storage_bucket)
         except Exception as e:
             logger.error("Supabase Storage not configured for production finalize: %s", str(e))
             raise RuntimeError(str(e)) from e
