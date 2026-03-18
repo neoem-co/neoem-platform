@@ -11,14 +11,9 @@ Typhoon API quirks (discovered empirically):
       b) "max_tokens is too large … maximum context length is N" → max_tokens > context window
 """
 
-from __future__ import annotations
-
 import logging
 import re
 from typing import Optional
-
-from langchain_openai import ChatOpenAI
-from langchain_core.messages import HumanMessage, SystemMessage
 
 from config import settings
 
@@ -39,8 +34,9 @@ def get_typhoon_llm(
     temperature: float = 0.1,
     max_tokens: int = _DEFAULT_MAX_TOKENS,
     model: Optional[str] = None,
-) -> ChatOpenAI:
+):
     """Create a LangChain ChatOpenAI pointing to Typhoon API."""
+    from langchain_openai import ChatOpenAI
     return ChatOpenAI(
         model=model or settings.typhoon_model,
         openai_api_key=settings.typhoon_api_key,
@@ -92,6 +88,8 @@ async def typhoon_invoke(
     Automatically retries once with an adjusted max_tokens if the API
     returns a 400 related to token limits.
     """
+    from langchain_core.messages import HumanMessage, SystemMessage
+    
     llm = get_typhoon_llm(temperature=temperature, max_tokens=max_tokens)
     messages = [
         SystemMessage(content=system_prompt),

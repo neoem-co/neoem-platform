@@ -8,6 +8,15 @@ const AI_BASE = "/api/ai";
 /** 5 minutes — LLM calls are slow on free tier */
 const AI_TIMEOUT = 300_000;
 
+function normalizeAiUrl(url: string | null): string | null {
+  if (!url) return null;
+  if (/^https?:\/\//.test(url)) return url;
+  url = url.replace(/^\/api\/ai\/ai\//, "/api/ai/");
+  if (url.startsWith(`${AI_BASE}/`)) return url;
+  if (url.startsWith("/api/")) return url.replace(/^\/api\//, `${AI_BASE}/`);
+  return url;
+}
+
 // ─── Risk Check ──────────────────────────────────────────────────────────────
 
 export interface RiskItemResult {
@@ -202,6 +211,16 @@ export interface FinalizeResponse {
   saved_to_history: boolean;
 }
 
+export interface ContractHistoryItem {
+  id: string;
+  contract_id: string;
+  base_name: string;
+  created_at: string;
+  pdf_url: string | null;
+  docx_url: string | null;
+  has_deal_sheet: boolean;
+}
+
 export interface TemplateInfo {
   type: string;
   name_th: string;
@@ -289,7 +308,30 @@ export async function finalizeContract(payload: {
   });
 
   if (!res.ok) throw new Error(`Finalization failed (${res.status})`);
-  return res.json();
+  const result: FinalizeResponse = await res.json();
+  return {
+    ...result,
+    pdf_url: normalizeAiUrl(result.pdf_url),
+    docx_url: normalizeAiUrl(result.docx_url),
+  };
+}
+
+export async function getContractHistory(): Promise<{ contracts: ContractHistoryItem[] }> {
+  const res = await fetch(`${AI_BASE}/contract-draft/history`, {
+    signal: AbortSignal.timeout(AI_TIMEOUT),
+  });
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`Contract history failed (${res.status}): ${err}`);
+  }
+  const result: { contracts: ContractHistoryItem[] } = await res.json();
+  return {
+    contracts: result.contracts.map((item) => ({
+      ...item,
+      pdf_url: normalizeAiUrl(item.pdf_url),
+      docx_url: normalizeAiUrl(item.docx_url),
+    })),
+  };
 }
 
 /**
@@ -297,6 +339,23 @@ export async function finalizeContract(payload: {
  */
 export function getContractDownloadUrl(contractId: string, format: "pdf" | "docx"): string {
   return `${AI_BASE}/contract-draft/contracts/${contractId}/download/${format}`;
+}
+
+export async function downloadFile(url: string, filename?: string): Promise<void> {
+  const res = await fetch(url);
+  if (!res.ok) {
+    throw new Error(`Download failed (${res.status})`);
+  }
+
+  const blob = await res.blob();
+  const objectUrl = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = objectUrl;
+  link.download = filename || "download";
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(objectUrl);
 }
 
 /**

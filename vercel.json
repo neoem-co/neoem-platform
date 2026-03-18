@@ -1,0 +1,15 @@
+{
+    "rewrites": [
+        {
+            "source": "/api/ai/(.*)",
+            "destination": "/api/ai"
+        }
+    ],
+    "functions": {
+        "api/ai.py": {
+            "includeFiles": "ai_service/**/*",
+            "memory": 1024,
+            "maxDuration": 60
+        }
+    }
+}

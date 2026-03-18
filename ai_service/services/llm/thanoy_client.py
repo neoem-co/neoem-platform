@@ -14,21 +14,31 @@ from __future__ import annotations
 import logging
 
 import httpx
-from tenacity import retry, stop_after_attempt, wait_exponential
+from tenacity import retry, retry_if_exception, stop_after_attempt, wait_exponential
 
 from config import settings
 
 logger = logging.getLogger(__name__)
 
 
+def _should_retry_thanoy_error(exc: BaseException) -> bool:
+    if isinstance(exc, httpx.HTTPStatusError) and exc.response is not None:
+        return exc.response.status_code >= 500
+    return isinstance(exc, (httpx.TimeoutException, httpx.NetworkError, httpx.TransportError))
+
+
 class ThanoyClient:
     """Client for iApp Thanoy Legal AI Chatbot."""
 
     def __init__(self) -> None:
-        self._api_key = settings.iapp_api_key
+        self._api_key = settings.iapp_thanoy_api_key or settings.iapp_api_key
         self._url = settings.iapp_thanoy_url
 
-    @retry(stop=stop_after_attempt(3), wait=wait_exponential(min=2, max=20))
+    @retry(
+        stop=stop_after_attempt(3),
+        wait=wait_exponential(min=2, max=20),
+        retry=retry_if_exception(_should_retry_thanoy_error),
+    )
     async def consult(self, query: str) -> dict:
         """
         Send a Thai legal question to Thanoy and return the structured result.
@@ -42,6 +52,9 @@ class ThanoyClient:
         """
         logger.info("Thanoy query (first 80 chars): %s", query[:80])
 
+        if not self._api_key:
+            raise RuntimeError("Thanoy API key is missing. Set IAPP_THANOY_API_KEY or IAPP_API_KEY.")
+
         async with httpx.AsyncClient(timeout=60.0) as client:
             resp = await client.post(
                 self._url,
@@ -51,7 +64,14 @@ class ThanoyClient:
                 },
                 json={"query": query},
             )
-            resp.raise_for_status()
+            try:
+                resp.raise_for_status()
+            except httpx.HTTPStatusError as exc:
+                if exc.response.status_code == 401:
+                    raise RuntimeError(
+                        "Thanoy API unauthorized (401). Check IAPP_THANOY_API_KEY or IAPP_API_KEY in Vercel."
+                    ) from exc
+                raise
             data = resp.json()
 
         # Parse response

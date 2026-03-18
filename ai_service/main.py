@@ -20,6 +20,11 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from config import settings
 from routers import risk_check, contract_draft, search
+from services.document.storage_paths import get_contracts_dir
+from services.supabase_client import (
+    check_storage_bucket_access,
+    ensure_storage_config,
+)
 
 # ── Logging ──────────────────────────────────────────────────────────────────
 logging.basicConfig(
@@ -65,9 +70,13 @@ app.include_router(search.router)
 async def startup():
     logger.info("NeoEM AI Service starting (env=%s)", settings.app_env)
 
-    # Create data directories
-    os.makedirs("./data/contracts", exist_ok=True)
-    os.makedirs("./data/chroma_db", exist_ok=True)
+    # Create local data directories only when they are actually writable/needed.
+    if settings.app_env != "production" and not os.getenv("VERCEL"):
+        try:
+            os.makedirs(get_contracts_dir(), exist_ok=True)
+            os.makedirs("./data/chroma_db", exist_ok=True)
+        except Exception as e:
+            logger.warning("Could not create local data directories: %s", str(e))
 
     # Seed the legal knowledge vector store
     try:
@@ -88,17 +97,53 @@ async def health():
     }
 
 
+# ── Seeding Endpoint (for production/Vercel) ───────────────────────────
+@app.get("/api/ai/seed-db")
+async def seed_db(key: str = ""):
+    """Explicitly trigger vector store seeding. Use a secret key in prod."""
+    if settings.app_env == "production" and key != settings.gemini_api_key[:5]:
+        return {"error": "Unauthorized"}
+    
+    try:
+        from services.rag.vector_store import seed_thai_legal_knowledge
+        seed_thai_legal_knowledge()
+        return {"status": "success", "message": "Legal knowledge seeded"}
+    except Exception as e:
+        logger.error("Seeding failed: %s", str(e))
+        return {"status": "error", "message": str(e)}
+
+
+@app.get("/api/ai/storage-health")
+async def storage_health(key: str = ""):
+    """Check whether Supabase Storage is configured and readable."""
+    if settings.app_env == "production" and key != settings.gemini_api_key[:5]:
+        return {"error": "Unauthorized"}
+
+    try:
+        ensure_storage_config()
+        bucket = settings.supabase_storage_bucket
+        readable = check_storage_bucket_access(bucket)
+        return {
+            "status": "ok",
+            "bucket": bucket,
+            "supabase_url_present": bool(settings.supabase_url),
+            "supabase_key_present": bool(settings.supabase_key),
+            "bucket_list_access": readable,
+        }
+    except Exception as e:
+        logger.error("Storage health check failed: %s", str(e))
+        return {"status": "error", "message": str(e)}
+
+
 @app.get("/")
 async def root():
     return {
         "service": "NeoEM AI Service",
         "docs": "/docs",
         "endpoints": {
-            "risk_check": "/api/risk-check/analyze",
-            "contract_draft_templates": "/api/contract-draft/templates",
-            "contract_draft_extract": "/api/contract-draft/extract-context",
-            "contract_draft_generate": "/api/contract-draft/generate",
-            "contract_draft_finalize": "/api/contract-draft/finalize",
-            "semantic_search": "/api/search/semantic",
+            "risk_check": "/api/ai/risk-check/analyze",
+            "contract_draft": "/api/ai/contract-draft/...",
+            "health": "/api/ai/health",
+            "seed": "/api/ai/seed-db"
         },
     }

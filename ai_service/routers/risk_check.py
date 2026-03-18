@@ -24,7 +24,7 @@ from services.llm.typhoon_client import typhoon_invoke
 from services.llm.prompts import RISK_EXPLAIN_SYSTEM, RISK_EXPLAIN_USER
 
 logger = logging.getLogger(__name__)
-router = APIRouter(prefix="/api/risk-check", tags=["Risk Check"])
+router = APIRouter(prefix="/api/ai/risk-check", tags=["Risk Check"])
 
 
 @router.post("/analyze", response_model=RiskCheckResponse)

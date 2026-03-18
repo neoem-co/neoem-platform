@@ -11,27 +11,34 @@ import logging
 import os
 from typing import Optional
 
-from langchain_core.documents import Document
-from langchain_community.vectorstores import Chroma
-from langchain_community.embeddings import HuggingFaceEmbeddings
-
 from config import settings
+from services.rag.gemini_embeddings import GeminiRESTEmbeddings
 
 logger = logging.getLogger(__name__)
 
-# ── Singleton ────────────────────────────────────────────────────────────────
-_vector_store: Optional[Chroma] = None
-_factory_store: Optional[Chroma] = None
-
-# Multilingual model with strong Thai support, runs locally, no API key needed
+# Shared instances
 _EMBEDDING_MODEL = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
+_vector_store: Optional[any] = None
+_factory_store: Optional[any] = None
 
 
-def _get_embeddings() -> HuggingFaceEmbeddings:
+def _get_embeddings():
     """
-    Local sentence-transformer embeddings (no API key needed).
-    paraphrase-multilingual-MiniLM-L12-v2 supports Thai out of the box.
+    Get embeddings model. Use Gemini in production (Vercel) and local HF in dev.
     """
+    if settings.vector_store_provider == "supabase" or settings.app_env == "production":
+        if settings.gemini_api_key:
+            logger.info(
+                "Initializing Gemini REST embeddings: %s",
+                settings.gemini_embedding_model,
+            )
+            return GeminiRESTEmbeddings(
+                model=settings.gemini_embedding_model,
+                api_key=settings.gemini_api_key,
+            )
+    
+    from langchain_community.embeddings import HuggingFaceEmbeddings
+    logger.info("Using local HuggingFace Embeddings (%s)", _EMBEDDING_MODEL)
     return HuggingFaceEmbeddings(
         model_name=_EMBEDDING_MODEL,
         model_kwargs={"device": "cpu"},
@@ -39,52 +46,109 @@ def _get_embeddings() -> HuggingFaceEmbeddings:
     )
 
 
-def get_vector_store() -> Chroma:
-    """Return (or create) the ChromaDB vector store for legal knowledge."""
+def get_vector_store():
+    """Return the vector store (ChromaDB or Supabase PGVector)."""
     global _vector_store
     if _vector_store is not None:
         return _vector_store
 
-    persist_dir = settings.chroma_persist_dir
-    os.makedirs(persist_dir, exist_ok=True)
+    embeddings = _get_embeddings()
 
-    _vector_store = Chroma(
-        collection_name="thai_legal_knowledge",
-        embedding_function=_get_embeddings(),
-        persist_directory=persist_dir,
-    )
-    logger.info("ChromaDB vector store initialised at %s", persist_dir)
+    if settings.vector_store_provider == "supabase" and settings.supabase_db_url:
+        from langchain_postgres.vectorstores import PGVector
+        
+        # Ensure the URL uses the psycopg (v3) driver
+        db_url = settings.supabase_db_url
+        if db_url.startswith("postgresql://"):
+            db_url = db_url.replace("postgresql://", "postgresql+psycopg://", 1)
+        
+        # Add sslmode=require if not present
+        if "sslmode=" not in db_url:
+            separator = "&" if "?" in db_url else "?"
+            db_url += f"{separator}sslmode=require"
+            
+        _vector_store = PGVector(
+            embeddings=embeddings,
+            collection_name="thai_legal_knowledge",
+            connection=db_url,
+            use_jsonb=True,
+            # Connection pool settings for serverless
+            engine_args={
+                "connect_args": {
+                    "connect_timeout": 10,
+                },
+                "pool_pre_ping": True,
+            }
+        )
+        logger.info("Supabase PGVector initialised (v3 driver + ssl)")
+    else:
+        from langchain_community.vectorstores import Chroma
+        persist_dir = settings.chroma_persist_dir
+        os.makedirs(persist_dir, exist_ok=True)
+        _vector_store = Chroma(
+            collection_name="thai_legal_knowledge",
+            embedding_function=embeddings,
+            persist_directory=persist_dir,
+        )
+        logger.info("ChromaDB vector store initialised at %s", persist_dir)
     return _vector_store
 
 
-def get_factory_store() -> Chroma:
-    """Return (or create) the ChromaDB vector store for factories."""
+def get_factory_store():
+    """Return the factory store."""
     global _factory_store
     if _factory_store is not None:
         return _factory_store
 
-    persist_dir = settings.chroma_persist_dir
-    os.makedirs(persist_dir, exist_ok=True)
+    embeddings = _get_embeddings()
 
-    _factory_store = Chroma(
-        collection_name="factories",
-        embedding_function=_get_embeddings(),
-        persist_directory=persist_dir,
-    )
-    logger.info("ChromaDB factory store initialised at %s", persist_dir)
+    if settings.vector_store_provider == "supabase" and settings.supabase_db_url:
+        from langchain_postgres.vectorstores import PGVector
+        
+        db_url = settings.supabase_db_url
+        if db_url.startswith("postgresql://"):
+            db_url = db_url.replace("postgresql://", "postgresql+psycopg://", 1)
+            
+        if "sslmode=" not in db_url:
+            separator = "&" if "?" in db_url else "?"
+            db_url += f"{separator}sslmode=require"
+            
+        _factory_store = PGVector(
+            embeddings=embeddings,
+            collection_name="factories",
+            connection=db_url,
+            use_jsonb=True,
+            engine_args={
+                "connect_args": {
+                    "connect_timeout": 10,
+                },
+                "pool_pre_ping": True,
+            }
+        )
+        logger.info("Supabase PGVector (factories) initialised")
+    else:
+        from langchain_community.vectorstores import Chroma
+        persist_dir = settings.chroma_persist_dir
+        os.makedirs(persist_dir, exist_ok=True)
+        _factory_store = Chroma(
+            collection_name="factories",
+            embedding_function=embeddings,
+            persist_directory=persist_dir,
+        )
+        logger.info("ChromaDB factory store initialised at %s", persist_dir)
     return _factory_store
 
 
 # ── Convenience helpers ──────────────────────────────────────────────────────
 
 
-async def similarity_search(query: str, k: int = 5) -> list[Document]:
+async def similarity_search(query: str, k: int = 5):
     """Search for the most relevant legal documents for a query."""
     store = get_vector_store()
     return store.similarity_search(query, k=k)
 
 
-async def factory_similarity_search(query: str, k: int = 10) -> list[tuple[Document, float]]:
+async def factory_similarity_search(query: str, k: int = 10):
     """Search for the most relevant factories for a query with scores."""
     store = get_factory_store()
     return store.similarity_search_with_relevance_scores(query, k=k)
@@ -115,12 +179,17 @@ def seed_thai_legal_knowledge() -> None:
     store = get_vector_store()
 
     # Check if already seeded
-    existing = store.get()
-    if existing and len(existing.get("ids", [])) > 0:
-        logger.info("Vector store already contains %d docs, skipping seed", len(existing["ids"]))
-        return
+    try:
+        # Chroma has .get(), but PGVector doesn't. 
+        # A universal way is to try a simple search.
+        existing = store.similarity_search("สัญญา", k=1)
+        if existing:
+            logger.info("Vector store already seeded, skipping.")
+            return
+    except Exception as e:
+        logger.info("New or empty vector store detected, proceeding with seed. (%s)", str(e))
 
-    # ── Curated Thai Legal Knowledge for OEM Contracts ────────────────────
+    from langchain_core.documents import Document
     legal_docs = [
         Document(
             page_content=(
@@ -251,5 +320,13 @@ def seed_thai_legal_knowledge() -> None:
         ),
     ]
 
-    store.add_documents(legal_docs)
-    logger.info("Seeded %d Thai legal knowledge documents", len(legal_docs))
+    # Adding documents one by one to avoid Batch 400 errors and identifying which one fails
+    for i, doc in enumerate(legal_docs):
+        try:
+            store.add_documents([doc])
+            logger.info("Seeded legal document %d/%d", i + 1, len(legal_docs))
+        except Exception as e:
+            logger.error("Failed to seed document %d: %s", i + 1, str(e))
+            raise e
+
+    logger.info("Successfully seeded all %d Thai legal knowledge documents", len(legal_docs))

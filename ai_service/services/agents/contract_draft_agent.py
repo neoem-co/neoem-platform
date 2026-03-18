@@ -12,9 +12,17 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
-import time
 import uuid
 from typing import Optional
+
+from config import settings
+from services.document.storage_paths import get_contracts_dir
+from services.supabase_client import (
+    check_storage_bucket_access,
+    ensure_storage_config,
+    is_production_runtime,
+    upload_contract_file,
+)
 
 from models.contract_draft import (
     ChatMessage,
@@ -331,50 +339,100 @@ async def finalize_contract(request: FinalizeRequest) -> FinalizeResponse:
     Step 4/4 in the UI prototype.
     """
     logger.info("Step 4: Finalizing contract '%s'", request.contract_title)
+    production_storage_required = is_production_runtime()
+    if production_storage_required:
+        try:
+            ensure_storage_config()
+            check_storage_bucket_access(settings.supabase_storage_bucket)
+        except Exception as e:
+            logger.error("Supabase Storage not configured for production finalize: %s", str(e))
+            raise RuntimeError(str(e)) from e
 
     contract_id = f"CTR-{uuid.uuid4().hex[:8].upper()}"
 
     pdf_url: Optional[str] = None
     docx_url: Optional[str] = None
+    generation_errors: list[str] = []
 
     # Generate documents
     if request.output_format in ("pdf", "both"):
-        from services.document.pdf_generator import generate_contract_pdf
-        pdf_bytes = generate_contract_pdf(
-            title=request.contract_title,
-            preamble=request.preamble_th,
-            articles=request.articles,
-            parties=request.parties,
-        )
-        # In production: upload to Supabase Storage and get URL
-        # For now: save locally
-        pdf_path = f"./data/contracts/{contract_id}.pdf"
-        _save_file(pdf_path, pdf_bytes)
-        pdf_url = f"/api/contract-draft/contracts/{contract_id}/download/pdf"
+        try:
+            from services.document.pdf_generator import generate_contract_pdf
+            pdf_bytes = generate_contract_pdf(
+                title=request.contract_title,
+                preamble=request.preamble_th,
+                articles=request.articles,
+                parties=request.parties,
+            )
+
+            pdf_path = f"contracts/{contract_id}.pdf"
+
+            if production_storage_required or (settings.supabase_url and settings.supabase_key):
+                # Upload to Supabase Storage
+                pdf_url = upload_contract_file(
+                    pdf_path,
+                    pdf_bytes,
+                    bucket=settings.supabase_storage_bucket,
+                )
+                logger.info("Uploaded PDF to Supabase: %s", pdf_url)
+            else:
+                # Save locally
+                local_path = str(get_contracts_dir() / f"{contract_id}.pdf")
+                _save_file(local_path, pdf_bytes)
+                pdf_url = f"/api/ai/contract-draft/contracts/{contract_id}/download/pdf"
+        except Exception as e:
+            logger.error("PDF generation failed: %s", str(e))
+            generation_errors.append(f"pdf: {e}")
 
     if request.output_format in ("docx", "both"):
-        from services.document.docx_generator import generate_contract_docx
-        docx_bytes = generate_contract_docx(
-            title=request.contract_title,
-            preamble=request.preamble_th,
-            articles=request.articles,
-            parties=request.parties,
-        )
-        docx_path = f"./data/contracts/{contract_id}.docx"
-        _save_file(docx_path, docx_bytes)
-        docx_url = f"/api/contract-draft/contracts/{contract_id}/download/docx"
+        try:
+            from services.document.docx_generator import generate_contract_docx
+            docx_bytes = generate_contract_docx(
+                title=request.contract_title,
+                preamble=request.preamble_th,
+                articles=request.articles,
+                parties=request.parties,
+            )
+
+            docx_path = f"contracts/{contract_id}.docx"
+
+            if production_storage_required or (settings.supabase_url and settings.supabase_key):
+                # Upload to Supabase Storage
+                docx_url = upload_contract_file(
+                    docx_path,
+                    docx_bytes,
+                    bucket=settings.supabase_storage_bucket,
+                )
+                logger.info("Uploaded DOCX to Supabase: %s", docx_url)
+            else:
+                # Save locally
+                local_path = str(get_contracts_dir() / f"{contract_id}.docx")
+                _save_file(local_path, docx_bytes)
+                docx_url = f"/api/ai/contract-draft/contracts/{contract_id}/download/docx"
+        except Exception as e:
+            logger.error("DOCX generation failed: %s", str(e))
+            generation_errors.append(f"docx: {e}")
+
+    if not pdf_url and not docx_url:
+        raise RuntimeError("; ".join(generation_errors) or "No output file could be generated")
 
     # Save deal sheet JSON for future risk check comparison (History Check)
     if request.deal_sheet:
-        history_path = f"./data/contracts/{contract_id}_deal_sheet.json"
-        _save_file(
-            history_path,
-            json.dumps(
-                request.deal_sheet.model_dump(),
-                ensure_ascii=False,
-                indent=2,
-            ).encode("utf-8"),
-        )
+        history_bytes = json.dumps(
+            request.deal_sheet.model_dump(),
+            ensure_ascii=False,
+            indent=2,
+        ).encode("utf-8")
+        if production_storage_required or (settings.supabase_url and settings.supabase_key):
+            history_path = f"contracts/{contract_id}_deal_sheet.json"
+            upload_contract_file(
+                history_path,
+                history_bytes,
+                bucket=settings.supabase_storage_bucket,
+            )
+        else:
+            history_path = str(get_contracts_dir() / f"{contract_id}_deal_sheet.json")
+            _save_file(history_path, history_bytes)
 
     return FinalizeResponse(
         pdf_url=pdf_url,

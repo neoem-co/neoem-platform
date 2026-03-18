@@ -21,9 +21,13 @@ class Settings(BaseSettings):
     gemini_model: str = Field(
         default="gemini-2.5-flash-lite", alias="GEMINI_MODEL"
     )
+    gemini_embedding_model: str = Field(
+        default="gemini-embedding-001", alias="GEMINI_EMBEDDING_MODEL"
+    )
 
     # ── iApp Technology ──────────────────────────────
     iapp_api_key: str = Field(default="", alias="IAPP_API_KEY")
+    iapp_thanoy_api_key: str = Field(default="", alias="IAPP_THANOY_API_KEY")
     iapp_ocr_url: str = Field(
         default="https://api.iapp.co.th/v3/store/ocr/document/ocr",
         alias="IAPP_OCR_URL",
@@ -43,10 +47,20 @@ class Settings(BaseSettings):
         default="./data/chroma_db", alias="CHROMA_PERSIST_DIR"
     )
 
+    # ── Supabase ─────────────────────────────────────
+    supabase_url: str = Field(default="", alias="SUPABASE_URL")
+    supabase_key: str = Field(default="", alias="SUPABASE_KEY")
+    supabase_storage_bucket: str = Field(default="contracts", alias="SUPABASE_STORAGE_BUCKET")
+    # For pgvector: postgresql://postgres.ID:PASSWORD@aws-0-REGION.pooler.supabase.com:5432/postgres
+    supabase_db_url: str = Field(default="", alias="SUPABASE_DB_URL")
+
     # ── Application ──────────────────────────────────
     app_env: str = Field(default="development", alias="APP_ENV")
     app_port: int = Field(default=8000, alias="APP_PORT")
-    cors_origins: str = Field(default="http://localhost:3000", alias="CORS_ORIGINS")
+    cors_origins: str = Field(
+        default="http://localhost:3000,http://localhost:3001,https://*.vercel.app", 
+        alias="CORS_ORIGINS"
+    )
     log_level: str = Field(default="INFO", alias="LOG_LEVEL")
     ocr_char_threshold: int = Field(default=50, alias="OCR_CHAR_THRESHOLD")
 

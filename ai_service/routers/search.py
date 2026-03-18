@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import logging
 import math
-import os
+from pathlib import Path
 from typing import Any
 
 from fastapi import APIRouter, Query
@@ -13,25 +13,28 @@ from services.rag.vector_store import get_factory_store, factory_similarity_sear
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/api/search", tags=["search"])
+router = APIRouter(prefix="/api/ai/search", tags=["search"])
 
-FACTORIES_DATA_PATH = "../data/factories.json"
+FACTORIES_DATA_PATH = Path(__file__).resolve().parent.parent / "data" / "factories.json"
 
 def seed_factories():
     """Seed the vector store with factory data for semantic search."""
     store = get_factory_store()
     
-    # Check if already seeded
-    existing = store.get()
-    if existing and len(existing.get("ids", [])) > 0:
-        logger.info("Factory vector store already contains %d docs, skipping seed", len(existing["ids"]))
-        return
+    # Check if already seeded. Chroma has .get(); PGVector does not.
+    try:
+        existing = store.similarity_search("โรงงาน", k=1)
+        if existing:
+            logger.info("Factory vector store already seeded, skipping.")
+            return
+    except Exception as e:
+        logger.info("Factory store appears empty, proceeding with seed. (%s)", str(e))
 
-    if not os.path.exists(FACTORIES_DATA_PATH):
+    if not FACTORIES_DATA_PATH.exists():
         logger.warning("Factories data file not found at %s", FACTORIES_DATA_PATH)
         return
 
-    with open(FACTORIES_DATA_PATH, "r", encoding="utf-8") as f:
+    with FACTORIES_DATA_PATH.open("r", encoding="utf-8") as f:
         data = json.load(f)
         factories = data.get("factories", [])
 
