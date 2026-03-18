@@ -22,8 +22,12 @@ export function TOSModal({ open, onAccept }: TOSModalProps) {
 
     return (
         <Dialog open={open}>
-            <DialogContent className="sm:max-w-md" onInteractOutside={(e) => e.preventDefault()}>
-                <DialogHeader>
+            <DialogContent
+                hideCloseButton
+                className="w-[calc(100vw-1rem)] max-w-[calc(100vw-1rem)] sm:max-w-lg p-0 gap-0 overflow-hidden rounded-2xl"
+                onInteractOutside={(e) => e.preventDefault()}
+            >
+                <DialogHeader className="px-5 pt-5 pb-3">
                     <DialogTitle className="flex items-center gap-2">
                         <Shield className="h-5 w-5 text-primary" />
                         {t("chat.tosModal.title")}
@@ -33,8 +37,8 @@ export function TOSModal({ open, onAccept }: TOSModalProps) {
                     </DialogDescription>
                 </DialogHeader>
 
-                <div className="space-y-4">
-                    <div className="bg-secondary/50 rounded-lg p-4 text-sm text-muted-foreground max-h-48 overflow-y-auto">
+                <div className="space-y-4 px-5 pb-5">
+                    <div className="bg-secondary/50 rounded-lg p-4 text-sm text-muted-foreground max-h-[min(42vh,320px)] overflow-y-auto">
                         <h4 className="font-semibold text-foreground mb-2">{t("chat.tosModal.tradeSecrets")}</h4>
                         <p className="mb-3">
                             {t("chat.tosModal.tradeSecretsDesc")}

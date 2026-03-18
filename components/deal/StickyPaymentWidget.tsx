@@ -6,14 +6,21 @@ interface StickyPaymentWidgetProps {
     amount: number;
     status: "pending" | "paid";
     onPay: () => void;
+    warningMessage?: string | null;
 }
 
-export function StickyPaymentWidget({ currentMilestone, amount, status, onPay }: StickyPaymentWidgetProps) {
+export function StickyPaymentWidget({ currentMilestone, amount, status, onPay, warningMessage }: StickyPaymentWidgetProps) {
     const isPaid = status === "paid";
 
     return (
         <div className="sticky bottom-0 z-20 border-t bg-card px-4 py-2.5">
-            <div className="flex items-center justify-between gap-3">
+            <div className="space-y-2">
+                {warningMessage && !isPaid && (
+                    <div className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs text-destructive">
+                        {warningMessage}
+                    </div>
+                )}
+                <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2 min-w-0">
                     <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${isPaid ? "bg-success/20" : "bg-primary/20"
                         }`}>
@@ -31,6 +38,7 @@ export function StickyPaymentWidget({ currentMilestone, amount, status, onPay }:
                 ) : (
                     <span className="text-xs text-success font-medium flex-shrink-0">✓ Paid</span>
                 )}
+                </div>
             </div>
         </div>
     );

@@ -44,6 +44,13 @@ interface AILegalWorkspaceProps {
     initialTab?: "draft" | "risk" | "history" | "esign";
     chatHistory?: ChatMessagePayload[];
     factoryInfo?: FactoryInfoPayload;
+    onRiskAnalysisComplete?: (result: {
+        overallRisk: RiskCheckResponse["overall_risk"];
+        summary: string;
+        highCount: number;
+        mediumCount: number;
+        lowCount: number;
+    }) => void;
 }
 
 // ── Draft Contract types ──
@@ -109,6 +116,7 @@ export function AILegalWorkspace({
     initialTab = "draft",
     chatHistory = [],
     factoryInfo,
+    onRiskAnalysisComplete,
 }: AILegalWorkspaceProps) {
     const [activeTab, setActiveTab] = useState<"draft" | "risk" | "history" | "esign">(initialTab);
 
@@ -159,7 +167,7 @@ export function AILegalWorkspace({
                 {/* Main Content */}
                 <div className="flex-1 overflow-y-auto">
                     {activeTab === "draft" && <DraftPanel factoryName={factoryName} chatHistory={chatHistory} factoryInfo={factoryInfo} />}
-                    {activeTab === "risk" && <RiskPanel chatHistory={chatHistory} factoryInfo={factoryInfo} />}
+                    {activeTab === "risk" && <RiskPanel chatHistory={chatHistory} factoryInfo={factoryInfo} onRiskAnalysisComplete={onRiskAnalysisComplete} />}
                     {activeTab === "esign" && <ESignaturePanel factoryName={factoryName} />}
                     {activeTab === "history" && <HistoryPanel />}
                 </div>
@@ -501,7 +509,7 @@ function DraftPanel({
                                 </p>
                             </div>
                             <p className="text-muted-foreground">
-                                This Agreement is entered into between <strong className="text-foreground">{formData.buyerName}</strong> ("Buyer") and <strong className="text-primary">{formData.sellerName}</strong> ("Manufacturer").
+                                This Agreement is entered into between <strong className="text-foreground">{formData.buyerName}</strong> (&quot;Buyer&quot;) and <strong className="text-primary">{formData.sellerName}</strong> (&quot;Manufacturer&quot;).
                             </p>
                             <p className="text-muted-foreground">
                                 <strong className="text-foreground">Product:</strong> {formData.productType} — Qty: {formData.quantity} pcs — Total: ฿{parseInt(formData.totalPrice).toLocaleString()}
@@ -587,9 +595,17 @@ function DraftPanel({
 function RiskPanel({
     chatHistory,
     factoryInfo,
+    onRiskAnalysisComplete,
 }: {
     chatHistory: ChatMessagePayload[];
     factoryInfo?: FactoryInfoPayload;
+    onRiskAnalysisComplete?: (result: {
+        overallRisk: RiskCheckResponse["overall_risk"];
+        summary: string;
+        highCount: number;
+        mediumCount: number;
+        lowCount: number;
+    }) => void;
 }) {
     const [file, setFile] = useState<File | null>(null);
     const [analyzing, setAnalyzing] = useState(false);
@@ -597,6 +613,7 @@ function RiskPanel({
     const [selectedRisk, setSelectedRisk] = useState<RiskItem | null>(null);
     const [analysisSummary, setAnalysisSummary] = useState<string>("");
     const [analysisError, setAnalysisError] = useState<string | null>(null);
+    const [overallRisk, setOverallRisk] = useState<RiskCheckResponse["overall_risk"]>("medium");
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
     const lawyerCostSaved = 15000;
 
@@ -633,6 +650,17 @@ function RiskPanel({
             }));
             setResults(mapped);
             setAnalysisSummary(response.summary_en || response.summary_th || "Analysis completed");
+            setOverallRisk(response.overall_risk);
+            const nextHighCount = mapped.filter((risk) => risk.type === "high").length;
+            const nextMediumCount = mapped.filter((risk) => risk.type === "medium").length;
+            const nextLowCount = mapped.filter((risk) => risk.type === "low").length;
+            onRiskAnalysisComplete?.({
+                overallRisk: response.overall_risk,
+                summary: response.summary_en || response.summary_th || "Analysis completed",
+                highCount: nextHighCount,
+                mediumCount: nextMediumCount,
+                lowCount: nextLowCount,
+            });
         } catch (err) {
             setAnalysisError(err instanceof Error ? err.message : "Risk analysis failed");
         } finally {
@@ -756,6 +784,16 @@ function RiskPanel({
                     {analysisSummary && (
                         <p className="text-xs text-muted-foreground">{analysisSummary}</p>
                     )}
+
+                    <div className={`rounded-lg border px-3 py-2 text-xs ${
+                        overallRisk === "critical" || overallRisk === "high"
+                            ? "border-destructive/30 bg-destructive/10 text-destructive"
+                            : overallRisk === "medium"
+                                ? "border-warning/30 bg-warning/10 text-warning"
+                                : "border-success/30 bg-success/10 text-success"
+                    }`}>
+                        Overall risk: {overallRisk}
+                    </div>
 
                     <div className="text-sm font-semibold text-foreground">Risk Summary</div>
                     <div className="flex gap-2">

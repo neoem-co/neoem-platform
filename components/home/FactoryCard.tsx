@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import type { StaticImageData } from "next/image";
 import { Star, Trophy, BadgeCheck, DollarSign } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import factory1 from "@/public/assets/factory-1.jpg";
@@ -10,7 +11,7 @@ import factory4 from "@/public/assets/factory-4.jpg";
 import factory5 from "@/public/assets/factory-5.jpg";
 import { useLocale, useTranslations } from "next-intl";
 
-const factoryImages: Record<string, any> = {
+const factoryImages: Record<string, StaticImageData> = {
     "factory-1": factory1,
     "factory-2": factory2,
     "factory-3": factory3,
@@ -43,8 +44,7 @@ export function FactoryCard({ factory, variant = "vertical", isRecommended = fal
     const t = useTranslations("Factories");
     const locale = useLocale();
     const imageUrl = factoryImages[factory.image] || factory1;
-
-    const PriceIndicator = () => (
+    const priceIndicator = (
         <span className="flex items-center text-muted-foreground">
             {Array.from({ length: 3 }).map((_, i) => (
                 <DollarSign
@@ -54,8 +54,7 @@ export function FactoryCard({ factory, variant = "vertical", isRecommended = fal
             ))}
         </span>
     );
-
-    const RecommendedBadge = () => (
+    const recommendedBadge = (
         <div className="absolute top-0 left-0 bg-[#FF7A00] text-white text-[10px] font-bold px-2 py-1 flex items-center gap-1 rounded-br-lg z-10 shadow-sm">
             <Star className="h-3 w-3 fill-current" />
             {t("recommended")}
@@ -66,11 +65,11 @@ export function FactoryCard({ factory, variant = "vertical", isRecommended = fal
         return (
             <Link
                 href={`/${locale}/factory/${factory.slug}`}
-                className={`factory-card relative flex gap-4 p-4 bg-card border rounded-lg hover:shadow-md transition-all ${isRecommended ? "border-[#FF7A00] border-2" : "border-border"
+                className={`factory-card relative flex flex-col sm:flex-row gap-4 p-3 sm:p-4 bg-card border rounded-lg hover:shadow-md transition-all overflow-hidden max-w-full ${isRecommended ? "border-[#FF7A00] border-2" : "border-border"
                     }`}
             >
-                {isRecommended && <RecommendedBadge />}
-                <div className="w-48 h-32 flex-shrink-0 rounded-md overflow-hidden relative">
+                {isRecommended && recommendedBadge}
+                <div className="w-full sm:w-48 h-40 sm:h-32 flex-shrink-0 rounded-md overflow-hidden relative">
                     <img
                         src={imageUrl.src || imageUrl}
                         alt={factory.name}
@@ -79,14 +78,14 @@ export function FactoryCard({ factory, variant = "vertical", isRecommended = fal
                 </div>
 
                 <div className="flex-1 min-w-0 space-y-2">
-                    <div className="flex items-start justify-between gap-2">
+                    <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2">
                         <div className="flex items-center gap-2">
-                            <h3 className="font-semibold text-foreground truncate">{factory.name}</h3>
+                            <h3 className="font-semibold text-foreground break-words leading-snug">{factory.name}</h3>
                             {factory.verified && (
                                 <BadgeCheck className="h-5 w-5 text-success flex-shrink-0" />
                             )}
                         </div>
-                        <PriceIndicator />
+                        {priceIndicator}
                     </div>
 
                     <p className="text-sm text-muted-foreground">{factory.location}</p>
@@ -99,7 +98,7 @@ export function FactoryCard({ factory, variant = "vertical", isRecommended = fal
                         ))}
                     </div>
 
-                    <div className="flex items-center gap-4 text-sm">
+                    <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-sm">
                         <span className="flex items-center gap-1">
                             <Star className="h-4 w-4 fill-primary text-primary" />
                             <span className="font-medium">{factory.rating}</span>
@@ -121,7 +120,7 @@ export function FactoryCard({ factory, variant = "vertical", isRecommended = fal
             className={`factory-card relative flex flex-col bg-card border rounded-lg overflow-hidden hover:shadow-md transition-all ${isRecommended ? "border-[#FF7A00] border-2" : "border-border"
                 }`}
         >
-            {isRecommended && <RecommendedBadge />}
+            {isRecommended && recommendedBadge}
             <div className="relative h-40 overflow-hidden">
                 <img
                     src={imageUrl.src || imageUrl}
@@ -155,7 +154,7 @@ export function FactoryCard({ factory, variant = "vertical", isRecommended = fal
                         <Star className="h-4 w-4 fill-primary text-primary" />
                         <span className="font-medium">{factory.rating}</span>
                     </span>
-                    <PriceIndicator />
+                    {priceIndicator}
                 </div>
             </div>
         </Link>

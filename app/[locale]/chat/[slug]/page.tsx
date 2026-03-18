@@ -40,21 +40,55 @@ interface Message {
     attachment?: { type: string; name: string; size: string };
 }
 
+interface RiskAlertState {
+    level: "critical" | "high" | "medium" | "low" | "safe";
+    summary: string;
+    highCount: number;
+    mediumCount: number;
+    lowCount: number;
+}
+
+interface DealRoomState {
+    tosAccepted: boolean;
+    depositPaid: boolean;
+    riskAlert: RiskAlertState | null;
+}
+
+function loadDealRoomState(slug: string): DealRoomState {
+    if (typeof window === "undefined") {
+        return { tosAccepted: false, depositPaid: false, riskAlert: null };
+    }
+
+    try {
+        const raw = window.localStorage.getItem(`neoem:deal-room:${slug}`);
+        if (!raw) return { tosAccepted: false, depositPaid: false, riskAlert: null };
+        const parsed = JSON.parse(raw) as DealRoomState;
+        return {
+            tosAccepted: parsed.tosAccepted ?? false,
+            depositPaid: parsed.depositPaid ?? false,
+            riskAlert: parsed.riskAlert ?? null,
+        };
+    } catch {
+        return { tosAccepted: false, depositPaid: false, riskAlert: null };
+    }
+}
+
 const DealRoom = () => {
     const params = useParams();
     const slug = params.slug as string;
     const router = useRouter();
     const locale = useLocale();
     const factory = getFactoryBySlug(slug, locale);
-    const [showTOS, setShowTOS] = useState(true);
-    const [tosAccepted, setTosAccepted] = useState(false);
+    const [showTOS, setShowTOS] = useState(() => !loadDealRoomState(slug).tosAccepted);
+    const [tosAccepted, setTosAccepted] = useState(() => loadDealRoomState(slug).tosAccepted);
     const [messages, setMessages] = useState<Message[]>([...getFactoryChatHistory(locale) as Message[]]);
     const [inputValue, setInputValue] = useState("");
     const [showPaymentModal, setShowPaymentModal] = useState(false);
     const [showContractWarning, setShowContractWarning] = useState(false);
     const [mobileAiOpen, setMobileAiOpen] = useState(false);
     const [aiPanelOpen, setAiPanelOpen] = useState(true);
-    const [depositPaid, setDepositPaid] = useState(false);
+    const [depositPaid, setDepositPaid] = useState(() => loadDealRoomState(slug).depositPaid);
+    const [riskAlert, setRiskAlert] = useState<RiskAlertState | null>(() => loadDealRoomState(slug).riskAlert);
     const [showLegalWorkspace, setShowLegalWorkspace] = useState(false);
     const [legalWorkspaceTab, setLegalWorkspaceTab] = useState<"draft" | "risk" | "history" | "esign">("draft");
     const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -67,6 +101,15 @@ const DealRoom = () => {
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }, [messages]);
+
+    useEffect(() => {
+        if (typeof window === "undefined") return;
+        window.localStorage.setItem(`neoem:deal-room:${slug}`, JSON.stringify({
+            tosAccepted,
+            depositPaid,
+            riskAlert,
+        }));
+    }, [depositPaid, riskAlert, slug, tosAccepted]);
 
     const handleTOSAccept = () => { setTosAccepted(true); setShowTOS(false); };
 
@@ -112,11 +155,19 @@ const DealRoom = () => {
     };
 
     const handlePayDeposit = () => {
+        if (riskAlert && (riskAlert.level === "critical" || riskAlert.level === "high")) {
+            setShowContractWarning(true);
+            return;
+        }
         if (hasContractInChat) setShowContractWarning(true);
         else setShowPaymentModal(true);
     };
 
-    const handlePaymentSuccess = () => { setShowPaymentModal(false); setDepositPaid(true); };
+    const handlePaymentSuccess = () => {
+        setShowPaymentModal(false);
+        setDepositPaid(true);
+        router.push(`/${locale}/legal-nudge`);
+    };
 
     const handleMilestoneAction = (action: string) => {
         // Handle preview actions
@@ -138,7 +189,26 @@ const DealRoom = () => {
     const sidePanelContent = (
         <div className="flex-1 flex flex-col overflow-hidden">
             <div className="flex-1 p-4 space-y-4 overflow-y-auto scrollbar-thin">
-                <MilestoneTracker onAction={handleMilestoneAction} />
+                <MilestoneTracker
+                    onAction={handleMilestoneAction}
+                    storageKey={`neoem:milestones:${slug}`}
+                    riskAlert={riskAlert}
+                    depositPaid={depositPaid}
+                />
+
+                {riskAlert && (riskAlert.level === "critical" || riskAlert.level === "high") && (
+                    <Card className="border-destructive/30 bg-destructive/5">
+                        <CardHeader className="py-3">
+                            <CardTitle className="text-sm flex items-center gap-2 text-destructive">
+                                <AlertTriangle className="h-4 w-4" /> Payment Warning
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent className="py-3 text-sm text-muted-foreground">
+                            <p className="text-destructive font-medium">High-risk clauses were detected in the contract review.</p>
+                            <p className="mt-1">{riskAlert.summary}</p>
+                        </CardContent>
+                    </Card>
+                )}
 
                 <Card>
                     <CardHeader className="py-3">
@@ -181,6 +251,11 @@ const DealRoom = () => {
                 amount={depositAmount}
                 status={depositPaid ? "paid" : "pending"}
                 onPay={handlePayDeposit}
+                warningMessage={
+                    riskAlert && (riskAlert.level === "critical" || riskAlert.level === "high")
+                        ? "High-risk contract issues found. Review the legal warnings before releasing payment."
+                        : null
+                }
             />
         </div>
     );
@@ -319,6 +394,15 @@ const DealRoom = () => {
                     rating: factory.rating,
                     verified: factory.verified,
                 }}
+                onRiskAnalysisComplete={(result) => {
+                    setRiskAlert({
+                        level: result.overallRisk,
+                        summary: result.summary,
+                        highCount: result.highCount,
+                        mediumCount: result.mediumCount,
+                        lowCount: result.lowCount,
+                    });
+                }}
             />
 
             <PaymentModal
@@ -334,6 +418,8 @@ const DealRoom = () => {
                 onClose={() => setShowContractWarning(false)}
                 onSkip={() => { setShowContractWarning(false); setShowPaymentModal(true); }}
                 onReview={() => { setShowContractWarning(false); openLegalWorkspace("risk"); }}
+                riskLevel={riskAlert?.level ?? null}
+                riskSummary={riskAlert?.summary ?? null}
             />
         </div>
     );
