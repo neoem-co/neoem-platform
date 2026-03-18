@@ -52,24 +52,26 @@ interface DealRoomState {
     tosAccepted: boolean;
     depositPaid: boolean;
     riskAlert: RiskAlertState | null;
+    completedActions: string[];
 }
 
 function loadDealRoomState(slug: string): DealRoomState {
     if (typeof window === "undefined") {
-        return { tosAccepted: false, depositPaid: false, riskAlert: null };
+        return { tosAccepted: false, depositPaid: false, riskAlert: null, completedActions: [] };
     }
 
     try {
         const raw = window.localStorage.getItem(`neoem:deal-room:${slug}`);
-        if (!raw) return { tosAccepted: false, depositPaid: false, riskAlert: null };
+        if (!raw) return { tosAccepted: false, depositPaid: false, riskAlert: null, completedActions: [] };
         const parsed = JSON.parse(raw) as DealRoomState;
         return {
             tosAccepted: parsed.tosAccepted ?? false,
             depositPaid: parsed.depositPaid ?? false,
             riskAlert: parsed.riskAlert ?? null,
+            completedActions: parsed.completedActions ?? [],
         };
     } catch {
-        return { tosAccepted: false, depositPaid: false, riskAlert: null };
+        return { tosAccepted: false, depositPaid: false, riskAlert: null, completedActions: [] };
     }
 }
 
@@ -89,6 +91,7 @@ const DealRoom = () => {
     const [aiPanelOpen, setAiPanelOpen] = useState(true);
     const [depositPaid, setDepositPaid] = useState(() => loadDealRoomState(slug).depositPaid);
     const [riskAlert, setRiskAlert] = useState<RiskAlertState | null>(() => loadDealRoomState(slug).riskAlert);
+    const [completedActions, setCompletedActions] = useState<string[]>(() => loadDealRoomState(slug).completedActions);
     const [showLegalWorkspace, setShowLegalWorkspace] = useState(false);
     const [legalWorkspaceTab, setLegalWorkspaceTab] = useState<"draft" | "risk" | "history" | "esign">("draft");
     const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -108,8 +111,13 @@ const DealRoom = () => {
             tosAccepted,
             depositPaid,
             riskAlert,
+            completedActions,
         }));
-    }, [depositPaid, riskAlert, slug, tosAccepted]);
+    }, [completedActions, depositPaid, riskAlert, slug, tosAccepted]);
+
+    const markActionCompleted = (action: string) => {
+        setCompletedActions((prev) => (prev.includes(action) ? prev : [...prev, action]));
+    };
 
     const handleTOSAccept = () => { setTosAccepted(true); setShowTOS(false); };
 
@@ -194,6 +202,7 @@ const DealRoom = () => {
                     storageKey={`neoem:milestones:${slug}`}
                     riskAlert={riskAlert}
                     depositPaid={depositPaid}
+                    completedActions={completedActions}
                 />
 
                 {riskAlert && (riskAlert.level === "critical" || riskAlert.level === "high") && (
@@ -394,7 +403,9 @@ const DealRoom = () => {
                     rating: factory.rating,
                     verified: factory.verified,
                 }}
+                onDraftComplete={() => markActionCompleted("draft")}
                 onRiskAnalysisComplete={(result) => {
+                    markActionCompleted("risk");
                     setRiskAlert({
                         level: result.overallRisk,
                         summary: result.summary,

@@ -44,6 +44,7 @@ interface AILegalWorkspaceProps {
     initialTab?: "draft" | "risk" | "history" | "esign";
     chatHistory?: ChatMessagePayload[];
     factoryInfo?: FactoryInfoPayload;
+    onDraftComplete?: () => void;
     onRiskAnalysisComplete?: (result: {
         overallRisk: RiskCheckResponse["overall_risk"];
         summary: string;
@@ -116,6 +117,7 @@ export function AILegalWorkspace({
     initialTab = "draft",
     chatHistory = [],
     factoryInfo,
+    onDraftComplete,
     onRiskAnalysisComplete,
 }: AILegalWorkspaceProps) {
     const [activeTab, setActiveTab] = useState<"draft" | "risk" | "history" | "esign">(initialTab);
@@ -166,7 +168,7 @@ export function AILegalWorkspace({
 
                 {/* Main Content */}
                 <div className="flex-1 overflow-y-auto">
-                    {activeTab === "draft" && <DraftPanel factoryName={factoryName} chatHistory={chatHistory} factoryInfo={factoryInfo} />}
+                    {activeTab === "draft" && <DraftPanel factoryName={factoryName} chatHistory={chatHistory} factoryInfo={factoryInfo} onDraftComplete={onDraftComplete} />}
                     {activeTab === "risk" && <RiskPanel chatHistory={chatHistory} factoryInfo={factoryInfo} onRiskAnalysisComplete={onRiskAnalysisComplete} />}
                     {activeTab === "esign" && <ESignaturePanel factoryName={factoryName} />}
                     {activeTab === "history" && <HistoryPanel />}
@@ -191,10 +193,12 @@ function DraftPanel({
     factoryName,
     chatHistory,
     factoryInfo,
+    onDraftComplete,
 }: {
     factoryName: string;
     chatHistory: ChatMessagePayload[];
     factoryInfo?: FactoryInfoPayload;
+    onDraftComplete?: () => void;
 }) {
     const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
     const [loading, setLoading] = useState(false);
@@ -327,6 +331,7 @@ function DraftPanel({
                 docx_url: result.docx_url,
             });
             setStep(4);
+            onDraftComplete?.();
         } catch (err) {
             setError(err instanceof Error ? err.message : "Failed to finalize contract");
         } finally {

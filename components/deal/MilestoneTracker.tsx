@@ -83,14 +83,38 @@ interface MilestoneTrackerProps {
     storageKey?: string;
     riskAlert?: RiskAlertState | null;
     depositPaid?: boolean;
+    completedActions?: string[];
 }
 
-export function MilestoneTracker({ onAction, storageKey, riskAlert, depositPaid = false }: MilestoneTrackerProps) {
+function withCompletedActions(milestones: Milestone[], completedActions: string[]) {
+    if (completedActions.length === 0) return milestones;
+
+    const updated = [...milestones];
+    const actionSet = new Set(completedActions);
+
+    updated.forEach((milestone, idx) => {
+        if (!milestone.ctaAction || !actionSet.has(milestone.ctaAction)) return;
+
+        updated[idx] = {
+            ...milestone,
+            status: "completed",
+            hasDocument: true,
+        };
+
+        if (idx + 1 < updated.length && updated[idx + 1].status === "upcoming") {
+            updated[idx + 1] = { ...updated[idx + 1], status: "active" };
+        }
+    });
+
+    return updated;
+}
+
+export function MilestoneTracker({ onAction, storageKey, riskAlert, depositPaid = false, completedActions = [] }: MilestoneTrackerProps) {
     const [milestones, setMilestones] = useState<Milestone[]>(() => getInitialMilestones(storageKey));
     const [expanded, setExpanded] = useState(true);
     const effectiveMilestones = useMemo(
-        () => withDepositPaidStatus(milestones, depositPaid),
-        [depositPaid, milestones]
+        () => withCompletedActions(withDepositPaidStatus(milestones, depositPaid), completedActions),
+        [completedActions, depositPaid, milestones]
     );
 
     useEffect(() => {
@@ -274,16 +298,28 @@ export function MilestoneTracker({ onAction, storageKey, riskAlert, depositPaid 
 
                                 {/* Document preview for completed (not skipped) steps that have documents */}
                                 {milestone.status === "completed" && milestone.hasDocument && (
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        className="h-6 text-[10px] mt-1 px-2"
-                                        onClick={() => {
-                                            if (milestone.ctaAction) onAction(`preview-${milestone.ctaAction}`);
-                                        }}
-                                    >
-                                        <Eye className="h-3 w-3 mr-0.5" /> Preview
-                                    </Button>
+                                    <div className="flex gap-1.5 mt-1">
+                                        {milestone.ctaAction && (
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                className="h-7 text-[10px] px-2 border-primary/30 bg-primary/5 text-primary hover:bg-primary/10"
+                                                onClick={() => onAction(milestone.ctaAction!)}
+                                            >
+                                                Open Again
+                                            </Button>
+                                        )}
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            className="h-7 text-[10px] px-2"
+                                            onClick={() => {
+                                                if (milestone.ctaAction) onAction(`preview-${milestone.ctaAction}`);
+                                            }}
+                                        >
+                                            <Eye className="h-3 w-3 mr-0.5" /> Preview
+                                        </Button>
+                                    </div>
                                 )}
 
                                 {milestone.status === "active" && (

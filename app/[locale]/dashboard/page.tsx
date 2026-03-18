@@ -170,7 +170,7 @@ const Dashboard = () => {
                     <AlertCircle className="h-5 w-5 text-warning" />
                     <span className="text-xs">{t("checkRisks")}</span>
                 </Button>
-                <Button variant="outline" className="h-auto py-3 flex-col gap-1" onClick={() => router.push(`${locale}/brand-launchpad`)}>
+                <Button variant="outline" className="h-auto py-3 flex-col gap-1" onClick={() => router.push(`/${locale}/brand-launchpad`)}>
                     <Package className="h-5 w-5 text-success" />
                     <span className="text-xs">{t("brandLaunchpad")}</span>
                 </Button>
