@@ -150,6 +150,12 @@ class RiskExplainRequest(BaseModel):
     category: str = "general"
 
 
+class ClientLogRequest(BaseModel):
+    level: str = "info"
+    event: str
+    context: dict = Field(default_factory=dict)
+
+
 class RiskExplainResponse(BaseModel):
     risk_id: str
     explanation_th: str
@@ -157,6 +163,26 @@ class RiskExplainResponse(BaseModel):
     business_impact: list[str] = Field(default_factory=list)
     worst_case_scenario: str = ""
     compliance_notice: str = ""
+
+
+@router.post("/client-log")
+async def client_log(request: ClientLogRequest):
+    """
+    Receives frontend diagnostic events and writes them to backend logs.
+    Useful for production debugging where browser console is not accessible.
+    """
+    level = (request.level or "info").lower()
+    message = "ClientLog | event=%s | context=%s"
+    args = (request.event, request.context)
+
+    if level == "error":
+        logger.error(message, *args)
+    elif level == "warning" or level == "warn":
+        logger.warning(message, *args)
+    else:
+        logger.info(message, *args)
+
+    return {"status": "ok"}
 
 
 @router.post("/explain", response_model=RiskExplainResponse)

@@ -28,6 +28,18 @@ interface RiskPdfViewerProps {
   onHighlightClick: (riskId: string) => void;
 }
 
+async function sendPdfViewerLog(level: "info" | "warn" | "error", event: string, context: Record<string, unknown>) {
+  try {
+    await fetch("/api/ai/risk-check/client-log", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ level, event, context }),
+    });
+  } catch {
+    // Best-effort logging only.
+  }
+}
+
 export function RiskPdfViewer({
   fileUrl,
   highlights,
@@ -55,7 +67,7 @@ export function RiskPdfViewer({
       setPageError(null);
       return;
     }
-    console.info("[RiskPdfViewer] loading file", { fileUrl });
+    void sendPdfViewerLog("info", "pdf_file_loading", { fileUrl });
   }, [fileUrl]);
 
   useEffect(() => {
@@ -65,7 +77,7 @@ export function RiskPdfViewer({
     };
 
     updateWidth();
-    console.info("[RiskPdfViewer] pdfjs worker configured", {
+    void sendPdfViewerLog("info", "pdf_worker_configured", {
       workerSrc: pdfjs.GlobalWorkerOptions.workerSrc,
     });
     window.addEventListener("resize", updateWidth);
@@ -113,7 +125,7 @@ export function RiskPdfViewer({
           <Document
             file={fileUrl}
             onLoadSuccess={({ numPages: loaded }) => {
-              console.info("[RiskPdfViewer] document loaded", {
+              void sendPdfViewerLog("info", "pdf_document_loaded", {
                 numPages: loaded,
                 containerWidth,
               });
@@ -124,16 +136,20 @@ export function RiskPdfViewer({
             }}
             onLoadError={(error) => {
               const message = error instanceof Error ? error.message : String(error);
-              console.error("[RiskPdfViewer] document load error", error);
+              void sendPdfViewerLog("error", "pdf_document_load_error", {
+                message,
+              });
               setDocError(message);
             }}
             onSourceError={(error) => {
               const message = error instanceof Error ? error.message : String(error);
-              console.error("[RiskPdfViewer] document source error", error);
+              void sendPdfViewerLog("error", "pdf_document_source_error", {
+                message,
+              });
               setDocError(message);
             }}
             loading={<div className="text-sm text-muted-foreground p-4">Loading PDF...</div>}
-            error={<div className="text-sm text-destructive p-4">Failed to render PDF. Check browser console logs.</div>}
+            error={<div className="text-sm text-destructive p-4">Failed to render PDF. Viewer diagnostics were sent to backend logs.</div>}
           >
             <div className="relative">
               <Page
@@ -142,7 +158,7 @@ export function RiskPdfViewer({
                 renderAnnotationLayer={false}
                 renderTextLayer={false}
                 onRenderSuccess={() => {
-                  console.info("[RiskPdfViewer] page rendered", {
+                  void sendPdfViewerLog("info", "pdf_page_rendered", {
                     currentPage,
                     containerWidth,
                   });
@@ -150,10 +166,10 @@ export function RiskPdfViewer({
                 }}
                 onRenderError={(error) => {
                   const message = error instanceof Error ? error.message : String(error);
-                  console.error("[RiskPdfViewer] page render error", {
+                  void sendPdfViewerLog("error", "pdf_page_render_error", {
                     currentPage,
                     containerWidth,
-                    error,
+                    message,
                   });
                   setPageError(message);
                 }}
