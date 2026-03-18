@@ -29,7 +29,7 @@ class GeminiRESTEmbeddings(Embeddings):
         if not api_key:
             raise ValueError("GEMINI_API_KEY is missing")
 
-        # The REST path expects the bare model id; we normalize either form.
+        # The REST path expects the bare model id; we normalize either form..
         self.api_key = api_key
         self.model = model.removeprefix("models/")
         self.timeout = timeout
