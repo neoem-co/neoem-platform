@@ -28,6 +28,7 @@ from models.risk_check import (
     ExtractedClause,
     LegalReference,
     OEMFactoryInfo,
+    RiskAnchor,
     RiskCheckResponse,
     RiskItem,
     RiskLevel,
@@ -280,6 +281,7 @@ async def analyse_risks(
 
 async def run_risk_check_pipeline(
     ocr_result: dict,
+    ocr_layout: Optional[dict],
     chat_history: list[ChatMessage],
     factory_info: Optional[OEMFactoryInfo] = None,
     language: str = "both",
@@ -325,6 +327,7 @@ async def run_risk_check_pipeline(
 
     # Stage 6: Format response
     risks = _parse_risk_items(risk_data.get("risks", []))
+    _attach_risk_anchors(risks, ocr_layout)
     mismatches = _parse_mismatches(risk_data.get("mismatches", []))
 
     overall_str = risk_data.get("overall_risk", "medium")
@@ -472,3 +475,97 @@ def _parse_mismatches(items: list[dict]) -> list[ChatContractMismatch]:
         except Exception as e:
             logger.warning("Skipping malformed mismatch item: %s", str(e))
     return results
+
+
+def _attach_risk_anchors(risks: list[RiskItem], ocr_layout: Optional[dict]) -> None:
+    """
+    Best-effort mapping from risk text to OCR layout components.
+
+    Each matched risk receives 1-3 normalized boxes for UI highlighting.
+    """
+    if not ocr_layout:
+        return
+
+    pages = ocr_layout.get("pages", []) if isinstance(ocr_layout, dict) else []
+    if not pages:
+        return
+
+    flattened: list[dict] = []
+    for page in pages:
+        page_number = int(page.get("page_number", 1))
+        page_width = _safe_float(page.get("page_width"), 1.0)
+        page_height = _safe_float(page.get("page_height"), 1.0)
+        for comp in page.get("components", []):
+            text = str(comp.get("text") or "").strip()
+            bbox = comp.get("bbox") or []
+            if not text or len(bbox) != 4:
+                continue
+            x0, y0, x1, y1 = [_safe_float(v, 0.0) for v in bbox]
+            width = max(0.0, x1 - x0)
+            height = max(0.0, y1 - y0)
+            if width <= 0 or height <= 0:
+                continue
+
+            flattened.append(
+                {
+                    "page": page_number,
+                    "text": text,
+                    "bbox": [x0, y0, width, height],
+                    "page_width": page_width,
+                    "page_height": page_height,
+                    "match_text": text.lower(),
+                }
+            )
+
+    if not flattened:
+        return
+
+    for risk in risks:
+        q_parts = [
+            (risk.title_en or "").strip(),
+            (risk.title_th or "").strip(),
+            (risk.clause_ref or "").strip(),
+            (risk.description_en or "").strip()[:120],
+            (risk.description_th or "").strip()[:120],
+        ]
+        query_terms = [q.lower() for q in q_parts if q]
+
+        scored: list[tuple[int, dict]] = []
+        for comp in flattened:
+            score = 0
+            comp_text = comp["match_text"]
+            for term in query_terms:
+                if term and term in comp_text:
+                    score += min(8, len(term.split()))
+            if score > 0:
+                scored.append((score, comp))
+
+        if not scored:
+            continue
+
+        scored.sort(key=lambda pair: pair[0], reverse=True)
+        top = scored[:3]
+        anchors: list[RiskAnchor] = []
+        for _, comp in top:
+            x0, y0, w, h = comp["bbox"]
+            page_w = max(comp["page_width"], 1.0)
+            page_h = max(comp["page_height"], 1.0)
+            anchors.append(
+                RiskAnchor(
+                    page=int(comp["page"]),
+                    x=max(0.0, min(1.0, x0 / page_w)),
+                    y=max(0.0, min(1.0, y0 / page_h)),
+                    width=max(0.0, min(1.0, w / page_w)),
+                    height=max(0.0, min(1.0, h / page_h)),
+                    snippet=comp["text"][:220],
+                )
+            )
+
+        risk.anchors = anchors
+
+
+def _safe_float(value: object, default: float) -> float:
+    try:
+        return float(value)
+    except Exception:
+        return default

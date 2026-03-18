@@ -92,10 +92,14 @@ async def analyze_contract(
     ocr_service = OCRService()
     ocr_result = await ocr_service.extract(file_bytes, file.filename or "document.pdf")
 
+    # Extract layout for click-to-highlight anchors (best effort)
+    layout_result = await ocr_service.extract_layout(file_bytes, file.filename or "document.pdf")
+
     # Run risk analysis pipeline
     try:
         result = await run_risk_check_pipeline(
             ocr_result=ocr_result,
+            ocr_layout=layout_result,
             chat_history=messages,
             factory_info=factory,
             language=language,
@@ -152,7 +156,7 @@ class RiskExplainResponse(BaseModel):
     explanation_en: str
     business_impact: list[str] = Field(default_factory=list)
     worst_case_scenario: str = ""
-    suggested_fix: str = ""
+    compliance_notice: str = ""
 
 
 @router.post("/explain", response_model=RiskExplainResponse)
@@ -160,9 +164,11 @@ async def explain_risk(request: RiskExplainRequest):
     """
     AI-powered deep explanation of a single risk item.
     Explains what the risk means, how it can harm the business,
-    gives a real-world scenario, and suggests a contract fix.
+    and gives a real-world scenario without legal recommendations.
     """
     try:
+        logger.info("Risk explain requested | risk_id=%s | level=%s | category=%s", request.risk_id, request.level, request.category)
+
         response_text = await typhoon_invoke(
             system_prompt=RISK_EXPLAIN_SYSTEM,
             user_prompt=RISK_EXPLAIN_USER.format(
@@ -172,8 +178,6 @@ async def explain_risk(request: RiskExplainRequest):
                 clause_ref=request.clause_ref or "ไม่ระบุ",
                 description_th=request.description_th,
                 description_en=request.description_en,
-                recommendation_th=request.recommendation_th,
-                recommendation_en=request.recommendation_en,
                 category=request.category,
             ),
             temperature=0.2,
@@ -190,8 +194,10 @@ async def explain_risk(request: RiskExplainRequest):
                 "explanation_en": "",
                 "business_impact": [],
                 "worst_case_scenario": "",
-                "suggested_fix": "",
+                "compliance_notice": "ข้อมูลนี้เป็นคำอธิบายเชิงข้อมูลทั่วไป ไม่ใช่คำแนะนำทางกฎหมาย",
             }
+
+        compliance_notice = data.get("compliance_notice") or "This explanation is informational only and not legal advice."
 
         return RiskExplainResponse(
             risk_id=request.risk_id,
@@ -199,7 +205,7 @@ async def explain_risk(request: RiskExplainRequest):
             explanation_en=data.get("explanation_en", ""),
             business_impact=data.get("business_impact", []),
             worst_case_scenario=data.get("worst_case_scenario", ""),
-            suggested_fix=data.get("suggested_fix", ""),
+            compliance_notice=compliance_notice,
         )
     except Exception as e:
         logger.error("Risk explanation failed: %s", str(e))

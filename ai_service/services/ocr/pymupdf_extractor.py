@@ -80,6 +80,8 @@ class PyMuPDFExtractor:
                 page = doc.load_page(page_num)
                 blocks = page.get_text("dict")["blocks"]
                 components: list[dict] = []
+                page_width = float(page.rect.width)
+                page_height = float(page.rect.height)
 
                 for block in blocks:
                     if block.get("type") == 0:  # text block
@@ -97,6 +99,8 @@ class PyMuPDFExtractor:
 
                 pages_layout.append({
                     "page_number": page_num + 1,
+                    "page_width": page_width,
+                    "page_height": page_height,
                     "components": components,
                 })
 

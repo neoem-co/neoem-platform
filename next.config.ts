@@ -19,7 +19,7 @@ const nextConfig = {
             },
             {
                 source: "/api/ai/:path*",
-                destination: `${aiBackendUrl}/api/:path*`,
+                destination: `${aiBackendUrl}/api/ai/:path*`,
             },
         ];
     },

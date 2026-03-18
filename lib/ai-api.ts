@@ -31,6 +31,14 @@ export interface RiskItemResult {
   recommendation_th: string;
   recommendation_en: string;
   category: string;
+  anchors: {
+    page: number;
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+    snippet: string;
+  }[];
   legal_refs: { law_name: string; section: string; summary: string; relevance: string }[];
 }
 
@@ -134,7 +142,7 @@ export interface RiskExplainResponse {
   explanation_en: string;
   business_impact: string[];
   worst_case_scenario: string;
-  suggested_fix: string;
+  compliance_notice: string;
 }
 
 /**

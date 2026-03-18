@@ -20,9 +20,11 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { ESignaturePanel } from "@/components/legal/ESignaturePanel";
+import { RiskPdfViewer, type RiskHighlight } from "@/components/legal/RiskPdfViewer";
 import {
     analyzeContractRisk,
     downloadFile,
+    explainRisk,
     extractContext,
     finalizeContract,
     generateDraft,
@@ -34,6 +36,7 @@ import {
     type FactoryInfoPayload,
     type GenerateDraftResponse,
     type RiskCheckResponse,
+    type RiskExplainResponse,
     type RiskExplainRequest,
 } from "@/lib/ai-api";
 
@@ -80,15 +83,92 @@ interface RiskItem {
     clause: string;
     description: string;
     page: number;
-    recommendation: string;
+    level: string;
+    clauseRef: string;
+    category: string;
+    titleTh: string;
+    titleEn: string;
+    descriptionTh: string;
+    descriptionEn: string;
+    anchors: RiskHighlight[];
 }
 
 const mockRisks: RiskItem[] = [
-    { id: "1", type: "high", clause: "Termination Clause (Missing)", description: "No termination clause found in the entire document.", page: 1, recommendation: "Add a mutual termination clause with 30-day written notice." },
-    { id: "2", type: "high", clause: "Intellectual Property – Clause 7", description: "IP ownership is ambiguous. Both parties could claim rights.", page: 3, recommendation: "Clearly state IP ownership belongs to the buyer (brand owner)." },
-    { id: "3", type: "medium", clause: "Payment Terms – Clause 4.2", description: "100% upfront payment with no milestones.", page: 2, recommendation: "Switch to milestone-based payments (30-40-30). Use escrow." },
-    { id: "4", type: "medium", clause: "Quality Assurance – Clause 5", description: "No specific quality standards referenced.", page: 2, recommendation: "Include GMP, ISO 22716 references. Define defect rates." },
-    { id: "5", type: "low", clause: "Delivery Timeline – Clause 6.1", description: "Delivery described as 'approximately 4-6 weeks'.", page: 3, recommendation: "Specify exact date. Add penalty for late delivery." },
+    {
+        id: "1",
+        type: "high",
+        clause: "Termination Clause (Missing)",
+        description: "No termination clause found in the entire document.",
+        page: 1,
+        level: "high",
+        clauseRef: "N/A",
+        category: "termination",
+        titleTh: "",
+        titleEn: "Termination Clause (Missing)",
+        descriptionTh: "",
+        descriptionEn: "No termination clause found in the entire document.",
+        anchors: [],
+    },
+    {
+        id: "2",
+        type: "high",
+        clause: "Intellectual Property – Clause 7",
+        description: "IP ownership is ambiguous. Both parties could claim rights.",
+        page: 3,
+        level: "high",
+        clauseRef: "Clause 7",
+        category: "ip_ownership",
+        titleTh: "",
+        titleEn: "Intellectual Property – Clause 7",
+        descriptionTh: "",
+        descriptionEn: "IP ownership is ambiguous. Both parties could claim rights.",
+        anchors: [],
+    },
+    {
+        id: "3",
+        type: "medium",
+        clause: "Payment Terms – Clause 4.2",
+        description: "100% upfront payment with no milestones.",
+        page: 2,
+        level: "medium",
+        clauseRef: "Clause 4.2",
+        category: "payment_terms",
+        titleTh: "",
+        titleEn: "Payment Terms – Clause 4.2",
+        descriptionTh: "",
+        descriptionEn: "100% upfront payment with no milestones.",
+        anchors: [],
+    },
+    {
+        id: "4",
+        type: "medium",
+        clause: "Quality Assurance – Clause 5",
+        description: "No specific quality standards referenced.",
+        page: 2,
+        level: "medium",
+        clauseRef: "Clause 5",
+        category: "quality",
+        titleTh: "",
+        titleEn: "Quality Assurance – Clause 5",
+        descriptionTh: "",
+        descriptionEn: "No specific quality standards referenced.",
+        anchors: [],
+    },
+    {
+        id: "5",
+        type: "low",
+        clause: "Delivery Timeline – Clause 6.1",
+        description: "Delivery described as 'approximately 4-6 weeks'.",
+        page: 3,
+        level: "low",
+        clauseRef: "Clause 6.1",
+        category: "delivery",
+        titleTh: "",
+        titleEn: "Delivery Timeline – Clause 6.1",
+        descriptionTh: "",
+        descriptionEn: "Delivery described as 'approximately 4-6 weeks'.",
+        anchors: [],
+    },
 ];
 
 const mockSignHistory = [
@@ -598,6 +678,10 @@ function RiskPanel({
     const [analysisSummary, setAnalysisSummary] = useState<string>("");
     const [analysisError, setAnalysisError] = useState<string | null>(null);
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+    const [focusedPage, setFocusedPage] = useState<number | null>(null);
+    const [explainLoadingId, setExplainLoadingId] = useState<string | null>(null);
+    const [explainErrorByRiskId, setExplainErrorByRiskId] = useState<Record<string, string>>({});
+    const [explainByRiskId, setExplainByRiskId] = useState<Record<string, RiskExplainResponse>>({});
     const lawyerCostSaved = 15000;
 
     useEffect(() => {
@@ -628,11 +712,30 @@ function RiskPanel({
                 type: risk.level === "critical" || risk.level === "high" ? "high" as const : risk.level === "medium" ? "medium" as const : "low" as const,
                 clause: risk.title_en || risk.title_th || risk.clause_ref || "Unspecified clause",
                 description: risk.description_en || risk.description_th,
-                page: 1,
-                recommendation: risk.recommendation_en || risk.recommendation_th || "Review this item with legal counsel.",
+                page: risk.anchors?.[0]?.page || 1,
+                level: risk.level,
+                clauseRef: risk.clause_ref || "",
+                category: risk.category || "general",
+                titleTh: risk.title_th || "",
+                titleEn: risk.title_en || "",
+                descriptionTh: risk.description_th || "",
+                descriptionEn: risk.description_en || "",
+                anchors: (risk.anchors || []).map((a) => ({
+                    riskId: risk.risk_id,
+                    page: a.page,
+                    x: a.x,
+                    y: a.y,
+                    width: a.width,
+                    height: a.height,
+                    snippet: a.snippet,
+                })),
             }));
             setResults(mapped);
             setAnalysisSummary(response.summary_en || response.summary_th || "Analysis completed");
+            setExplainByRiskId({});
+            setExplainErrorByRiskId({});
+            setSelectedRisk(mapped[0] ?? null);
+            setFocusedPage(mapped[0]?.anchors?.[0]?.page ?? 1);
         } catch (err) {
             setAnalysisError(err instanceof Error ? err.message : "Risk analysis failed");
         } finally {
@@ -640,10 +743,36 @@ function RiskPanel({
         }
     };
 
+    const handleExplain = async (risk: RiskItem) => {
+        setExplainLoadingId(risk.id);
+        setExplainErrorByRiskId((prev) => ({ ...prev, [risk.id]: "" }));
+        try {
+            const payload: RiskExplainRequest = {
+                risk_id: risk.id,
+                title_th: risk.titleTh,
+                title_en: risk.titleEn || risk.clause,
+                level: risk.level,
+                clause_ref: risk.clauseRef || "N/A",
+                description_th: risk.descriptionTh,
+                description_en: risk.descriptionEn || risk.description,
+                recommendation_th: "",
+                recommendation_en: "",
+                category: risk.category || "general",
+            };
+            const response = await explainRisk(payload);
+            setExplainByRiskId((prev) => ({ ...prev, [risk.id]: response }));
+        } catch (err) {
+            const message = err instanceof Error ? err.message : "Explain request failed";
+            setExplainErrorByRiskId((prev) => ({ ...prev, [risk.id]: message }));
+        } finally {
+            setExplainLoadingId(null);
+        }
+    };
+
     const handleDownloadSummary = () => {
         if (!results) return;
         const content = `NEOEM AI Risk Analysis Summary\n${"=".repeat(40)}\n\nGenerated: ${new Date().toLocaleDateString()}\nDocument: ${file?.name || "Contract"}\n\n${results.map((r, i) => (
-            `${i + 1}. [${r.type.toUpperCase()}] ${r.clause}\n   Issue: ${r.description}\n   Recommendation: ${r.recommendation}\n   Page: ${r.page}\n`
+            `${i + 1}. [${r.type.toUpperCase()}] ${r.clause}\n   Issue: ${r.description}\n   Page: ${r.page}\n`
         )).join("\n")}`;
         const blob = new Blob([content], { type: "text/plain" });
         const url = URL.createObjectURL(blob);
@@ -665,6 +794,7 @@ function RiskPanel({
     const highCount = results?.filter((r) => r.type === "high").length || 0;
     const mediumCount = results?.filter((r) => r.type === "medium").length || 0;
     const lowCount = results?.filter((r) => r.type === "low").length || 0;
+    const highlightBoxes: RiskHighlight[] = results?.flatMap((r) => r.anchors) || [];
 
     if (!results) {
         return (
@@ -719,17 +849,17 @@ function RiskPanel({
                     <Button variant="ghost" size="sm" className="h-7 text-xs" disabled={!previewUrl}><Download className="h-3.5 w-3.5 mr-1" /> Download</Button>
                 </div>
                 <div className="flex-1 overflow-hidden bg-secondary/10">
-                    {previewUrl ? (
-                        <iframe
-                            src={previewUrl}
-                            className="w-full h-full border-0"
-                            title="Contract PDF Viewer"
-                        />
-                    ) : (
-                        <div className="h-full w-full flex items-center justify-center text-sm text-muted-foreground">
-                            Upload a document to preview
-                        </div>
-                    )}
+                    <RiskPdfViewer
+                        fileUrl={previewUrl}
+                        highlights={highlightBoxes}
+                        selectedRiskId={selectedRisk?.id || null}
+                        focusedPage={focusedPage}
+                        onHighlightClick={(riskId) => {
+                            const risk = results?.find((r) => r.id === riskId) || null;
+                            setSelectedRisk(risk);
+                            setFocusedPage(risk?.anchors?.[0]?.page ?? null);
+                        }}
+                    />
                 </div>
             </div>
 
@@ -779,7 +909,10 @@ function RiskPanel({
                                 key={risk.id}
                                 className={`cursor-pointer transition-all hover:shadow-md ${selectedRisk?.id === risk.id ? "ring-2 ring-primary" : ""
                                     } ${getRiskBgColor(risk.type)}`}
-                                onClick={() => setSelectedRisk(risk)}
+                                onClick={() => {
+                                    setSelectedRisk(risk);
+                                    setFocusedPage(risk.anchors[0]?.page ?? risk.page ?? 1);
+                                }}
                             >
                                 <CardContent className="p-3 space-y-2">
                                     <div className="flex items-start gap-2">
@@ -792,12 +925,52 @@ function RiskPanel({
                                     </div>
                                     {selectedRisk?.id === risk.id && (
                                         <div className="mt-2 p-2.5 bg-card rounded-lg border">
-                                            <p className="text-xs font-medium text-primary mb-1">💡 Recommendation:</p>
-                                            <p className="text-xs text-muted-foreground">{risk.recommendation}</p>
+                                            <p className="text-xs font-medium text-primary mb-1">Issue Context</p>
+                                            <p className="text-xs text-muted-foreground">{risk.description}</p>
                                             <div className="flex gap-2 mt-2">
-                                                <Button variant="outline" size="sm" className="h-7 text-xs flex-1">Explain</Button>
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    className="h-7 text-xs flex-1"
+                                                    onClick={() => handleExplain(risk)}
+                                                    disabled={explainLoadingId === risk.id}
+                                                >
+                                                    {explainLoadingId === risk.id ? <><Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> Explaining...</> : "Explain"}
+                                                </Button>
                                                 <Button variant="outline" size="sm" className="h-7 text-xs flex-1 text-primary border-primary/30">Ask Lawyer</Button>
                                             </div>
+                                            {explainErrorByRiskId[risk.id] && (
+                                                <p className="text-xs text-destructive mt-2">{explainErrorByRiskId[risk.id]}</p>
+                                            )}
+                                            {explainByRiskId[risk.id] && (
+                                                <div className="mt-2 p-2.5 rounded-md border bg-secondary/20 space-y-2">
+                                                    <p className="text-xs font-semibold text-foreground">AI Explanation</p>
+                                                    <p className="text-xs text-muted-foreground whitespace-pre-wrap">
+                                                        {explainByRiskId[risk.id].explanation_en || explainByRiskId[risk.id].explanation_th}
+                                                    </p>
+                                                    {explainByRiskId[risk.id].business_impact.length > 0 && (
+                                                        <div>
+                                                            <p className="text-xs font-medium text-foreground mb-1">Business Impact</p>
+                                                            <ul className="text-xs text-muted-foreground list-disc pl-4 space-y-0.5">
+                                                                {explainByRiskId[risk.id].business_impact.map((item, idx) => (
+                                                                    <li key={`${risk.id}-impact-${idx}`}>{item}</li>
+                                                                ))}
+                                                            </ul>
+                                                        </div>
+                                                    )}
+                                                    {explainByRiskId[risk.id].worst_case_scenario && (
+                                                        <div>
+                                                            <p className="text-xs font-medium text-foreground mb-1">Worst-case Scenario</p>
+                                                            <p className="text-xs text-muted-foreground">{explainByRiskId[risk.id].worst_case_scenario}</p>
+                                                        </div>
+                                                    )}
+                                                    {explainByRiskId[risk.id].compliance_notice && (
+                                                        <p className="text-[11px] text-muted-foreground italic border-t pt-2">
+                                                            {explainByRiskId[risk.id].compliance_notice}
+                                                        </p>
+                                                    )}
+                                                </div>
+                                            )}
                                         </div>
                                     )}
                                 </CardContent>
