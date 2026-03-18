@@ -18,7 +18,7 @@ data/chroma_db/
 chroma_db/
 
 # Fonts (downloaded separately)
-fonts/
+# fonts/
 
 # IDE
 .vscode/
