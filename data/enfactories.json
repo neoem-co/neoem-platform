@@ -41,6 +41,18 @@
                     "revenue": 1860000000
                 }
             ],
+            "machines": [
+                {
+                    "name": "Automated Filling Line",
+                    "capacity": "20,000 Units/Day",
+                    "image": "filling"
+                },
+                {
+                    "name": "High Volume Mixer",
+                    "capacity": "5 Tons/Day",
+                    "image": "mixer"
+                }
+            ],
             "certifications": [
                 "ISO 9001",
                 "ISO 14001"
@@ -85,6 +97,18 @@
                 {
                     "year": "2023",
                     "revenue": 178000000
+                }
+            ],
+            "machines": [
+                {
+                    "name": "Automated Filling Line",
+                    "capacity": "20,000 Units/Day",
+                    "image": "filling"
+                },
+                {
+                    "name": "High Volume Mixer",
+                    "capacity": "5 Tons/Day",
+                    "image": "mixer"
                 }
             ],
             "certifications": [
@@ -134,6 +158,18 @@
             ],
             "certifications": [
                 "ISO 9001"
+            ],
+            "machines": [
+                {
+                    "name": "Pharmaceutical Mixing Vessel",
+                    "capacity": "3 Tons/Batch",
+                    "image": "mixer"
+                },
+                {
+                    "name": "Cosmeceutical Filling Line",
+                    "capacity": "18,000 Units/Day",
+                    "image": "filling"
+                }
             ]
         },
         {
@@ -172,7 +208,19 @@
                     "revenue": 650000000
                 }
             ],
-            "certifications": []
+            "certifications": [],
+            "machines": [
+                {
+                    "name": "Vacuum Emulsifying Mixer",
+                    "capacity": "4 Tons/Batch",
+                    "image": "mixer"
+                },
+                {
+                    "name": "High-Speed Filling & Capping Line",
+                    "capacity": "25,000 Units/Day",
+                    "image": "filling"
+                }
+            ]
         },
         {
             "id": "5",
@@ -206,7 +254,19 @@
                     "revenue": 105000000
                 }
             ],
-            "certifications": []
+            "certifications": [],
+            "machines": [
+                {
+                    "name": "Pilot Formulation Mixer",
+                    "capacity": "1.5 Tons/Batch",
+                    "image": "mixer"
+                },
+                {
+                    "name": "Flexible Packaging Line",
+                    "capacity": "12,000 Units/Day",
+                    "image": "packaging"
+                }
+            ]
         },
         {
             "id": "6",
@@ -243,7 +303,19 @@
                     "revenue": 290000000
                 }
             ],
-            "certifications": []
+            "certifications": [],
+            "machines": [
+                {
+                    "name": "Supplement Blending System",
+                    "capacity": "6 Tons/Day",
+                    "image": "mixer"
+                },
+                {
+                    "name": "Sachet Filling Machine",
+                    "capacity": "80,000 Sachets/Day",
+                    "image": "filling"
+                }
+            ]
         },
         {
             "id": "7",
@@ -277,7 +349,19 @@
                     "revenue": 3040000000
                 }
             ],
-            "certifications": []
+            "certifications": [],
+            "machines": [
+                {
+                    "name": "Retort Sterilization Line",
+                    "capacity": "40,000 Packs/Day",
+                    "image": "factory"
+                },
+                {
+                    "name": "Automated Pouch Packing Line",
+                    "capacity": "60,000 Units/Day",
+                    "image": "packaging"
+                }
+            ]
         },
         {
             "id": "8",
@@ -320,7 +404,19 @@
                     "revenue": 155000000
                 }
             ],
-            "certifications": []
+            "certifications": [],
+            "machines": [
+                {
+                    "name": "Fermentation Tank System",
+                    "capacity": "10,000 Liters/Batch",
+                    "image": "mixer"
+                },
+                {
+                    "name": "Aseptic Bottling Line",
+                    "capacity": "15,000 Bottles/Day",
+                    "image": "filling"
+                }
+            ]
         },
         {
             "id": "9",
@@ -364,7 +460,19 @@
                     "revenue": 520000000
                 }
             ],
-            "certifications": []
+            "certifications": [],
+            "machines": [
+                {
+                    "name": "Sauce Cooking Kettle",
+                    "capacity": "5 Tons/Batch",
+                    "image": "mixer"
+                },
+                {
+                    "name": "Hot-Fill Bottle Line",
+                    "capacity": "22,000 Units/Day",
+                    "image": "filling"
+                }
+            ]
         },
         {
             "id": "10",
@@ -408,7 +516,19 @@
                     "revenue": 220000000
                 }
             ],
-            "certifications": []
+            "certifications": [],
+            "machines": [
+                {
+                    "name": "Continuous Roasting Oven",
+                    "capacity": "3 Tons/Day",
+                    "image": "factory"
+                },
+                {
+                    "name": "Snack Seasoning Drum",
+                    "capacity": "10,000 Packs/Shift",
+                    "image": "mixer"
+                }
+            ]
         },
         {
             "id": "11",
@@ -450,7 +570,19 @@
                     "revenue": 1280000000
                 }
             ],
-            "certifications": []
+            "certifications": [],
+            "machines": [
+                {
+                    "name": "Liquid Blending Tank",
+                    "capacity": "8 Tons/Batch",
+                    "image": "mixer"
+                },
+                {
+                    "name": "Household Bottle Filling Line",
+                    "capacity": "30,000 Units/Day",
+                    "image": "filling"
+                }
+            ]
         },
         {
             "id": "12",
@@ -488,7 +620,19 @@
                     "revenue": 115000000
                 }
             ],
-            "certifications": []
+            "certifications": [],
+            "machines": [
+                {
+                    "name": "CNC Component Line",
+                    "capacity": "Precision Batch Production",
+                    "image": "factory"
+                },
+                {
+                    "name": "Powder Coating System",
+                    "capacity": "2,500 Parts/Day",
+                    "image": "packaging"
+                }
+            ]
         },
         {
             "id": "13",
@@ -522,7 +666,19 @@
                     "revenue": 88000000
                 }
             ],
-            "certifications": []
+            "certifications": [],
+            "machines": [
+                {
+                    "name": "Metal Forming Press",
+                    "capacity": "4,000 Parts/Day",
+                    "image": "factory"
+                },
+                {
+                    "name": "Surface Finishing Line",
+                    "capacity": "Continuous Flow",
+                    "image": "packaging"
+                }
+            ]
         },
         {
             "id": "14",
@@ -560,7 +716,19 @@
                     "revenue": 58000000
                 }
             ],
-            "certifications": []
+            "certifications": [],
+            "machines": [
+                {
+                    "name": "Injection Molding Machine",
+                    "capacity": "6,000 Pieces/Day",
+                    "image": "factory"
+                },
+                {
+                    "name": "Assembly Conveyor Line",
+                    "capacity": "10,000 Units/Shift",
+                    "image": "filling"
+                }
+            ]
         },
         {
             "id": "15",
@@ -598,7 +766,19 @@
                     "revenue": 2857000000
                 }
             ],
-            "certifications": []
+            "certifications": [],
+            "machines": [
+                {
+                    "name": "Detergent Mixing Reactor",
+                    "capacity": "12 Tons/Batch",
+                    "image": "mixer"
+                },
+                {
+                    "name": "High-Speed Cartoning Line",
+                    "capacity": "45,000 Units/Day",
+                    "image": "packaging"
+                }
+            ]
         },
         {
             "id": "16",
@@ -632,7 +812,19 @@
                     "revenue": 9333000000
                 }
             ],
-            "certifications": []
+            "certifications": [],
+            "machines": [
+                {
+                    "name": "CNC Stamping Line",
+                    "capacity": "5,000 Components/Day",
+                    "image": "factory"
+                },
+                {
+                    "name": "Automated Assembly Cell",
+                    "capacity": "12,000 Units/Shift",
+                    "image": "filling"
+                }
+            ]
         },
         {
             "id": "17",
@@ -666,7 +858,19 @@
                     "revenue": 8465000000
                 }
             ],
-            "certifications": []
+            "certifications": [],
+            "machines": [
+                {
+                    "name": "Motor Winding Machine",
+                    "capacity": "3,500 Units/Day",
+                    "image": "factory"
+                },
+                {
+                    "name": "Electrical Safety Test Bench",
+                    "capacity": "100% End-of-Line QC",
+                    "image": "lab"
+                }
+            ]
         },
         {
             "id": "18",
@@ -700,7 +904,19 @@
                     "revenue": 3191000000
                 }
             ],
-            "certifications": []
+            "certifications": [],
+            "machines": [
+                {
+                    "name": "Compressor Coil Winder",
+                    "capacity": "2,800 Units/Day",
+                    "image": "factory"
+                },
+                {
+                    "name": "Leak Testing Station",
+                    "capacity": "Continuous Inspection",
+                    "image": "lab"
+                }
+            ]
         },
         {
             "id": "19",
@@ -734,7 +950,19 @@
                     "revenue": 240000000
                 }
             ],
-            "certifications": []
+            "certifications": [],
+            "machines": [
+                {
+                    "name": "PCB Assembly Line",
+                    "capacity": "20,000 Boards/Day",
+                    "image": "factory"
+                },
+                {
+                    "name": "Audio Calibration Lab",
+                    "capacity": "Full Functional Testing",
+                    "image": "lab"
+                }
+            ]
         },
         {
             "id": "20",
@@ -768,7 +996,19 @@
                     "revenue": 450000000
                 }
             ],
-            "certifications": []
+            "certifications": [],
+            "machines": [
+                {
+                    "name": "Fin Press Machine",
+                    "capacity": "4,500 Coil Sets/Day",
+                    "image": "factory"
+                },
+                {
+                    "name": "Refrigeration Performance Test Room",
+                    "capacity": "Batch Validation",
+                    "image": "lab"
+                }
+            ]
         },
         {
             "id": "21",
@@ -802,7 +1042,19 @@
                     "revenue": 82000000
                 }
             ],
-            "certifications": []
+            "certifications": [],
+            "machines": [
+                {
+                    "name": "Industrial Sewing Line",
+                    "capacity": "1,200 Garments/Day",
+                    "image": "factory"
+                },
+                {
+                    "name": "Heat Transfer Printing Machine",
+                    "capacity": "2,500 Prints/Day",
+                    "image": "packaging"
+                }
+            ]
         },
         {
             "id": "22",
@@ -836,7 +1088,19 @@
                     "revenue": 65000000
                 }
             ],
-            "certifications": []
+            "certifications": [],
+            "machines": [
+                {
+                    "name": "Automatic Fabric Cutter",
+                    "capacity": "3,000 Pieces/Day",
+                    "image": "factory"
+                },
+                {
+                    "name": "Embroidery Machine Set",
+                    "capacity": "1,500 Logos/Day",
+                    "image": "lab"
+                }
+            ]
         },
         {
             "id": "23",
@@ -874,7 +1138,19 @@
                     "revenue": 350000000
                 }
             ],
-            "certifications": []
+            "certifications": [],
+            "machines": [
+                {
+                    "name": "Polo Shirt Sewing Line",
+                    "capacity": "1,800 Pieces/Day",
+                    "image": "factory"
+                },
+                {
+                    "name": "Screen Printing Carousel",
+                    "capacity": "2,000 Prints/Day",
+                    "image": "packaging"
+                }
+            ]
         },
         {
             "id": "24",
@@ -908,7 +1184,19 @@
                     "revenue": 58000000
                 }
             ],
-            "certifications": []
+            "certifications": [],
+            "machines": [
+                {
+                    "name": "Recycled Textile Sorting Line",
+                    "capacity": "2 Tons/Day",
+                    "image": "factory"
+                },
+                {
+                    "name": "Small-Batch Sewing Cell",
+                    "capacity": "600 Pieces/Day",
+                    "image": "filling"
+                }
+            ]
         },
         {
             "id": "25",
@@ -944,6 +1232,18 @@
             ],
             "certifications": [
                 "Excellence in Craftsmanship"
+            ],
+            "machines": [
+                {
+                    "name": "Pattern Cutting Table",
+                    "capacity": "Custom Small Runs",
+                    "image": "lab"
+                },
+                {
+                    "name": "Tailoring Sewing Station",
+                    "capacity": "150 Pieces/Week",
+                    "image": "factory"
+                }
             ]
         },
         {
@@ -978,7 +1278,19 @@
                     "revenue": 72000000
                 }
             ],
-            "certifications": []
+            "certifications": [],
+            "machines": [
+                {
+                    "name": "Flexographic Printing Press",
+                    "capacity": "120,000 Labels/Day",
+                    "image": "packaging"
+                },
+                {
+                    "name": "Laminating Line",
+                    "capacity": "18,000 Sheets/Shift",
+                    "image": "factory"
+                }
+            ]
         },
         {
             "id": "27",
@@ -1012,7 +1324,19 @@
                     "revenue": 38000000
                 }
             ],
-            "certifications": []
+            "certifications": [],
+            "machines": [
+                {
+                    "name": "Blow Molding Machine",
+                    "capacity": "25,000 Bottles/Day",
+                    "image": "factory"
+                },
+                {
+                    "name": "Injection Molding Press",
+                    "capacity": "18,000 Parts/Day",
+                    "image": "mixer"
+                }
+            ]
         },
         {
             "id": "28",
@@ -1046,7 +1370,19 @@
                     "revenue": 88000000
                 }
             ],
-            "certifications": []
+            "certifications": [],
+            "machines": [
+                {
+                    "name": "Offset Printing Press",
+                    "capacity": "90,000 Cartons/Day",
+                    "image": "packaging"
+                },
+                {
+                    "name": "Die Cutting Machine",
+                    "capacity": "35,000 Sheets/Day",
+                    "image": "factory"
+                }
+            ]
         },
         {
             "id": "29",
@@ -1080,7 +1416,19 @@
                     "revenue": 280000000
                 }
             ],
-            "certifications": []
+            "certifications": [],
+            "machines": [
+                {
+                    "name": "Paper Bag Forming Line",
+                    "capacity": "40,000 Bags/Day",
+                    "image": "packaging"
+                },
+                {
+                    "name": "Food-Grade Printing Line",
+                    "capacity": "High-Speed Roll Feed",
+                    "image": "factory"
+                }
+            ]
         },
         {
             "id": "30",
@@ -1114,7 +1462,19 @@
                     "revenue": 125000000
                 }
             ],
-            "certifications": []
+            "certifications": [],
+            "machines": [
+                {
+                    "name": "Corrugated Box Line",
+                    "capacity": "28,000 Boxes/Day",
+                    "image": "packaging"
+                },
+                {
+                    "name": "Auto Folder Gluer",
+                    "capacity": "22,000 Units/Day",
+                    "image": "factory"
+                }
+            ]
         }
     ],
     "chatHistory": [

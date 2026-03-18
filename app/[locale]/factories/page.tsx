@@ -9,32 +9,64 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Slider } from "@/components/ui/slider";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import factoriesData from "@/data/factories.json";
-import { useTranslations } from "next-intl";
-
-const locations = ["Bangkok", "Samut Prakan", "Pathum Thani", "Chonburi", "Nonthaburi"];
-const certifications = ["ISO 9001", "GMP", "FDA Approved", "Halal", "Organic", "OEKO-TEX"];
-const categories = ["Cosmetics", "Supplements", "Packaging", "Clothing", "Skincare"];
+import { useLocale, useTranslations } from "next-intl";
+import {
+    getFactories,
+    getFactoryCategoryId,
+    getFactorySearchableText,
+} from "@/lib/factory-data";
 
 const FactoriesContent = () => {
     const t = useTranslations("Factories");
     const commonT = useTranslations("Common");
+    const locale = useLocale();
     const searchParams = useSearchParams();
     const router = useRouter();
     const pathname = usePathname();
+    const factories = useMemo(() => getFactories(locale), [locale]);
     const query = searchParams.get("q") || "";
     const categoryParam = searchParams.get("category") || "";
+    const initialCategorySelection = useMemo(
+        () => (categoryParam ? [categoryParam.toLowerCase()] : []),
+        [categoryParam]
+    );
 
     const [searchInput, setSearchInput] = useState(query);
     const [selectedLocations, setSelectedLocations] = useState<string[]>([]);
     const [selectedCertifications, setSelectedCertifications] = useState<string[]>([]);
-    const [selectedCategories, setSelectedCategories] = useState<string[]>(
-        categoryParam ? [categoryParam] : []
-    );
+    const [selectedCategories, setSelectedCategories] = useState<string[] | null>(null);
     const [moqRange, setMoqRange] = useState([0, 5000]);
     const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
     const [recommendedIds, setRecommendedIds] = useState<string[]>([]);
-    const [isLoadingAI, setIsLoadingAI] = useState(false);
+    const activeSelectedCategories = selectedCategories ?? initialCategorySelection;
+
+    const categoryOptions = useMemo(() => {
+        const labelsById = new Map<string, string>();
+
+        factories.forEach((factory) => {
+            const id = getFactoryCategoryId(factory);
+            if (!labelsById.has(id)) {
+                labelsById.set(id, factory.category);
+            }
+        });
+
+        return Array.from(labelsById.entries()).map(([id, label]) => ({ id, label }));
+    }, [factories]);
+
+    const categoryLabels = useMemo(
+        () => new Map(categoryOptions.map((category) => [category.id, category.label] as const)),
+        [categoryOptions]
+    );
+
+    const locations = useMemo(
+        () => Array.from(new Set(factories.map((factory) => factory.location))).sort(),
+        [factories]
+    );
+
+    const certifications = useMemo(
+        () => Array.from(new Set(factories.flatMap((factory) => factory.certifications || []))).sort(),
+        [factories]
+    );
 
     // Fetch semantic search recommendations
     useEffect(() => {
@@ -44,19 +76,15 @@ const FactoriesContent = () => {
                 return;
             }
 
-            setIsLoadingAI(true);
             try {
                 const res = await fetch(`/api/ai/search/semantic?q=${encodeURIComponent(query)}`);
                 if (res.ok) {
-                    const data = await res.json();
-                    const ids = data.recommended.map((r: any) => r.id);
-                    setRecommendedIds(ids);
+                    const data = await res.json() as { recommended?: Array<{ id: string }> };
+                    setRecommendedIds((data.recommended || []).map((item) => item.id));
                 }
             } catch (error) {
                 console.error("Failed to fetch semantic search results:", error);
                 setRecommendedIds([]);
-            } finally {
-                setIsLoadingAI(false);
             }
         };
 
@@ -75,21 +103,15 @@ const FactoriesContent = () => {
     };
 
     const filteredFactories = useMemo(() => {
-        const filtered = factoriesData.factories.filter((factory) => {
+        const filtered = factories.filter((factory) => {
             if (query) {
                 const searchLower = query.toLowerCase();
-                const matchesSearch =
-                    factory.name.toLowerCase().includes(searchLower) ||
-                    factory.description.toLowerCase().includes(searchLower) ||
-                    factory.specialties.some((s) => s.toLowerCase().includes(searchLower)) ||
-                    factory.category.toLowerCase().includes(searchLower);
+                const matchesSearch = getFactorySearchableText(factory, locale).includes(searchLower);
                 if (!matchesSearch) return false;
             }
 
-            if (selectedCategories.length > 0) {
-                if (!selectedCategories.some((c) =>
-                    factory.category.toLowerCase() === c.toLowerCase()
-                )) return false;
+            if (activeSelectedCategories.length > 0) {
+                if (!activeSelectedCategories.includes(getFactoryCategoryId(factory))) return false;
             }
 
             if (selectedLocations.length > 0) {
@@ -98,7 +120,7 @@ const FactoriesContent = () => {
 
             if (selectedCertifications.length > 0) {
                 if (!selectedCertifications.some((c) =>
-                    factory.tags.some((t) => t.includes(c))
+                    (factory.certifications || []).some((certification) => certification.includes(c))
                 )) return false;
             }
 
@@ -115,7 +137,7 @@ const FactoriesContent = () => {
             if (!aRec && bRec) return 1;
             return 0;
         });
-    }, [query, selectedCategories, selectedLocations, selectedCertifications, moqRange, recommendedIds]);
+    }, [activeSelectedCategories, factories, locale, query, selectedLocations, selectedCertifications, moqRange, recommendedIds]);
 
     const toggleFilter = (
         value: string,
@@ -129,6 +151,14 @@ const FactoriesContent = () => {
         }
     };
 
+    const toggleCategoryFilter = (value: string) => {
+        if (activeSelectedCategories.includes(value)) {
+            setSelectedCategories(activeSelectedCategories.filter((category) => category !== value));
+        } else {
+            setSelectedCategories([...activeSelectedCategories, value]);
+        }
+    };
+
     const clearFilters = () => {
         setSelectedLocations([]);
         setSelectedCertifications([]);
@@ -139,12 +169,11 @@ const FactoriesContent = () => {
     const hasActiveFilters =
         selectedLocations.length > 0 ||
         selectedCertifications.length > 0 ||
-        selectedCategories.length > 0 ||
+        activeSelectedCategories.length > 0 ||
         moqRange[0] > 0 ||
         moqRange[1] < 5000;
 
-    // Filter Panel Content (shared between desktop sidebar and mobile sheet)
-    const FilterContent = () => (
+    const filterContent = (
         <div className="space-y-6">
             <div className="flex items-center justify-between">
                 <h3 className="font-semibold text-foreground flex items-center gap-2">
@@ -162,15 +191,13 @@ const FactoriesContent = () => {
             <div className="space-y-3">
                 <h4 className="text-sm font-medium text-foreground">{t("category")}</h4>
                 <div className="space-y-2">
-                    {categories.map((cat) => (
-                        <label key={cat} className="flex items-center gap-2 cursor-pointer">
+                    {categoryOptions.map((category) => (
+                        <label key={category.id} className="flex items-center gap-2 cursor-pointer">
                             <Checkbox
-                                checked={selectedCategories.includes(cat.toLowerCase())}
-                                onCheckedChange={() =>
-                                    toggleFilter(cat.toLowerCase(), selectedCategories, setSelectedCategories)
-                                }
+                                checked={activeSelectedCategories.includes(category.id)}
+                                onCheckedChange={() => toggleCategoryFilter(category.id)}
                             />
-                            <span className="text-sm text-muted-foreground">{cat}</span>
+                            <span className="text-sm text-muted-foreground">{category.label}</span>
                         </label>
                     ))}
                 </div>
@@ -257,7 +284,7 @@ const FactoriesContent = () => {
                                     <SlidersHorizontal className="h-4 w-4" />
                                     {hasActiveFilters && (
                                         <span className="ml-1 w-5 h-5 rounded-full bg-primary text-primary-foreground text-xs flex items-center justify-center">
-                                            {selectedCategories.length + selectedLocations.length + selectedCertifications.length}
+                                            {activeSelectedCategories.length + selectedLocations.length + selectedCertifications.length}
                                         </span>
                                     )}
                                 </Button>
@@ -267,7 +294,7 @@ const FactoriesContent = () => {
                                     <SheetTitle>{t("filters")}</SheetTitle>
                                 </SheetHeader>
                                 <div className="mt-6">
-                                    <FilterContent />
+                                    {filterContent}
                                 </div>
                             </SheetContent>
                         </Sheet>
@@ -287,7 +314,7 @@ const FactoriesContent = () => {
                         </p>
                     </div>
                     <div className="bg-card border rounded-lg p-4">
-                        <FilterContent />
+                        {filterContent}
                     </div>
                 </div>
 
@@ -306,13 +333,13 @@ const FactoriesContent = () => {
                     {/* Active Filters */}
                     {hasActiveFilters && (
                         <div className="flex items-center gap-2 flex-wrap mb-4">
-                            {selectedCategories.map((cat) => (
+                            {activeSelectedCategories.map((cat) => (
                                 <span
                                     key={cat}
                                     className="inline-flex items-center gap-1 px-3 py-1 bg-primary/10 text-primary rounded-full text-sm"
                                 >
-                                    {cat}
-                                    <button onClick={() => toggleFilter(cat, selectedCategories, setSelectedCategories)}>
+                                    {categoryLabels.get(cat) || cat}
+                                    <button onClick={() => toggleCategoryFilter(cat)}>
                                         <X className="h-3 w-3" />
                                     </button>
                                 </span>

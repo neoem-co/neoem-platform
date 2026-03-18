@@ -2,12 +2,13 @@
 
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
+import type { StaticImageData } from "next/image";
 import { useLocale } from "next-intl";
 import { useParams, useRouter } from "next/navigation";
 import {
     Send, Paperclip, FileText, Download, Bot,
-    Sparkles, FileCheck, AlertTriangle, ChevronRight, X,
-    CreditCard, ArrowLeft, PanelRightClose, PanelRight,
+    Sparkles, FileCheck, AlertTriangle, ChevronRight,
+    ArrowLeft, PanelRightClose, PanelRight,
 } from "lucide-react";
 import { Navbar } from "@/components/layout/Navbar";
 import { Button } from "@/components/ui/button";
@@ -19,14 +20,14 @@ import { AILegalWorkspace } from "@/components/legal/AILegalWorkspace";
 import { TOSModal } from "@/components/chat/TOSModal";
 import { MilestoneTracker } from "@/components/deal/MilestoneTracker";
 import { StickyPaymentWidget } from "@/components/deal/StickyPaymentWidget";
-import factoriesData from "@/data/factories.json";
+import { getFactoryBySlug, getFactoryChatHistory } from "@/lib/factory-data";
 import factory1 from "@/public/assets/factory-1.jpg";
 import factory2 from "@/public/assets/factory-2.jpg";
 import factory3 from "@/public/assets/factory-3.jpg";
 import factory4 from "@/public/assets/factory-4.jpg";
 import factory5 from "@/public/assets/factory-5.jpg";
 
-const factoryImages: Record<string, any> = {
+const factoryImages: Record<string, StaticImageData> = {
     "factory-1": factory1, "factory-2": factory2, "factory-3": factory3,
     "factory-4": factory4, "factory-5": factory5,
 };
@@ -43,11 +44,11 @@ const DealRoom = () => {
     const params = useParams();
     const slug = params.slug as string;
     const router = useRouter();
-    const factory = factoriesData.factories.find((f) => f.slug === slug);
     const locale = useLocale();
+    const factory = getFactoryBySlug(slug, locale);
     const [showTOS, setShowTOS] = useState(true);
     const [tosAccepted, setTosAccepted] = useState(false);
-    const [messages, setMessages] = useState<Message[]>([...factoriesData.chatHistory as Message[]]);
+    const [messages, setMessages] = useState<Message[]>([...getFactoryChatHistory(locale) as Message[]]);
     const [inputValue, setInputValue] = useState("");
     const [showPaymentModal, setShowPaymentModal] = useState(false);
     const [showContractWarning, setShowContractWarning] = useState(false);
@@ -133,8 +134,7 @@ const DealRoom = () => {
         }
     };
 
-    // Right panel content
-    const SidePanelContent = () => (
+    const sidePanelContent = (
         <div className="flex-1 flex flex-col overflow-hidden">
             <div className="flex-1 p-4 space-y-4 overflow-y-auto scrollbar-thin">
                 <MilestoneTracker onAction={handleMilestoneAction} />
@@ -206,7 +206,7 @@ const DealRoom = () => {
                         <SheetTrigger asChild><Button variant="outline" size="sm"><Bot className="h-4 w-4 mr-1" /> Timeline</Button></SheetTrigger>
                         <SheetContent side="bottom" className="h-[85vh] flex flex-col">
                             <SheetHeader><SheetTitle className="flex items-center gap-2"><Bot className="h-5 w-5 text-primary" /> AI Middleman Hub</SheetTitle></SheetHeader>
-                            <SidePanelContent />
+                            {sidePanelContent}
                         </SheetContent>
                     </Sheet>
                 </div>
@@ -294,7 +294,7 @@ const DealRoom = () => {
                                 <h3 className="font-semibold text-foreground text-sm">AI Middleman Hub</h3>
                             </div>
                         </div>
-                        <SidePanelContent />
+                        {sidePanelContent}
                     </aside>
                 )}
             </div>
