@@ -356,17 +356,36 @@ async def run_risk_check_pipeline(
 
 
 def _parse_json_response(text: str) -> dict:
-    """Extract JSON from an LLM response that may contain markdown fences."""
-    text = text.strip()
-    # Remove markdown code fences
-    if text.startswith("```"):
-        lines = text.split("\n")
-        # Remove first and last lines
-        lines = lines[1:]
+    """Extract JSON from an LLM response that may contain markdown fences or extra text."""
+    cleaned = text.strip()
+
+    # Strategy 1: direct JSON parse
+    try:
+        return json.loads(cleaned)
+    except json.JSONDecodeError:
+        pass
+
+    # Strategy 2: markdown fenced block
+    if "```" in cleaned:
+        lines = cleaned.split("\n")
+        if lines and lines[0].strip().startswith("```"):
+            lines = lines[1:]
         if lines and lines[-1].strip() == "```":
             lines = lines[:-1]
-        text = "\n".join(lines)
-    return json.loads(text)
+        fenced = "\n".join(lines).strip()
+        try:
+            return json.loads(fenced)
+        except json.JSONDecodeError:
+            pass
+
+    # Strategy 3: first { ... } block in mixed text
+    first_brace = cleaned.find("{")
+    last_brace = cleaned.rfind("}")
+    if first_brace != -1 and last_brace > first_brace:
+        candidate = cleaned[first_brace:last_brace + 1]
+        return json.loads(candidate)
+
+    raise json.JSONDecodeError("No JSON object found", cleaned, 0)
 
 
 def _extract_topics(contract: StructuredContract) -> list[str]:
@@ -441,16 +460,35 @@ def _parse_risk_items(items: list[dict]) -> list[RiskItem]:
                     recommendation_th=item.get("recommendation_th", ""),
                     recommendation_en=item.get("recommendation_en", ""),
                     category=item.get("category", "general"),
-                    legal_refs=[
-                        LegalReference(**ref)
-                        for ref in item.get("legal_refs", [])
-                        if isinstance(ref, dict)
-                    ],
+                    legal_refs=_parse_legal_refs(item.get("legal_refs", [])),
                 )
             )
         except Exception as e:
             logger.warning("Skipping malformed risk item: %s", str(e))
     return results
+
+
+def _parse_legal_refs(raw_refs: object) -> list[LegalReference]:
+    """Parse legal references defensively so nullable fields do not drop full risk items."""
+    if not isinstance(raw_refs, list):
+        return []
+
+    parsed: list[LegalReference] = []
+    for ref in raw_refs:
+        if not isinstance(ref, dict):
+            continue
+        try:
+            parsed.append(
+                LegalReference(
+                    law_name=str(ref.get("law_name") or "ไม่ระบุ"),
+                    section=str(ref.get("section") or "ไม่ระบุ"),
+                    summary=str(ref.get("summary") or ""),
+                    relevance=str(ref.get("relevance") or ""),
+                )
+            )
+        except Exception as e:
+            logger.warning("Skipping malformed legal reference: %s", str(e))
+    return parsed
 
 
 def _parse_mismatches(items: list[dict]) -> list[ChatContractMismatch]:

@@ -85,8 +85,8 @@ export function RiskPdfViewer({
   }, []);
 
   const currentPageHighlights = useMemo(
-    () => highlights.filter((h) => h.page === currentPage),
-    [highlights, currentPage],
+    () => highlights.filter((h) => h.page === currentPage && (!selectedRiskId || h.riskId === selectedRiskId)),
+    [highlights, currentPage, selectedRiskId],
   );
 
   const prevPage = () => setCurrentPage((p) => Math.max(1, p - 1));

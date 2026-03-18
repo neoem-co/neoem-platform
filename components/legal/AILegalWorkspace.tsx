@@ -724,12 +724,16 @@ function RiskPanel({
                     snippet: a.snippet,
                 })),
             }));
-            setResults(mapped);
+            const mappedWithPage = mapped.map((risk) => ({
+                ...risk,
+                page: risk.anchors[0]?.page || risk.page || 1,
+            }));
+            setResults(mappedWithPage);
             setAnalysisSummary(response.summary_en || response.summary_th || "Analysis completed");
             setExplainByRiskId({});
             setExplainErrorByRiskId({});
-            setSelectedRisk(mapped[0] ?? null);
-            setFocusedPage(mapped[0]?.anchors?.[0]?.page ?? 1);
+            setSelectedRisk(mappedWithPage[0] ?? null);
+            setFocusedPage(mappedWithPage[0]?.anchors?.[0]?.page ?? mappedWithPage[0]?.page ?? 1);
         } catch (err) {
             setAnalysisError(err instanceof Error ? err.message : "Risk analysis failed");
         } finally {
