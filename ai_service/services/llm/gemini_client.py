@@ -17,6 +17,8 @@ def get_gemini_llm(
     model: Optional[str] = None,
 ):
     """Create a LangChain ChatGoogleGenerativeAI pointing to Gemini API."""
+    from langchain_google_genai import ChatGoogleGenerativeAI
+
     return ChatGoogleGenerativeAI(
         model=model or settings.gemini_model,
         google_api_key=settings.gemini_api_key,
@@ -37,7 +39,9 @@ async def gemini_invoke(
     if not settings.gemini_api_key:
         logger.error("GEMINI_API_KEY is not set in environment variables")
         raise ValueError("GEMINI_API_KEY is missing")
-    
+
+    from langchain_core.messages import HumanMessage, SystemMessage
+
     llm = get_gemini_llm(temperature=temperature)
     messages = [
         SystemMessage(content=system_prompt),
