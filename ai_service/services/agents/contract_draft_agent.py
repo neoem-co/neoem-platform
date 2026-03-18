@@ -12,11 +12,11 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
-import time
 import uuid
 from typing import Optional
 
 from config import settings
+from services.document.storage_paths import get_contracts_dir
 from services.supabase_client import upload_contract_file
 
 from models.contract_draft import (
@@ -356,11 +356,17 @@ async def finalize_contract(request: FinalizeRequest) -> FinalizeResponse:
 
             if settings.supabase_url and settings.supabase_key:
                 # Upload to Supabase Storage
-                pdf_url = upload_contract_file(pdf_path, pdf_bytes)
+                pdf_url = upload_contract_file(
+                    pdf_path,
+                    pdf_bytes,
+                    bucket=settings.supabase_storage_bucket,
+                )
+                if not pdf_url:
+                    raise RuntimeError("Supabase upload returned no PDF URL")
                 logger.info("Uploaded PDF to Supabase: %s", pdf_url)
             else:
                 # Save locally
-                local_path = f"./data/{pdf_path}"
+                local_path = str(get_contracts_dir() / f"{contract_id}.pdf")
                 _save_file(local_path, pdf_bytes)
                 pdf_url = f"/api/ai/contract-draft/contracts/{contract_id}/download/pdf"
         except Exception as e:
@@ -381,11 +387,17 @@ async def finalize_contract(request: FinalizeRequest) -> FinalizeResponse:
 
             if settings.supabase_url and settings.supabase_key:
                 # Upload to Supabase Storage
-                docx_url = upload_contract_file(docx_path, docx_bytes)
+                docx_url = upload_contract_file(
+                    docx_path,
+                    docx_bytes,
+                    bucket=settings.supabase_storage_bucket,
+                )
+                if not docx_url:
+                    raise RuntimeError("Supabase upload returned no DOCX URL")
                 logger.info("Uploaded DOCX to Supabase: %s", docx_url)
             else:
                 # Save locally
-                local_path = f"./data/{docx_path}"
+                local_path = str(get_contracts_dir() / f"{contract_id}.docx")
                 _save_file(local_path, docx_bytes)
                 docx_url = f"/api/ai/contract-draft/contracts/{contract_id}/download/docx"
         except Exception as e:
@@ -397,15 +409,23 @@ async def finalize_contract(request: FinalizeRequest) -> FinalizeResponse:
 
     # Save deal sheet JSON for future risk check comparison (History Check)
     if request.deal_sheet:
-        history_path = f"./data/contracts/{contract_id}_deal_sheet.json"
-        _save_file(
-            history_path,
-            json.dumps(
-                request.deal_sheet.model_dump(),
-                ensure_ascii=False,
-                indent=2,
-            ).encode("utf-8"),
-        )
+        history_bytes = json.dumps(
+            request.deal_sheet.model_dump(),
+            ensure_ascii=False,
+            indent=2,
+        ).encode("utf-8")
+        if settings.supabase_url and settings.supabase_key:
+            history_path = f"contracts/{contract_id}_deal_sheet.json"
+            uploaded = upload_contract_file(
+                history_path,
+                history_bytes,
+                bucket=settings.supabase_storage_bucket,
+            )
+            if not uploaded:
+                logger.warning("Failed to upload deal sheet JSON for %s", contract_id)
+        else:
+            history_path = str(get_contracts_dir() / f"{contract_id}_deal_sheet.json")
+            _save_file(history_path, history_bytes)
 
     return FinalizeResponse(
         pdf_url=pdf_url,

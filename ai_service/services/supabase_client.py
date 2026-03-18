@@ -5,6 +5,7 @@ Supabase client helper for storage and database operations.
 from __future__ import annotations
 
 import logging
+import mimetypes
 from typing import Optional
 
 from supabase import create_client, Client
@@ -33,19 +34,20 @@ def upload_contract_file(file_path: str, file_bytes: bytes, bucket: str = "contr
     """
     try:
         supabase = get_supabase()
-        
-        # Ensure bucket exists (or just try to upload)
-        filename = file_path.split("/")[-1]
-        
-        # Supabase storage upload
-        res = supabase.storage.from_(bucket).upload(
-            path=filename,
+
+        content_type = mimetypes.guess_type(file_path)[0] or "application/octet-stream"
+
+        supabase.storage.from_(bucket).upload(
+            path=file_path,
             file=file_bytes,
-            file_options={"content-type": "application/pdf" if filename.endswith(".pdf") else "application/vnd.openxmlformats-officedocument.wordprocessingml.document"}
+            file_options={
+                "content-type": content_type,
+                "upsert": "true",
+            },
         )
-        
+
         # Get public URL
-        url_res = supabase.storage.from_(bucket).get_public_url(filename)
+        url_res = supabase.storage.from_(bucket).get_public_url(file_path)
         return url_res
     except Exception as e:
         logger.error("Failed to upload to Supabase: %s", str(e))

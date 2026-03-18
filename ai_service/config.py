@@ -50,6 +50,7 @@ class Settings(BaseSettings):
     # ── Supabase ─────────────────────────────────────
     supabase_url: str = Field(default="", alias="SUPABASE_URL")
     supabase_key: str = Field(default="", alias="SUPABASE_KEY")
+    supabase_storage_bucket: str = Field(default="contracts", alias="SUPABASE_STORAGE_BUCKET")
     # For pgvector: postgresql://postgres.ID:PASSWORD@aws-0-REGION.pooler.supabase.com:5432/postgres
     supabase_db_url: str = Field(default="", alias="SUPABASE_DB_URL")
 

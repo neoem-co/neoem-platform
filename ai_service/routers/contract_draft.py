@@ -25,6 +25,7 @@ from services.agents.contract_draft_agent import (
     finalize_contract,
     generate_draft,
 )
+from services.document.storage_paths import get_contracts_dir
 from templates.contract_templates import get_template, list_templates
 
 logger = logging.getLogger(__name__)
@@ -106,7 +107,7 @@ async def download_contract(contract_id: str, format: str):
     if format not in ("pdf", "docx"):
         raise HTTPException(400, "Format must be 'pdf' or 'docx'")
 
-    file_path = f"./data/contracts/{contract_id}.{format}"
+    file_path = str(get_contracts_dir() / f"{contract_id}.{format}")
     if not os.path.exists(file_path):
         raise HTTPException(404, "Contract file not found")
 
