@@ -53,11 +53,16 @@ class ChatMessage(BaseModel):
 
 class PartyInfo(BaseModel):
     """Information about a contract party."""
-    name: str
-    role: str = Field(description="'buyer' | 'seller' | 'vendor' | 'client'")
+    name: str = ""
+    role: str = Field(default="", description="'buyer' | 'seller' | 'vendor' | 'client'")
     company: Optional[str] = None
     address: Optional[str] = None
     tax_id: Optional[str] = None
+
+    @field_validator("name", "role", "company", "address", "tax_id", mode="before")
+    @classmethod
+    def _normalize_empty_strings(cls, v):
+        return "" if v is None else v
 
 
 class ProductInfo(BaseModel):

@@ -27,6 +27,7 @@ class Settings(BaseSettings):
 
     # ── iApp Technology ──────────────────────────────
     iapp_api_key: str = Field(default="", alias="IAPP_API_KEY")
+    iapp_thanoy_api_key: str = Field(default="", alias="IAPP_THANOY_API_KEY")
     iapp_ocr_url: str = Field(
         default="https://api.iapp.co.th/v3/store/ocr/document/ocr",
         alias="IAPP_OCR_URL",

@@ -339,49 +339,61 @@ async def finalize_contract(request: FinalizeRequest) -> FinalizeResponse:
 
     pdf_url: Optional[str] = None
     docx_url: Optional[str] = None
+    generation_errors: list[str] = []
 
     # Generate documents
     if request.output_format in ("pdf", "both"):
-        from services.document.pdf_generator import generate_contract_pdf
-        pdf_bytes = generate_contract_pdf(
-            title=request.contract_title,
-            preamble=request.preamble_th,
-            articles=request.articles,
-            parties=request.parties,
-        )
-        
-        pdf_path = f"contracts/{contract_id}.pdf"
-        
-        if settings.supabase_url and settings.supabase_key:
-            # Upload to Supabase Storage
-            pdf_url = upload_contract_file(pdf_path, pdf_bytes)
-            logger.info("Uploaded PDF to Supabase: %s", pdf_url)
-        else:
-            # Save locally
-            local_path = f"./data/{pdf_path}"
-            _save_file(local_path, pdf_bytes)
-            pdf_url = f"/api/ai/contract-draft/contracts/{contract_id}/download/pdf"
+        try:
+            from services.document.pdf_generator import generate_contract_pdf
+            pdf_bytes = generate_contract_pdf(
+                title=request.contract_title,
+                preamble=request.preamble_th,
+                articles=request.articles,
+                parties=request.parties,
+            )
+
+            pdf_path = f"contracts/{contract_id}.pdf"
+
+            if settings.supabase_url and settings.supabase_key:
+                # Upload to Supabase Storage
+                pdf_url = upload_contract_file(pdf_path, pdf_bytes)
+                logger.info("Uploaded PDF to Supabase: %s", pdf_url)
+            else:
+                # Save locally
+                local_path = f"./data/{pdf_path}"
+                _save_file(local_path, pdf_bytes)
+                pdf_url = f"/api/ai/contract-draft/contracts/{contract_id}/download/pdf"
+        except Exception as e:
+            logger.error("PDF generation failed: %s", str(e))
+            generation_errors.append(f"pdf: {e}")
 
     if request.output_format in ("docx", "both"):
-        from services.document.docx_generator import generate_contract_docx
-        docx_bytes = generate_contract_docx(
-            title=request.contract_title,
-            preamble=request.preamble_th,
-            articles=request.articles,
-            parties=request.parties,
-        )
-        
-        docx_path = f"contracts/{contract_id}.docx"
-        
-        if settings.supabase_url and settings.supabase_key:
-            # Upload to Supabase Storage
-            docx_url = upload_contract_file(docx_path, docx_bytes)
-            logger.info("Uploaded DOCX to Supabase: %s", docx_url)
-        else:
-            # Save locally
-            local_path = f"./data/{docx_path}"
-            _save_file(local_path, docx_bytes)
-            docx_url = f"/api/ai/contract-draft/contracts/{contract_id}/download/docx"
+        try:
+            from services.document.docx_generator import generate_contract_docx
+            docx_bytes = generate_contract_docx(
+                title=request.contract_title,
+                preamble=request.preamble_th,
+                articles=request.articles,
+                parties=request.parties,
+            )
+
+            docx_path = f"contracts/{contract_id}.docx"
+
+            if settings.supabase_url and settings.supabase_key:
+                # Upload to Supabase Storage
+                docx_url = upload_contract_file(docx_path, docx_bytes)
+                logger.info("Uploaded DOCX to Supabase: %s", docx_url)
+            else:
+                # Save locally
+                local_path = f"./data/{docx_path}"
+                _save_file(local_path, docx_bytes)
+                docx_url = f"/api/ai/contract-draft/contracts/{contract_id}/download/docx"
+        except Exception as e:
+            logger.error("DOCX generation failed: %s", str(e))
+            generation_errors.append(f"docx: {e}")
+
+    if not pdf_url and not docx_url:
+        raise RuntimeError("; ".join(generation_errors) or "No output file could be generated")
 
     # Save deal sheet JSON for future risk check comparison (History Check)
     if request.deal_sheet:
@@ -399,8 +411,16 @@ async def finalize_contract(request: FinalizeRequest) -> FinalizeResponse:
         pdf_url=pdf_url,
         docx_url=docx_url,
         contract_id=contract_id,
-        message_th="สัญญาแบบร่างของคุณพร้อมแล้ว บันทึกไปยังประวัติสัญญาและ Deal Room แล้ว",
-        message_en="Your draft contract is ready. Saved to Contract History and Deal Room.",
+        message_th=(
+            "สัญญาแบบร่างของคุณพร้อมแล้ว บันทึกไปยังประวัติสัญญาและ Deal Room แล้ว"
+            if not generation_errors else
+            "สร้างสัญญาแบบร่างสำเร็จบางส่วน กรุณาตรวจสอบไฟล์ที่พร้อมดาวน์โหลด"
+        ),
+        message_en=(
+            "Your draft contract is ready. Saved to Contract History and Deal Room."
+            if not generation_errors else
+            "Draft contract generated partially. Please check the available download files."
+        ),
         saved_to_history=True,
     )
 
