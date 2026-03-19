@@ -355,75 +355,19 @@ async def finalize_contract(request: FinalizeRequest) -> FinalizeResponse:
     pdf_url: Optional[str] = None
     docx_url: Optional[str] = None
     generation_errors: list[str] = []
-    docx_bytes: Optional[bytes] = None
 
-    # Generate DOCX first so PDF can reuse DOCX->PDF conversion path.
-    need_docx_bytes = request.output_format in ("docx", "both", "pdf")
-    if need_docx_bytes:
+    # Generate documents
+    if request.output_format in ("pdf", "both"):
         try:
-            docx_started_at = time.perf_counter()
-            from services.document.docx_generator import generate_contract_docx
-            docx_bytes = generate_contract_docx(
+            pdf_started_at = time.perf_counter()
+            from services.document.pdf_generator import generate_contract_pdf
+            pdf_bytes = generate_contract_pdf(
                 title=request.contract_title,
                 preamble=request.preamble_th,
                 articles=request.articles,
                 parties=request.parties,
             )
-            logger.info("DOCX generation completed in %.2fs", time.perf_counter() - docx_started_at)
-        except Exception as e:
-            logger.error("DOCX generation failed: %s", str(e))
-            generation_errors.append(f"docx: {e}")
-
-    if request.output_format in ("docx", "both") and docx_bytes:
-        try:
-            docx_path = f"contracts/{contract_id}.docx"
-            if production_storage_required or (settings.supabase_url and settings.supabase_key):
-                docx_url = upload_contract_file(
-                    docx_path,
-                    docx_bytes,
-                    bucket=settings.supabase_storage_bucket,
-                )
-                logger.info("Uploaded DOCX to Supabase: %s", docx_url)
-            else:
-                local_path = str(get_contracts_dir() / f"{contract_id}.docx")
-                _save_file(local_path, docx_bytes)
-                docx_url = f"/api/ai/contract-draft/contracts/{contract_id}/download/docx"
-        except Exception as e:
-            logger.error("DOCX upload/save failed: %s", str(e))
-            generation_errors.append(f"docx-save: {e}")
-
-    # Generate documents
-    if request.output_format in ("pdf", "both"):
-        try:
-            pdf_bytes: Optional[bytes] = None
-
-            # Primary path: convert generated DOCX to PDF for layout parity.
-            if docx_bytes:
-                try:
-                    convert_started_at = time.perf_counter()
-                    from services.document.docx_to_pdf_converter import convert_docx_bytes_to_pdf_bytes
-                    pdf_bytes = convert_docx_bytes_to_pdf_bytes(docx_bytes, base_name=contract_id)
-                    logger.info(
-                        "PDF generated from DOCX conversion path in %.2fs",
-                        time.perf_counter() - convert_started_at,
-                    )
-                except Exception as conv_e:
-                    logger.warning("DOCX->PDF conversion failed, fallback to fpdf2: %s", str(conv_e))
-
-            # Legacy fallback: direct fpdf2 rendering.
-            if not pdf_bytes:
-                pdf_fallback_started_at = time.perf_counter()
-                from services.document.pdf_generator import generate_contract_pdf
-                pdf_bytes = generate_contract_pdf(
-                    title=request.contract_title,
-                    preamble=request.preamble_th,
-                    articles=request.articles,
-                    parties=request.parties,
-                )
-                logger.info(
-                    "PDF generated via legacy fpdf2 fallback in %.2fs",
-                    time.perf_counter() - pdf_fallback_started_at,
-                )
+            logger.info("PDF generated via fpdf2 in %.2fs", time.perf_counter() - pdf_started_at)
 
             pdf_path = f"contracts/{contract_id}.pdf"
 
@@ -443,6 +387,35 @@ async def finalize_contract(request: FinalizeRequest) -> FinalizeResponse:
         except Exception as e:
             logger.error("PDF generation failed: %s", str(e))
             generation_errors.append(f"pdf: {e}")
+
+    if request.output_format in ("docx", "both"):
+        try:
+            docx_started_at = time.perf_counter()
+            from services.document.docx_generator import generate_contract_docx
+            docx_bytes = generate_contract_docx(
+                title=request.contract_title,
+                preamble=request.preamble_th,
+                articles=request.articles,
+                parties=request.parties,
+            )
+            logger.info("DOCX generation completed in %.2fs", time.perf_counter() - docx_started_at)
+
+            docx_path = f"contracts/{contract_id}.docx"
+
+            if production_storage_required or (settings.supabase_url and settings.supabase_key):
+                docx_url = upload_contract_file(
+                    docx_path,
+                    docx_bytes,
+                    bucket=settings.supabase_storage_bucket,
+                )
+                logger.info("Uploaded DOCX to Supabase: %s", docx_url)
+            else:
+                local_path = str(get_contracts_dir() / f"{contract_id}.docx")
+                _save_file(local_path, docx_bytes)
+                docx_url = f"/api/ai/contract-draft/contracts/{contract_id}/download/docx"
+        except Exception as e:
+            logger.error("DOCX generation failed: %s", str(e))
+            generation_errors.append(f"docx: {e}")
 
     if not pdf_url and not docx_url:
         raise RuntimeError("; ".join(generation_errors) or "No output file could be generated")

@@ -21,19 +21,48 @@ logger = logging.getLogger(__name__)
 # Thai font to use in DOCX — the system must have it installed.
 _THAI_DOCX_FONT = "Angsana New"
 
+_NUMBERED_PREFIX = re.compile(
+    r"^(?:ข้อ\s*\d+|"          # ข้อ 1, ข้อ2
+    r"\d+(?:\.\d+)*[\.)]?|"   # 1, 1.1, 1)
+    r"\([ก-ฮa-zA-Z0-9]+\)|"    # (ก) (a) (1)
+    r"[ก-ฮ][\.)])"              # ก. ก)
+)
+
+
+def _is_structured_line(text: str) -> bool:
+    return bool(_NUMBERED_PREFIX.match(text.strip()))
+
 
 def _iter_paragraphs(text: str) -> list[str]:
-    """Normalize line breaks and split into non-empty logical paragraphs."""
+    """Normalize text while preserving legal list/new-line structure."""
     if not text:
         return []
     normalized = text.replace("\r\n", "\n").replace("\r", "\n")
     blocks = re.split(r"\n\s*\n+", normalized)
     paragraphs: list[str] = []
+
     for block in blocks:
-        line = " ".join(part.strip() for part in block.split("\n") if part.strip())
-        line = re.sub(r"[ \t]{2,}", " ", line).strip()
-        if line:
-            paragraphs.append(line)
+        lines = [part.strip() for part in block.split("\n") if part.strip()]
+        if not lines:
+            continue
+
+        buffer: list[str] = []
+        for line in lines:
+            line = re.sub(r"[ \t]{2,}", " ", line).strip()
+            if not line:
+                continue
+
+            if _is_structured_line(line):
+                if buffer:
+                    paragraphs.append(" ".join(buffer).strip())
+                    buffer = []
+                paragraphs.append(line)
+            else:
+                buffer.append(line)
+
+        if buffer:
+            paragraphs.append(" ".join(buffer).strip())
+
     return paragraphs
 
 
@@ -113,7 +142,7 @@ def generate_contract_docx(
             body_para = doc.add_paragraph(para_text)
             body_para.alignment = _resolve_paragraph_alignment(para_text)
             body_para.paragraph_format.first_line_indent = Cm(0)
-            body_para.paragraph_format.space_after = Pt(3)
+            body_para.paragraph_format.space_after = Pt(2)
             for run in body_para.runs:
                 _set_run_font(run, 14)
 
