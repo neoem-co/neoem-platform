@@ -92,10 +92,8 @@ def generate_contract_pdf(
     # ── Preamble ─────────────────────────────────────────────────────────
     if preamble:
         pdf.set_font("Sarabun", "", 14)
-        for para_text in preamble.split("\n"):
-            para_text = para_text.strip()
-            if para_text:
-                _write_indented_para(pdf, para_text)
+        for para_text in _iter_paragraphs(preamble):
+            _write_indented_para(pdf, para_text)
         pdf.ln(_SECTION_GAP)
 
     # ── Articles ─────────────────────────────────────────────────────────
@@ -115,11 +113,7 @@ def generate_contract_pdf(
         # Article body — justified with proper Thai indentation
         pdf.set_font("Sarabun", "", 14)
         body = article.body_th.strip()
-        for para in body.split("\n"):
-            para = para.strip()
-            if not para:
-                pdf.ln(_LINE_HEIGHT * 0.5)  # half-line gap for empty lines
-                continue
+        for para in _iter_paragraphs(body):
             _write_indented_para(pdf, para)
         pdf.ln(_SECTION_GAP)
 
@@ -172,6 +166,21 @@ _NUMBERED_PREFIX = _re.compile(
 )
 
 
+def _iter_paragraphs(text: str) -> list[str]:
+    """Normalize text and return non-empty logical paragraphs."""
+    if not text:
+        return []
+    normalized = text.replace("\r\n", "\n").replace("\r", "\n")
+    blocks = _re.split(r"\n\s*\n+", normalized)
+    paragraphs: list[str] = []
+    for block in blocks:
+        line = " ".join(part.strip() for part in block.split("\n") if part.strip())
+        line = _re.sub(r"[ \t]{2,}", " ", line).strip()
+        if line:
+            paragraphs.append(line)
+    return paragraphs
+
+
 def _write_indented_para(pdf: FPDF, text: str):
     """Write a paragraph.
     Plain paragraphs get Thai-style ย่อหน้า first-line indent.
@@ -181,7 +190,7 @@ def _write_indented_para(pdf: FPDF, text: str):
         # Sub-item — no indent, full content width
         pdf.multi_cell(
             w=_CONTENT_W, h=_LINE_HEIGHT, text=text,
-            align="J", new_x="LMARGIN", new_y="NEXT",
+            align="L", new_x="LMARGIN", new_y="NEXT",
         )
     else:
         # New paragraph — apply ย่อหน้า first-line indent
@@ -190,7 +199,7 @@ def _write_indented_para(pdf: FPDF, text: str):
         first_line_w = _CONTENT_W - _PARA_INDENT
         pdf.multi_cell(
             w=first_line_w, h=_LINE_HEIGHT, text=text,
-            align="J", new_x="LMARGIN", new_y="NEXT",
+            align="L", new_x="LMARGIN", new_y="NEXT",
         )
 
 

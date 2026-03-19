@@ -79,8 +79,6 @@ interface ContractData {
 const templates = [
     { id: "sales", label: "สัญญาซื้อขาย / Sales Contract", icon: "📝" },
     { id: "hire-of-work", label: "สัญญาจ้างทำของ / Hire of Work", icon: "🔧" },
-    { id: "oem", label: "สัญญา OEM Manufacturing", icon: "🏭" },
-    { id: "nda", label: "สัญญารักษาความลับ / NDA", icon: "🔒" },
     { id: "distribution", label: "สัญญาตัวแทนจำหน่าย / Distribution", icon: "📦" },
 ];
 
@@ -258,9 +256,16 @@ export function AILegalWorkspace({
 const TEMPLATE_TO_API: Record<string, string> = {
     sales: "sales_contract",
     "hire-of-work": "hire_of_work",
-    oem: "hybrid_oem",
-    nda: "nda",
     distribution: "distribution",
+};
+
+const API_TO_TEMPLATE: Record<string, string> = {
+    sales_contract: "sales",
+    hire_of_work: "hire-of-work",
+    distribution: "distribution",
+    // OEM/NDA should be clauses under hire-of-work in this UI flow.
+    hybrid_oem: "hire-of-work",
+    nda: "hire-of-work",
 };
 
 function DraftPanel({
@@ -306,8 +311,10 @@ function DraftPanel({
             try {
                 const ctx = await extractContext(chatHistory, factoryName, factoryInfo?.factory_id);
                 if (!active) return;
-                const suggested = Object.entries(TEMPLATE_TO_API).find(([, value]) => value === ctx.suggested_template)?.[0] ?? "";
-                setRecommendedTemplate(ctx.suggested_template);
+                const suggested = API_TO_TEMPLATE[ctx.suggested_template] || "hire-of-work";
+                setRecommendedTemplate(
+                    templates.find((tpl) => tpl.id === suggested)?.label || "สัญญาจ้างทำของ / Hire of Work"
+                );
                 setFormData((prev) => ({
                     ...prev,
                     template: prev.template || suggested,
@@ -422,7 +429,7 @@ function DraftPanel({
                 <Sparkles className="h-4 w-4 text-primary flex-shrink-0" />
                 <p className="text-sm text-foreground">
                     {recommendedTemplate
-                        ? <>💡 Based on your chat, we recommend: <span className="font-semibold text-primary">{recommendedTemplate.replace(/_/g, " ")}</span></>
+                        ? <>💡 Based on your chat, we recommend: <span className="font-semibold text-primary">{recommendedTemplate}</span></>
                         : <>💡 Select a template to generate a legally structured first draft.</>}
                 </p>
             </div>
@@ -722,12 +729,12 @@ function RiskPanel({
         setAnalysisError(null);
         try {
             if (!file) return;
-            const response: RiskCheckResponse = await analyzeContractRisk(file, chatHistory, factoryInfo, "both");
+            const response: RiskCheckResponse = await analyzeContractRisk(file, chatHistory, factoryInfo, "th");
             const mapped = response.risks.map((risk) => ({
                 id: risk.risk_id,
                 type: risk.level === "critical" || risk.level === "high" ? "high" as const : risk.level === "medium" ? "medium" as const : "low" as const,
-                clause: risk.title_en || risk.title_th || risk.clause_ref || "Unspecified clause",
-                description: risk.description_en || risk.description_th,
+                clause: risk.title_th || risk.title_en || risk.clause_ref || "ไม่ระบุข้อสัญญา",
+                description: risk.description_th || risk.description_en,
                 page: risk.anchors?.[0]?.page || 1,
                 level: risk.level,
                 clauseRef: risk.clause_ref || "",
@@ -751,14 +758,14 @@ function RiskPanel({
                 page: risk.anchors[0]?.page || risk.page || 1,
             }));
             setResults(mappedWithPage);
-            setAnalysisSummary(response.summary_en || response.summary_th || "Analysis completed");
+            setAnalysisSummary(response.summary_th || response.summary_en || "วิเคราะห์เสร็จสิ้น");
             setOverallRisk(response.overall_risk);
             const nextHighCount = mapped.filter((risk) => risk.type === "high").length;
             const nextMediumCount = mapped.filter((risk) => risk.type === "medium").length;
             const nextLowCount = mapped.filter((risk) => risk.type === "low").length;
             onRiskAnalysisComplete?.({
                 overallRisk: response.overall_risk,
-                summary: response.summary_en || response.summary_th || "Analysis completed",
+                summary: response.summary_th || response.summary_en || "วิเคราะห์เสร็จสิ้น",
                 highCount: nextHighCount,
                 mediumCount: nextMediumCount,
                 lowCount: nextLowCount,
@@ -802,14 +809,14 @@ function RiskPanel({
 
     const handleDownloadSummary = () => {
         if (!results) return;
-        const content = `NEOEM AI Risk Analysis Summary\n${"=".repeat(40)}\n\nGenerated: ${new Date().toLocaleDateString()}\nDocument: ${file?.name || "Contract"}\n\n${results.map((r, i) => (
-            `${i + 1}. [${r.type.toUpperCase()}] ${r.clause}\n   Issue: ${r.description}\n   Page: ${r.page}\n`
+        const content = `สรุปผลตรวจความเสี่ยงสัญญา NEOEM AI\n${"=".repeat(40)}\n\nวันที่: ${new Date().toLocaleDateString("th-TH")}\nเอกสาร: ${file?.name || "สัญญา"}\n\n${results.map((r, i) => (
+            `${i + 1}. [${r.type.toUpperCase()}] ${r.clause}\n   ประเด็น: ${r.description}\n   หน้า: ${r.page}\n`
         )).join("\n")}`;
         const blob = new Blob([content], { type: "text/plain" });
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
-        a.download = "Risk_Summary_Report.txt";
+        a.download = "รายงานสรุปความเสี่ยงสัญญา.txt";
         a.click();
         URL.revokeObjectURL(url);
     };
@@ -826,6 +833,13 @@ function RiskPanel({
     const mediumCount = results?.filter((r) => r.type === "medium").length || 0;
     const lowCount = results?.filter((r) => r.type === "low").length || 0;
     const highlightBoxes: RiskHighlight[] = results?.flatMap((r) => r.anchors) || [];
+    const overallRiskLabel: Record<string, string> = {
+        critical: "วิกฤต",
+        high: "สูง",
+        medium: "กลาง",
+        low: "ต่ำ",
+        safe: "ปลอดภัย",
+    };
 
     if (!results) {
         return (
@@ -838,7 +852,7 @@ function RiskPanel({
                         </span>
                     </div>
 
-                    <h2 className="text-xl font-bold text-foreground text-center">Upload Contract to Check Risks</h2>
+                    <h2 className="text-xl font-bold text-foreground text-center">อัปโหลดสัญญาเพื่อตรวจความเสี่ยง</h2>
 
                     <label className="cursor-pointer block">
                         <input type="file" accept=".pdf,.png,.jpg,.jpeg" onChange={handleUpload} className="hidden" />
@@ -852,7 +866,7 @@ function RiskPanel({
                             ) : (
                                 <div className="space-y-2">
                                     <Upload className="h-10 w-10 text-muted-foreground mx-auto" />
-                                    <p className="text-foreground font-medium">Click to upload PDF or drag & drop</p>
+                                    <p className="text-foreground font-medium">คลิกเพื่ออัปโหลด PDF หรือวางไฟล์</p>
                                     <p className="text-sm text-muted-foreground">Supports PDF, PNG, JPG</p>
                                 </div>
                             )}
@@ -860,7 +874,7 @@ function RiskPanel({
                     </label>
 
                     <Button onClick={handleAnalyze} disabled={!file || analyzing} className="w-full" size="lg">
-                        {analyzing ? <><Loader2 className="h-5 w-5 mr-2 animate-spin" /> Analyzing with OCR + Legal AI...</> : <><Search className="h-5 w-5 mr-2" /> Analyze Contract</>}
+                        {analyzing ? <><Loader2 className="h-5 w-5 mr-2 animate-spin" /> กำลังวิเคราะห์ด้วย OCR + Legal AI...</> : <><Search className="h-5 w-5 mr-2" /> วิเคราะห์สัญญา</>}
                     </Button>
                     {analysisError && <p className="text-xs text-center text-destructive">{analysisError}</p>}
                 </div>
@@ -897,7 +911,7 @@ function RiskPanel({
             {/* Right: Risk Analysis (40%) */}
             <div className="w-[40%] flex flex-col">
                 <div className="h-10 border-b flex items-center justify-between px-4 bg-card flex-shrink-0">
-                    <span className="text-sm font-medium text-foreground">Risk Results</span>
+                    <span className="text-sm font-medium text-foreground">ผลการตรวจความเสี่ยง</span>
                     <div className="flex items-center gap-1">
                         <Button variant="outline" size="sm" className="h-7 text-xs" onClick={handleDownloadSummary}>
                             <Download className="h-3.5 w-3.5 mr-1" /> Summary
@@ -924,22 +938,22 @@ function RiskPanel({
                             ? "border-warning/30 bg-warning/10 text-warning"
                             : "border-success/30 bg-success/10 text-success"
                         }`}>
-                        Overall risk: {overallRisk}
+                        ระดับความเสี่ยงรวม: {overallRiskLabel[overallRisk] || overallRisk}
                     </div>
 
-                    <div className="text-sm font-semibold text-foreground">Risk Summary</div>
+                    <div className="text-sm font-semibold text-foreground">สรุปความเสี่ยง</div>
                     <div className="flex gap-2">
                         <div className="flex-1 p-2.5 rounded-lg bg-destructive/10 text-center">
                             <div className="text-xl font-bold text-destructive">{highCount}</div>
-                            <div className="text-[10px] text-muted-foreground">High</div>
+                            <div className="text-[10px] text-muted-foreground">สูง</div>
                         </div>
                         <div className="flex-1 p-2.5 rounded-lg bg-warning/10 text-center">
                             <div className="text-xl font-bold text-warning">{mediumCount}</div>
-                            <div className="text-[10px] text-muted-foreground">Medium</div>
+                            <div className="text-[10px] text-muted-foreground">กลาง</div>
                         </div>
                         <div className="flex-1 p-2.5 rounded-lg bg-success/10 text-center">
                             <div className="text-xl font-bold text-success">{lowCount}</div>
-                            <div className="text-[10px] text-muted-foreground">Low</div>
+                            <div className="text-[10px] text-muted-foreground">ต่ำ</div>
                         </div>
                     </div>
 
@@ -965,7 +979,7 @@ function RiskPanel({
                                     </div>
                                     {selectedRisk?.id === risk.id && (
                                         <div className="mt-2 p-2.5 bg-card rounded-lg border">
-                                            <p className="text-xs font-medium text-primary mb-1">Issue Context</p>
+                                            <p className="text-xs font-medium text-primary mb-1">บริบทข้อเสี่ยง</p>
                                             <p className="text-xs text-muted-foreground">{risk.description}</p>
                                             <div className="flex gap-2 mt-2">
                                                 <Button
@@ -975,7 +989,7 @@ function RiskPanel({
                                                     onClick={() => handleExplain(risk)}
                                                     disabled={explainLoadingId === risk.id}
                                                 >
-                                                    {explainLoadingId === risk.id ? <><Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> Explaining...</> : "Explain"}
+                                                    {explainLoadingId === risk.id ? <><Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> กำลังอธิบาย...</> : "อธิบาย"}
                                                 </Button>
                                                 <Button variant="outline" size="sm" className="h-7 text-xs flex-1 text-primary border-primary/30">Ask Lawyer</Button>
                                             </div>
@@ -984,13 +998,13 @@ function RiskPanel({
                                             )}
                                             {explainByRiskId[risk.id] && (
                                                 <div className="mt-2 p-2.5 rounded-md border bg-secondary/20 space-y-2">
-                                                    <p className="text-xs font-semibold text-foreground">AI Explanation</p>
+                                                    <p className="text-xs font-semibold text-foreground">คำอธิบายจาก AI</p>
                                                     <p className="text-xs text-muted-foreground whitespace-pre-wrap">
-                                                        {explainByRiskId[risk.id].explanation_en || explainByRiskId[risk.id].explanation_th}
+                                                        {explainByRiskId[risk.id].explanation_th || explainByRiskId[risk.id].explanation_en}
                                                     </p>
                                                     {explainByRiskId[risk.id].business_impact.length > 0 && (
                                                         <div>
-                                                            <p className="text-xs font-medium text-foreground mb-1">Business Impact</p>
+                                                            <p className="text-xs font-medium text-foreground mb-1">ผลกระทบทางธุรกิจ</p>
                                                             <ul className="text-xs text-muted-foreground list-disc pl-4 space-y-0.5">
                                                                 {explainByRiskId[risk.id].business_impact.map((item, idx) => (
                                                                     <li key={`${risk.id}-impact-${idx}`}>{item}</li>
@@ -1000,7 +1014,7 @@ function RiskPanel({
                                                     )}
                                                     {explainByRiskId[risk.id].worst_case_scenario && (
                                                         <div>
-                                                            <p className="text-xs font-medium text-foreground mb-1">Worst-case Scenario</p>
+                                                            <p className="text-xs font-medium text-foreground mb-1">กรณีเลวร้ายที่สุด</p>
                                                             <p className="text-xs text-muted-foreground">{explainByRiskId[risk.id].worst_case_scenario}</p>
                                                         </div>
                                                     )}
