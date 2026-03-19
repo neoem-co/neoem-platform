@@ -31,7 +31,6 @@ _CONTENT_W = _A4_W - _MARGIN_LEFT - _MARGIN_RIGHT
 
 # Thai typesetting constants
 _LINE_HEIGHT = 7          # mm per line (comfortable 1.0 spacing for 14pt)
-_PARA_INDENT = 12.5       # mm first-line indent (≈1 tab, standard Thai ย่อหน้า)
 _SECTION_GAP = 4          # mm gap between articles
 _HEADING_GAP_BEFORE = 6   # mm gap before article heading
 _HEADING_GAP_AFTER = 1    # mm gap after article heading
@@ -198,12 +197,9 @@ def _write_indented_para(pdf: FPDF, text: str):
             align=_resolve_pdf_align(text), new_x="LMARGIN", new_y="NEXT",
         )
     else:
-        # New paragraph — apply ย่อหน้า first-line indent
-        x0 = pdf.get_x()
-        pdf.set_x(x0 + _PARA_INDENT)
-        first_line_w = _CONTENT_W - _PARA_INDENT
+        # Body paragraph — no first-line indentation
         pdf.multi_cell(
-            w=first_line_w, h=_LINE_HEIGHT, text=text,
+            w=_CONTENT_W, h=_LINE_HEIGHT, text=text,
             align=_resolve_pdf_align(text), new_x="LMARGIN", new_y="NEXT",
         )
 

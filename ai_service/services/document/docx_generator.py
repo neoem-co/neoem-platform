@@ -112,7 +112,7 @@ def generate_contract_docx(
         for para_text in _iter_paragraphs(article.body_th):
             body_para = doc.add_paragraph(para_text)
             body_para.alignment = _resolve_paragraph_alignment(para_text)
-            body_para.paragraph_format.first_line_indent = Cm(1.5)
+            body_para.paragraph_format.first_line_indent = Cm(0)
             body_para.paragraph_format.space_after = Pt(3)
             for run in body_para.runs:
                 _set_run_font(run, 14)
