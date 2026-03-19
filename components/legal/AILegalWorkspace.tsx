@@ -1,5 +1,6 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
 import {
     FileText, Search, FolderClock, X, Upload, Loader2,
@@ -20,7 +21,7 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { ESignaturePanel } from "@/components/legal/ESignaturePanel";
-import { RiskPdfViewer, type RiskHighlight } from "@/components/legal/RiskPdfViewer";
+import type { RiskHighlight } from "@/components/legal/RiskPdfViewer";
 import {
     analyzeContractRisk,
     downloadFile,
@@ -39,6 +40,18 @@ import {
     type RiskExplainResponse,
     type RiskExplainRequest,
 } from "@/lib/ai-api";
+
+const RiskPdfViewer = dynamic(
+    () => import("@/components/legal/RiskPdfViewer").then((mod) => mod.RiskPdfViewer),
+    {
+        ssr: false,
+        loading: () => (
+            <div className="h-full w-full flex items-center justify-center text-sm text-muted-foreground">
+                Loading document viewer...
+            </div>
+        ),
+    }
+);
 
 interface AILegalWorkspaceProps {
     open: boolean;
