@@ -4,12 +4,13 @@ import { getAbsoluteUrl, getLocalizedPath } from "@/lib/seo";
 
 const publicRouteSuffixes = ["", "factories", "pricing", "brand-launchpad"];
 const locales = ["en", "th"] as const;
+type SitemapEntry = MetadataRoute.Sitemap[number];
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const now = new Date();
 
-  const publicRoutes = locales.flatMap((locale) =>
-    publicRouteSuffixes.map((suffix) => {
+  const publicRoutes: SitemapEntry[] = locales.flatMap((locale) =>
+    publicRouteSuffixes.map((suffix): SitemapEntry => {
       const pathname = getLocalizedPath(locale, suffix);
       const localizedAlternates = Object.fromEntries(
         locales.map((alternateLocale) => [
@@ -17,11 +18,13 @@ export default function sitemap(): MetadataRoute.Sitemap {
           getAbsoluteUrl(getLocalizedPath(alternateLocale, suffix)),
         ])
       );
+      const changeFrequency: SitemapEntry["changeFrequency"] =
+        suffix === "" ? "weekly" : "daily";
 
       return {
         url: getAbsoluteUrl(pathname),
         lastModified: now,
-        changeFrequency: suffix === "" ? "weekly" : "daily",
+        changeFrequency,
         priority: suffix === "" ? 1 : 0.8,
         alternates: {
           languages: localizedAlternates,
@@ -32,8 +35,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
 
   const englishFactories = getFactories("en");
 
-  const factoryRoutes = locales.flatMap((locale) =>
-    englishFactories.map((factory) => {
+  const factoryRoutes: SitemapEntry[] = locales.flatMap((locale) =>
+    englishFactories.map((factory): SitemapEntry => {
       const pathname = getLocalizedPath(locale, `factory/${factory.slug}`);
       const localizedAlternates = Object.fromEntries(
         locales.map((alternateLocale) => [
