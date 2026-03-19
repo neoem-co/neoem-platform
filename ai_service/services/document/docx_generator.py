@@ -11,7 +11,7 @@ import re
 from typing import Optional
 
 from docx import Document as DocxDocument
-from docx.shared import Pt, Cm, Inches, RGBColor
+from docx.shared import Pt, Cm, RGBColor
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 
 from models.contract_draft import ContractArticle, PartyInfo
@@ -41,6 +41,14 @@ def _set_run_font(run, size: int, font_name: str = _THAI_DOCX_FONT):
     """Set font name and size on a python-docx Run."""
     run.font.name = font_name
     run.font.size = Pt(size)
+
+
+def _resolve_paragraph_alignment(text: str):
+    """Prefer Thai-justify, fallback when text has too few natural break points."""
+    thai_justify = getattr(WD_ALIGN_PARAGRAPH, "THAI_JUSTIFY", WD_ALIGN_PARAGRAPH.JUSTIFY)
+    if text.count(" ") >= 2:
+        return thai_justify
+    return WD_ALIGN_PARAGRAPH.LEFT
 
 
 def generate_contract_docx(
@@ -82,8 +90,8 @@ def generate_contract_docx(
     if preamble:
         for para_text in _iter_paragraphs(preamble):
             preamble_para = doc.add_paragraph(para_text)
-            preamble_para.alignment = WD_ALIGN_PARAGRAPH.LEFT
-            preamble_para.paragraph_format.first_line_indent = Cm(1.5)
+            preamble_para.alignment = _resolve_paragraph_alignment(para_text)
+            preamble_para.paragraph_format.first_line_indent = Cm(0)
             preamble_para.paragraph_format.space_after = Pt(3)
             for run in preamble_para.runs:
                 _set_run_font(run, 14)
@@ -103,7 +111,7 @@ def generate_contract_docx(
         # Article body
         for para_text in _iter_paragraphs(article.body_th):
             body_para = doc.add_paragraph(para_text)
-            body_para.alignment = WD_ALIGN_PARAGRAPH.LEFT
+            body_para.alignment = _resolve_paragraph_alignment(para_text)
             body_para.paragraph_format.first_line_indent = Cm(1.5)
             body_para.paragraph_format.space_after = Pt(3)
             for run in body_para.runs:

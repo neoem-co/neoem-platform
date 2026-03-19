@@ -93,7 +93,7 @@ def generate_contract_pdf(
     if preamble:
         pdf.set_font("Sarabun", "", 14)
         for para_text in _iter_paragraphs(preamble):
-            _write_indented_para(pdf, para_text)
+            _write_preamble_para(pdf, para_text)
         pdf.ln(_SECTION_GAP)
 
     # ── Articles ─────────────────────────────────────────────────────────
@@ -181,6 +181,11 @@ def _iter_paragraphs(text: str) -> list[str]:
     return paragraphs
 
 
+def _resolve_pdf_align(text: str) -> str:
+    """Prefer justified text, fallback to left for lines with too few spaces."""
+    return "J" if text.count(" ") >= 2 else "L"
+
+
 def _write_indented_para(pdf: FPDF, text: str):
     """Write a paragraph.
     Plain paragraphs get Thai-style ย่อหน้า first-line indent.
@@ -190,7 +195,7 @@ def _write_indented_para(pdf: FPDF, text: str):
         # Sub-item — no indent, full content width
         pdf.multi_cell(
             w=_CONTENT_W, h=_LINE_HEIGHT, text=text,
-            align="L", new_x="LMARGIN", new_y="NEXT",
+            align=_resolve_pdf_align(text), new_x="LMARGIN", new_y="NEXT",
         )
     else:
         # New paragraph — apply ย่อหน้า first-line indent
@@ -199,8 +204,16 @@ def _write_indented_para(pdf: FPDF, text: str):
         first_line_w = _CONTENT_W - _PARA_INDENT
         pdf.multi_cell(
             w=first_line_w, h=_LINE_HEIGHT, text=text,
-            align="L", new_x="LMARGIN", new_y="NEXT",
+            align=_resolve_pdf_align(text), new_x="LMARGIN", new_y="NEXT",
         )
+
+
+def _write_preamble_para(pdf: FPDF, text: str):
+    """Write preamble without first-line indent and with safe justification."""
+    pdf.multi_cell(
+        w=_CONTENT_W, h=_LINE_HEIGHT, text=text,
+        align=_resolve_pdf_align(text), new_x="LMARGIN", new_y="NEXT",
+    )
 
 
 def _draw_sig_pair(pdf: FPDF, col_w: float, left: PartyInfo, right: PartyInfo):
