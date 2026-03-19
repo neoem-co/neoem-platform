@@ -90,6 +90,12 @@ export function HomePage() {
               </CardContent>
             </Card>
           </div>
+
+          <div className="mt-6">
+            <Link href={`/${locale}/find-oem-factory`} className="inline-flex items-center text-sm font-medium text-primary hover:underline">
+              {t("seoContent.guideCta")} <ChevronRight className="h-4 w-4 ml-1" />
+            </Link>
+          </div>
         </div>
       </section>
 

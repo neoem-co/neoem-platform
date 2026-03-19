@@ -2,7 +2,7 @@ import type { MetadataRoute } from "next";
 import { getFactories } from "@/lib/factory-data";
 import { getAbsoluteUrl, getLocalizedPath } from "@/lib/seo";
 
-const publicRouteSuffixes = ["", "factories", "pricing", "brand-launchpad"];
+const publicRouteSuffixes = ["", "factories", "pricing", "brand-launchpad", "find-oem-factory"];
 const locales = ["en", "th"] as const;
 type SitemapEntry = MetadataRoute.Sitemap[number];
 
