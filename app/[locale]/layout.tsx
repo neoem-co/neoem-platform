@@ -6,6 +6,18 @@ import { NextIntlClientProvider } from "next-intl";
 import { getMessages, setRequestLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { routing } from "@/i18n/routing";
+import {
+  DEFAULT_OG_IMAGE,
+  SITE_DESCRIPTION,
+  SITE_NAME,
+  getLocaleCountryCode,
+  getSiteUrl,
+  isThaiLocale,
+} from "@/lib/seo";
+
+const GOOGLE_SITE_VERIFICATION =
+  process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION ||
+  "3lYgTA1pl12tFqpekQvgQZc9uXN2fi6cVz4-dGEYZPE";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -17,13 +29,75 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-export const metadata: Metadata = {
-  title: "neoem",
-  description: "neoem: Finding Trust OEM",
-  icons: {
-    icon: "/assets/logo.png",
-  },
-};
+export function generateStaticParams() {
+  return routing.locales.map((locale) => ({ locale }));
+}
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+  const description = isThaiLocale(locale)
+    ? "ค้นหาโรงงาน OEM ที่ผ่านการตรวจสอบในประเทศไทย เปรียบเทียบพาร์ทเนอร์การผลิต และเปิดตัวแบรนด์ของคุณด้วยเครื่องมือด้านกฎหมายและคอมพลายแอนซ์ในแพลตฟอร์มเดียว"
+    : SITE_DESCRIPTION;
+
+  return {
+    metadataBase: new URL(getSiteUrl()),
+    title: {
+      default: SITE_NAME,
+      template: `%s | ${SITE_NAME}`,
+    },
+    description,
+    applicationName: SITE_NAME,
+    keywords: [
+      "OEM Thailand",
+      "Thailand manufacturers",
+      "private label manufacturing",
+      "cosmetics OEM Thailand",
+      "supplement manufacturer Thailand",
+      "factory sourcing platform",
+    ],
+    category: "manufacturing",
+    alternates: {
+      languages: {
+        en: "/en",
+        th: "/th",
+        "x-default": "/th",
+      },
+    },
+    openGraph: {
+      siteName: SITE_NAME,
+      locale: getLocaleCountryCode(locale),
+      type: "website",
+      title: SITE_NAME,
+      description,
+      images: [
+        {
+          url: DEFAULT_OG_IMAGE,
+          width: 1200,
+          height: 630,
+          alt: `${SITE_NAME} platform preview`,
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: SITE_NAME,
+      description,
+      images: [DEFAULT_OG_IMAGE],
+    },
+    verification: {
+      google: GOOGLE_SITE_VERIFICATION,
+    },
+    icons: {
+      icon: "/assets/logo.png",
+      shortcut: "/assets/logo.png",
+      apple: "/assets/logo.png",
+    },
+  };
+}
 
 export default async function RootLayout({
   children,
@@ -38,14 +112,11 @@ export default async function RootLayout({
   setRequestLocale(locale);
 
   // Ensure that the incoming `locale` is valid
-  if (!routing.locales.includes(locale as any)) {
+  if (!routing.locales.includes(locale as (typeof routing.locales)[number])) {
     notFound();
   }
 
-  // Providing all messages to the client
-  // side is the easiest way to get started
   const messages = await getMessages();
-  console.log('Layout locale:', locale, 'messages loaded:', !!messages);
 
   return (
     <html lang={locale}>
