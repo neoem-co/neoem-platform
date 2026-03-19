@@ -14,6 +14,7 @@ import {
   getSiteUrl,
   isThaiLocale,
 } from "@/lib/seo";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 const GOOGLE_SITE_VERIFICATION =
   process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION ||
@@ -127,6 +128,7 @@ export default async function RootLayout({
           {children}
           <GlobalFloatingChat />
         </NextIntlClientProvider>
+        <SpeedInsights />
       </body>
     </html>
   );
