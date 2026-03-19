@@ -15,6 +15,10 @@ import {
   isThaiLocale,
 } from "@/lib/seo";
 
+const GOOGLE_SITE_VERIFICATION =
+  process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION ||
+  "3lYgTA1pl12tFqpekQvgQZc9uXN2fi6cVz4-dGEYZPE";
+
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -83,6 +87,9 @@ export async function generateMetadata({
       title: SITE_NAME,
       description,
       images: [DEFAULT_OG_IMAGE],
+    },
+    verification: {
+      google: GOOGLE_SITE_VERIFICATION,
     },
     icons: {
       icon: "/assets/logo.png",
