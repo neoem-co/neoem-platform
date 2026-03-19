@@ -18,6 +18,7 @@ from typing import Optional
 
 from config import settings
 from services.document.storage_paths import get_contracts_dir
+from services.drafting.retrieval import retrieve_drafting_context
 from services.supabase_client import (
     check_storage_bucket_access,
     ensure_storage_config,
@@ -178,6 +179,14 @@ async def generate_draft(request: GenerateDraftRequest) -> GenerateDraftResponse
         indent=2,
     )
 
+    retrieval_context = retrieve_drafting_context(
+        request.template_type.value,
+        request.deal_sheet,
+        request.parties,
+        request.product,
+    )
+    retrieved_sections = retrieval_context.as_prompt_sections()
+
     # ── Step 2: Article generation (Template-First if template exists) ───
     template = None
     use_template = False
@@ -193,7 +202,7 @@ async def generate_draft(request: GenerateDraftRequest) -> GenerateDraftResponse
             )
             article_skeleton = build_article_skeleton(template)
             fairness_checklist = build_fairness_checklist(template)
-            legal_refs = load_legal_refs(request.template_type.value)
+            legacy_legal_refs = load_legal_refs(request.template_type.value)
 
             # Safe string substitution (avoids crashes from {/} in legal_refs)
             user_prompt = TEMPLATE_ARTICLE_GENERATION_USER
@@ -203,10 +212,13 @@ async def generate_draft(request: GenerateDraftRequest) -> GenerateDraftResponse
                 "{article_skeleton}": article_skeleton or "",
                 "{fairness_checklist}": fairness_checklist or "",
                 "{preamble}": preamble_filled or "",
+                "{retrieved_legal_authorities}": retrieved_sections["legal_authorities"],
+                "{retrieved_clause_patterns}": retrieved_sections["clause_patterns"],
+                "{retrieved_approved_examples}": retrieved_sections["approved_exemplars"],
+                "{legacy_legal_refs}": legacy_legal_refs or "",
                 "{deal_sheet}": deal_sheet_json,
                 "{parties}": parties_json,
                 "{product}": product_json,
-                "{legal_refs}": legal_refs or "",
             }
             for key, val in subs.items():
                 user_prompt = user_prompt.replace(key, str(val))
@@ -228,6 +240,9 @@ async def generate_draft(request: GenerateDraftRequest) -> GenerateDraftResponse
         user_prompt = ARTICLE_GENERATION_USER
         subs = {
             "{template_type}": request.template_type.value,
+            "{retrieved_legal_authorities}": retrieved_sections["legal_authorities"],
+            "{retrieved_clause_patterns}": retrieved_sections["clause_patterns"],
+            "{retrieved_approved_examples}": retrieved_sections["approved_exemplars"],
             "{deal_sheet}": deal_sheet_json,
             "{parties}": parties_json,
             "{product}": product_json,
@@ -289,6 +304,7 @@ async def generate_draft(request: GenerateDraftRequest) -> GenerateDraftResponse
         effective_date=data.get("effective_date"),
         preamble_th=final_preamble_th,
         preamble_en=data.get("preamble_en", ""),
+        retrieval_debug=retrieval_context.as_debug_payload(),
     )
 
 
@@ -366,6 +382,7 @@ async def finalize_contract(request: FinalizeRequest) -> FinalizeResponse:
                 preamble=request.preamble_th,
                 articles=request.articles,
                 parties=request.parties,
+                effective_date=request.effective_date,
             )
             logger.info("PDF generated via fpdf2 in %.2fs", time.perf_counter() - pdf_started_at)
 
@@ -397,6 +414,7 @@ async def finalize_contract(request: FinalizeRequest) -> FinalizeResponse:
                 preamble=request.preamble_th,
                 articles=request.articles,
                 parties=request.parties,
+                effective_date=request.effective_date,
             )
             logger.info("DOCX generation completed in %.2fs", time.perf_counter() - docx_started_at)
 

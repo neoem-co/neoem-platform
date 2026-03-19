@@ -161,6 +161,7 @@ class GenerateDraftResponse(BaseModel):
     effective_date: Optional[str] = None
     preamble_th: str = ""
     preamble_en: str = ""
+    retrieval_debug: dict[str, list[dict[str, str]]] = Field(default_factory=dict)
 
 
 # — Step 4: Finalize & download ——————————————————————————————————————————————
