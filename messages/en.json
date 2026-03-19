@@ -36,17 +36,38 @@
     },
     "HomePage": {
         "hero": {
-            "title": "The Operating System for",
+            "title": "NEOEM helps brands",
             "sequence": {
-                "manufacturing": "Manufacturing",
-                "smeSuccess": "SME Success",
-                "trustedDeals": "Trusted Deals",
-                "futureGrowth": "Future Growth"
+                "manufacturing": "Find OEM Factories in Thailand",
+                "smeSuccess": "Launch Private Label Brands",
+                "trustedDeals": "Compare Verified Manufacturers",
+                "futureGrowth": "Scale Trusted Production"
             },
-            "desc": "Connect with verified OEM factories. From idea to production in one intelligent platform.",
-            "placeholder": "Tell us your idea... (e.g., Whitening Cream, MOQ 500 pcs, Budget 50k)",
+            "desc": "Search verified OEM factories in Thailand, compare specialties and MOQ, and move from product idea to production with legal and compliance support.",
+            "placeholder": "Search OEM factories... (e.g., skincare OEM, MOQ 500, Bangkok)",
             "search": "Search",
             "popular": "Popular"
+        },
+        "seoContent": {
+            "title": "Find OEM factories in Thailand with NEOEM",
+            "description": "NEOEM is built for founders and brands that need a faster way to find OEM factories, compare manufacturers, and start production with more confidence.",
+            "highlights": {
+                "verifiedTitle": "Verified OEM factories",
+                "verifiedDesc": "Browse factory profiles with specialties, certifications, and trust signals before you request a quote.",
+                "matchTitle": "Search by product and MOQ",
+                "matchDesc": "Find skincare, cosmetics, supplements, packaging, and other OEM partners that match your production needs.",
+                "launchTitle": "Launch with legal support",
+                "launchDesc": "Use built-in contract, compliance, and launch tools while sourcing the right manufacturer."
+            },
+            "faqTitle": "Questions brands ask before choosing an OEM factory",
+            "faq": {
+                "q1": "How does NEOEM help me find an OEM factory?",
+                "a1": "NEOEM helps you search verified factory profiles, compare specialties, MOQ, certifications, and shortlist manufacturers that fit your product and budget.",
+                "q2": "Can I search OEM factories in Thailand by product category?",
+                "a2": "Yes. You can explore factories for cosmetics, skincare, supplements, packaging, clothing, food, and other manufacturing categories.",
+                "q3": "Why use NEOEM instead of searching factories manually?",
+                "a3": "NEOEM combines factory discovery, trust verification, quotation workflows, and legal support in one place, so brands can move faster and reduce sourcing risk."
+            }
         },
         "verifiedPicks": "Verified Top Picks",
         "verifiedPicksDesc": "Handpicked factories with proven track records",

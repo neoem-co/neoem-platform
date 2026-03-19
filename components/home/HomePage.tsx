@@ -18,6 +18,20 @@ export function HomePage() {
   const t = useTranslations("HomePage");
   const locale = useLocale();
   const topFactories = getFactories(locale).slice(0, 4);
+  const seoFaqs = [
+    {
+      question: t("seoContent.faq.q1"),
+      answer: t("seoContent.faq.a1"),
+    },
+    {
+      question: t("seoContent.faq.q2"),
+      answer: t("seoContent.faq.a2"),
+    },
+    {
+      question: t("seoContent.faq.q3"),
+      answer: t("seoContent.faq.a3"),
+    },
+  ];
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -32,6 +46,53 @@ export function HomePage() {
       </section>
 
       <FeatureShowcase />
+
+      <section className="py-14 bg-card/40 border-y">
+        <div className="container">
+          <div className="max-w-3xl">
+            <h2 className="text-2xl md:text-3xl font-bold text-foreground">
+              {t("seoContent.title")}
+            </h2>
+            <p className="mt-3 text-muted-foreground text-base md:text-lg">
+              {t("seoContent.description")}
+            </p>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-3 mt-8">
+            <Card className="bg-background/80">
+              <CardContent className="p-5">
+                <h3 className="font-semibold text-foreground">
+                  {t("seoContent.highlights.verifiedTitle")}
+                </h3>
+                <p className="text-sm text-muted-foreground mt-2">
+                  {t("seoContent.highlights.verifiedDesc")}
+                </p>
+              </CardContent>
+            </Card>
+            <Card className="bg-background/80">
+              <CardContent className="p-5">
+                <h3 className="font-semibold text-foreground">
+                  {t("seoContent.highlights.matchTitle")}
+                </h3>
+                <p className="text-sm text-muted-foreground mt-2">
+                  {t("seoContent.highlights.matchDesc")}
+                </p>
+              </CardContent>
+            </Card>
+            <Card className="bg-background/80">
+              <CardContent className="p-5">
+                <h3 className="font-semibold text-foreground">
+                  {t("seoContent.highlights.launchTitle")}
+                </h3>
+                <p className="text-sm text-muted-foreground mt-2">
+                  {t("seoContent.highlights.launchDesc")}
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </section>
+
       <TrustBanners />
 
       <section className="py-16 bg-secondary/20">
@@ -134,6 +195,27 @@ export function HomePage() {
                 {t("ctaList")}
               </Link>
             </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="py-16 bg-secondary/20">
+        <div className="container">
+          <div className="max-w-3xl">
+            <h2 className="text-2xl md:text-3xl font-bold text-foreground">
+              {t("seoContent.faqTitle")}
+            </h2>
+          </div>
+
+          <div className="grid gap-4 mt-8">
+            {seoFaqs.map((faq) => (
+              <Card key={faq.question} className="bg-background/90">
+                <CardContent className="p-6">
+                  <h3 className="font-semibold text-foreground">{faq.question}</h3>
+                  <p className="text-muted-foreground mt-2">{faq.answer}</p>
+                </CardContent>
+              </Card>
+            ))}
           </div>
         </div>
       </section>
