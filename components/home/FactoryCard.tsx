@@ -35,6 +35,7 @@ interface FactoryCardProps {
         priceLevel: number;
         moq: number;
         specialties: string[];
+        certifications?: string[];
     };
     variant?: "horizontal" | "vertical";
     isRecommended?: boolean;
