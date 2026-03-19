@@ -59,6 +59,13 @@
                 "launchTitle": "Launch with legal support",
                 "launchDesc": "Use built-in contract, compliance, and launch tools while sourcing the right manufacturer."
             },
+            "editorialQuote": "The fastest way to reduce sourcing risk is to compare real factory fit before you start talking price.",
+            "takeawaysTitle": "Key Takeaways",
+            "takeaways": {
+                "one": "Start with verified OEM factories, not random directories.",
+                "two": "Compare MOQ, specialties, and trust signals before outreach.",
+                "three": "Use category-specific pages to narrow your shortlist faster."
+            },
             "guideCta": "Read the OEM factory guide",
             "faqTitle": "Questions brands ask before choosing an OEM factory",
             "faq": {

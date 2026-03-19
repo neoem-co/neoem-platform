@@ -124,6 +124,42 @@ export function HomePage() {
                   ))}
                 </div>
 
+                <div className="mt-8 grid gap-4 lg:grid-cols-[minmax(0,1.1fr)_320px]">
+                  <div className="rounded-[24px] border bg-gradient-to-br from-primary/10 via-background to-background px-6 py-6 md:px-7">
+                    <div className="text-[11px] font-semibold uppercase tracking-[0.24em] text-primary/80">
+                      {isThai ? "Editor’s Note" : "Editor’s Note"}
+                    </div>
+                    <blockquote className="mt-4 border-l-4 border-primary pl-5 text-lg md:text-xl font-medium leading-8 text-foreground">
+                      “{t("seoContent.editorialQuote")}”
+                    </blockquote>
+                    <p className="mt-4 text-sm leading-6 text-muted-foreground">
+                      {isThai
+                        ? "บทความส่วนนี้ถูกจัดวางเพื่อช่วยให้คุณเริ่มจากคำถามพื้นฐานที่ถูกต้อง และไปต่อยังหน้าค้นหาโรงงานที่ตรงหมวดได้เร็วขึ้น"
+                        : "This section is structured to help you start with the right questions and move faster into the most relevant factory category pages."}
+                    </p>
+                  </div>
+
+                  <Card className="rounded-[24px] border bg-background/90">
+                    <CardContent className="p-6">
+                      <div className="text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground">
+                        {t("seoContent.takeawaysTitle")}
+                      </div>
+                      <div className="mt-4 space-y-3">
+                        {[
+                          t("seoContent.takeaways.one"),
+                          t("seoContent.takeaways.two"),
+                          t("seoContent.takeaways.three"),
+                        ].map((item) => (
+                          <div key={item} className="flex items-start gap-3">
+                            <CheckCircle2 className="mt-0.5 h-4 w-4 flex-shrink-0 text-primary" />
+                            <p className="text-sm leading-6 text-muted-foreground">{item}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+
                 <div className="mt-8 flex flex-wrap items-center gap-3">
                   <Link href={`/${locale}/find-oem-factory`}>
                     <Button className="gap-2">
