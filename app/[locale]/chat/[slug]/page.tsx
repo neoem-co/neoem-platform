@@ -299,15 +299,10 @@ const DealRoom = () => {
 
                 <Card className="bg-secondary/30 border-dashed">
                     <CardContent className="py-3 space-y-3">
+                        <p className="text-xs text-muted-foreground">
+                            💡 <strong>Tip:</strong> Both you and the factory see the same milestone status in real-time — full transparency.
+                        </p>
                         <Button
-                            onClick={resetDealProgress}
-                            className="w-full justify-start text-xs h-8"
-                        >
-                            <p className="text-xs text-muted-foreground">
-                                💡 <strong>Tip:</strong> Both you and the factory see the same milestone status in real-time — full transparency.
-                            </p>
-                        </Button>
-                        {/* <Button
                             type="button"
                             variant="outline"
                             size="sm"
@@ -315,7 +310,7 @@ const DealRoom = () => {
                             onClick={resetDealProgress}
                         >
                             Reset Demo to Step 3
-                        </Button> */}
+                        </Button>
                     </CardContent>
                 </Card>
             </div>
