@@ -76,6 +76,58 @@ interface ContractData {
     additionalClauses: string;
 }
 
+interface ProgressStage {
+    title: string;
+    hint: string;
+}
+
+function useProgressStage(active: boolean, stages: ProgressStage[], intervalMs = 1700) {
+    const [index, setIndex] = useState(0);
+
+    useEffect(() => {
+        if (!active) {
+            setIndex(0);
+            return;
+        }
+
+        setIndex(0);
+        if (stages.length <= 1) return;
+
+        const timer = window.setInterval(() => {
+            setIndex((prev) => Math.min(prev + 1, stages.length - 1));
+        }, intervalMs);
+
+        return () => window.clearInterval(timer);
+    }, [active, intervalMs, stages.length]);
+
+    return stages[Math.min(index, stages.length - 1)];
+}
+
+const DRAFT_GENERATE_STAGES: ProgressStage[] = [
+    { title: "กำลังวิเคราะห์บริบทดีล", hint: "ดึงประเด็นสำคัญจากแชทและข้อมูลข้อตกลง" },
+    { title: "กำลังร่างข้อสัญญา", hint: "สร้างข้อสัญญาตามเทมเพลตให้ครบถ้วนเป็นระบบ" },
+    { title: "กำลังปรับถ้อยคำทางกฎหมาย", hint: "ปรับภาษาให้เป็นทางการและอ่านเข้าใจง่าย" },
+];
+
+const DRAFT_FINALIZE_STAGES: ProgressStage[] = [
+    { title: "กำลังเตรียมเอกสารฉบับสุดท้าย", hint: "รวมเนื้อหาฉบับร่างเป็นรูปแบบพร้อมใช้งาน" },
+    { title: "กำลังสร้างไฟล์ PDF และ DOCX", hint: "เรนเดอร์เอกสารเพื่อดาวน์โหลดและใช้งานจริง" },
+    { title: "กำลังบันทึกประวัติเอกสาร", hint: "จัดเก็บไฟล์และข้อมูลอ้างอิงใน Legal Hub" },
+];
+
+const RISK_ANALYZE_STAGES: ProgressStage[] = [
+    { title: "กำลังรับไฟล์และอ่านเอกสาร", hint: "ดึงข้อความสัญญาเพื่อเตรียมวิเคราะห์" },
+    { title: "กำลังจับคู่ข้อสัญญาและตำแหน่งไฮไลต์", hint: "ระบุจุดอ้างอิงและตำแหน่งในเอกสาร" },
+    { title: "กำลังประเมินความเสี่ยงทางกฎหมาย", hint: "คำนวณระดับความเสี่ยงและสร้างสรุปภาษาไทย" },
+    { title: "กำลังจัดทำผลลัพธ์", hint: "เตรียมการ์ดความเสี่ยง สรุปผล และข้อมูลแสดงผล" },
+];
+
+const EXPLAIN_RISK_STAGES: ProgressStage[] = [
+    { title: "กำลังอ่านบริบทข้อเสี่ยง", hint: "วิเคราะห์รายละเอียดและหมวดหมู่ของประเด็น" },
+    { title: "กำลังสรุปผลกระทบทางธุรกิจ", hint: "แปลผลเชิงธุรกิจและความเสี่ยงที่อาจเกิดขึ้น" },
+    { title: "กำลังสร้างคำอธิบายภาษาไทย", hint: "จัดรูปคำอธิบายให้ชัดเจนและเข้าใจง่าย" },
+];
+
 const templates = [
     { id: "sales", label: "สัญญาซื้อขาย / Sales Contract", icon: "📝" },
     { id: "hire-of-work", label: "สัญญาจ้างทำของ / Hire of Work", icon: "🔧" },
@@ -286,6 +338,8 @@ function DraftPanel({
     const [draftResult, setDraftResult] = useState<GenerateDraftResponse | null>(null);
     const [downloadUrls, setDownloadUrls] = useState<{ pdf_url: string | null; docx_url: string | null } | null>(null);
     const [recommendedTemplate, setRecommendedTemplate] = useState<string | null>(null);
+    const generateStage = useProgressStage(loading, DRAFT_GENERATE_STAGES);
+    const finalizeStage = useProgressStage(finalizing, DRAFT_FINALIZE_STAGES);
     const [formData, setFormData] = useState<ContractData>({
         template: "",
         buyerName: "Your Company",
@@ -447,6 +501,20 @@ function DraftPanel({
                     </div>
                 ))}
             </div>
+
+            {(loading || finalizing) && (
+                <div className="flex items-start gap-3 px-4 py-3 rounded-lg border bg-secondary/20">
+                    <Loader2 className="h-4 w-4 mt-0.5 animate-spin text-primary flex-shrink-0" />
+                    <div>
+                        <p className="text-sm font-medium text-foreground">
+                            {loading ? generateStage.title : finalizeStage.title}
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                            {loading ? generateStage.hint : finalizeStage.hint}
+                        </p>
+                    </div>
+                </div>
+            )}
 
             {step === 1 && (
                 <div className="space-y-4">
@@ -705,6 +773,8 @@ function RiskPanel({
     const [explainLoadingId, setExplainLoadingId] = useState<string | null>(null);
     const [explainErrorByRiskId, setExplainErrorByRiskId] = useState<Record<string, string>>({});
     const [explainByRiskId, setExplainByRiskId] = useState<Record<string, RiskExplainResponse>>({});
+    const analyzeStage = useProgressStage(analyzing, RISK_ANALYZE_STAGES, 1500);
+    const explainStage = useProgressStage(Boolean(explainLoadingId), EXPLAIN_RISK_STAGES, 1400);
     const lawyerCostSaved = 15000;
 
     useEffect(() => {
@@ -840,6 +910,29 @@ function RiskPanel({
         low: "ต่ำ",
         safe: "ปลอดภัย",
     };
+    const overallRiskPercentMap: Record<string, number> = {
+        critical: 95,
+        high: 80,
+        medium: 60,
+        low: 35,
+        safe: 15,
+    };
+    const overallRiskHintMap: Record<string, string> = {
+        critical: "พบเงื่อนไขเสี่ยงสูงมาก ควรให้ผู้เชี่ยวชาญตรวจทานก่อนดำเนินการ",
+        high: "มีประเด็นสำคัญที่ควรเจรจาแก้ไขก่อนลงนาม",
+        medium: "มีจุดที่ควรทบทวนเพิ่มเติม แต่ยังพอเจรจาได้",
+        low: "ความเสี่ยงค่อนข้างต่ำ เงื่อนไขส่วนใหญ่สมดุล",
+        safe: "เงื่อนไขโดยรวมปลอดภัยและอยู่ในเกณฑ์ที่เหมาะสม",
+    };
+    const overallRiskToneClass: Record<string, string> = {
+        critical: "text-destructive",
+        high: "text-destructive",
+        medium: "text-warning",
+        low: "text-success",
+        safe: "text-success",
+    };
+    const overallRiskPercent = overallRiskPercentMap[overallRisk] ?? 60;
+    const gaugeAngle = Math.round((overallRiskPercent / 100) * 180) - 90;
 
     if (!results) {
         return (
@@ -876,6 +969,15 @@ function RiskPanel({
                     <Button onClick={handleAnalyze} disabled={!file || analyzing} className="w-full" size="lg">
                         {analyzing ? <><Loader2 className="h-5 w-5 mr-2 animate-spin" /> กำลังวิเคราะห์ด้วย OCR + Legal AI...</> : <><Search className="h-5 w-5 mr-2" /> วิเคราะห์สัญญา</>}
                     </Button>
+                    {analyzing && (
+                        <div className="flex items-start gap-3 px-4 py-3 rounded-lg border bg-secondary/20">
+                            <Loader2 className="h-4 w-4 mt-0.5 animate-spin text-primary flex-shrink-0" />
+                            <div>
+                                <p className="text-sm font-medium text-foreground">{analyzeStage.title}</p>
+                                <p className="text-xs text-muted-foreground mt-0.5">{analyzeStage.hint}</p>
+                            </div>
+                        </div>
+                    )}
                     {analysisError && <p className="text-xs text-center text-destructive">{analysisError}</p>}
                 </div>
             </div>
@@ -932,13 +1034,43 @@ function RiskPanel({
                         <p className="text-xs text-muted-foreground">{analysisSummary}</p>
                     )}
 
-                    <div className={`rounded-lg border px-3 py-2 text-xs ${overallRisk === "critical" || overallRisk === "high"
-                        ? "border-destructive/30 bg-destructive/10 text-destructive"
-                        : overallRisk === "medium"
-                            ? "border-warning/30 bg-warning/10 text-warning"
-                            : "border-success/30 bg-success/10 text-success"
-                        }`}>
-                        ระดับความเสี่ยงรวม: {overallRiskLabel[overallRisk] || overallRisk}
+                    <div className="rounded-xl border bg-card p-4 space-y-3">
+                        <div className="flex items-center justify-between">
+                            <p className="text-sm font-semibold text-foreground">ระดับความเสี่ยงรวมของสัญญา</p>
+                            <span className={`text-xs font-semibold px-2 py-1 rounded-full ${overallRisk === "critical" || overallRisk === "high"
+                                ? "bg-destructive/10 text-destructive"
+                                : overallRisk === "medium"
+                                    ? "bg-warning/10 text-warning"
+                                    : "bg-success/10 text-success"
+                                }`}>
+                                {overallRiskLabel[overallRisk] || overallRisk}
+                            </span>
+                        </div>
+
+                        <div className="relative mx-auto w-52 h-28 overflow-hidden">
+                            <div
+                                className="absolute inset-0 rounded-t-full border border-border"
+                                style={{
+                                    background: "conic-gradient(from 180deg, rgb(34 197 94) 0deg, rgb(245 158 11) 90deg, rgb(239 68 68) 180deg)",
+                                }}
+                            />
+                            <div className="absolute left-3 right-3 top-3 bottom-0 rounded-t-full bg-card" />
+
+                            <div
+                                className="absolute left-1/2 bottom-0 h-24 w-[2px] origin-bottom rounded-full bg-foreground/80"
+                                style={{ transform: `translateX(-50%) rotate(${gaugeAngle}deg)` }}
+                            />
+
+                            <div className="absolute left-1/2 bottom-2 -translate-x-1/2 text-center">
+                                <p className={`text-2xl font-bold ${overallRiskToneClass[overallRisk] || "text-foreground"}`}>
+                                    {overallRiskPercent}%
+                                </p>
+                            </div>
+                        </div>
+
+                        <p className="text-xs text-muted-foreground text-center">
+                            {overallRiskHintMap[overallRisk] || "กำลังประเมินความเสี่ยงโดยรวมของสัญญา"}
+                        </p>
                     </div>
 
                     <div className="text-sm font-semibold text-foreground">สรุปความเสี่ยง</div>
@@ -993,6 +1125,15 @@ function RiskPanel({
                                                 </Button>
                                                 <Button variant="outline" size="sm" className="h-7 text-xs flex-1 text-primary border-primary/30">Ask Lawyer</Button>
                                             </div>
+                                            {explainLoadingId === risk.id && (
+                                                <div className="flex items-start gap-2 mt-2 px-2.5 py-2 rounded-md border bg-secondary/20">
+                                                    <Loader2 className="h-3.5 w-3.5 mt-0.5 animate-spin text-primary flex-shrink-0" />
+                                                    <div>
+                                                        <p className="text-xs font-medium text-foreground">{explainStage.title}</p>
+                                                        <p className="text-[11px] text-muted-foreground mt-0.5">{explainStage.hint}</p>
+                                                    </div>
+                                                </div>
+                                            )}
                                             {explainErrorByRiskId[risk.id] && (
                                                 <p className="text-xs text-destructive mt-2">{explainErrorByRiskId[risk.id]}</p>
                                             )}
