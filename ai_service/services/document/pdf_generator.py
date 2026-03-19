@@ -1,8 +1,8 @@
 """
 PDF generator for finalised contracts.
 
-Uses fpdf2 with HarfBuzz text shaping and token-aware wrapping so Thai body
-paragraphs stay compact without forcing awkward justification gaps.
+Uses fpdf2 with HarfBuzz text shaping plus Thai-aware token wrapping so body
+paragraphs stay within the printable area and justify cleanly for demo output.
 """
 
 from __future__ import annotations
@@ -10,6 +10,7 @@ from __future__ import annotations
 import logging
 import os
 import re
+import unicodedata
 from typing import Optional
 
 from fpdf import FPDF
@@ -32,6 +33,27 @@ _NUMBERED_PREFIX = re.compile(
 _STRUCTURED_PREFIX = re.compile(
     r"^(?P<prefix>(?:\d+(?:\.\d+)*[\.)]?|\([ก-๙a-zA-Z0-9]+\)|[ก-๙][\.)]))\s*"
 )
+_NON_SPACE_CHUNK_RE = re.compile(
+    r"[A-Za-z0-9]+(?:[./:_-][A-Za-z0-9]+)*|[\u0E00-\u0E7F]+|[^\s]"
+)
+_THAI_COMBINING_MARKS = {
+    "\u0E31",
+    "\u0E34",
+    "\u0E35",
+    "\u0E36",
+    "\u0E37",
+    "\u0E38",
+    "\u0E39",
+    "\u0E3A",
+    "\u0E47",
+    "\u0E48",
+    "\u0E49",
+    "\u0E4A",
+    "\u0E4B",
+    "\u0E4C",
+    "\u0E4D",
+    "\u0E4E",
+}
 
 try:
     from pythainlp.tokenize import word_tokenize as _thai_word_tokenize
@@ -80,6 +102,7 @@ def generate_contract_pdf(
     pdf.set_margins(profile.margin_left_mm, profile.margin_top_mm, profile.margin_right_mm)
     pdf.set_auto_page_break(True, margin=profile.margin_bottom_mm)
     pdf.add_page()
+    pdf.c_margin = 0
 
     pdf.set_font(profile.pdf_font_family, "B", profile.title_font_size_pt)
     pdf.multi_cell(
@@ -195,17 +218,109 @@ def _iter_paragraphs(text: str) -> list[str]:
     return paragraphs
 
 
+def _split_non_space_chunk(chunk: str) -> list[str]:
+    if not chunk:
+        return []
+
+    if _thai_word_tokenize and len(_THAI_CHAR_RE.findall(chunk)) >= 4:
+        try:
+            tokens = [token for token in _thai_word_tokenize(chunk, keep_whitespace=False) if token]
+            if tokens:
+                split_tokens: list[str] = []
+                for token in tokens:
+                    split_tokens.extend(_NON_SPACE_CHUNK_RE.findall(token) or [token])
+                if split_tokens:
+                    return split_tokens
+        except Exception:
+            logger.debug("Thai tokenizer fallback triggered for chunk of length %d", len(chunk))
+
+    return _NON_SPACE_CHUNK_RE.findall(chunk) or [chunk]
+
+
 def _tokenize_for_wrap(text: str) -> list[str]:
-    normalized = text.replace("\t", "    ")
-    if _thai_word_tokenize and len(_THAI_CHAR_RE.findall(normalized)) >= 6:
-        tokens = [token for token in _thai_word_tokenize(normalized, keep_whitespace=True) if token]
-        if tokens:
-            return tokens
-    return [part for part in re.split(r"(\s+)", normalized) if part]
+    normalized = text.replace("\t", "    ").strip()
+    if not normalized:
+        return []
+
+    tokens: list[str] = []
+    for segment in re.findall(r"\s+|\S+", normalized):
+        if segment.isspace():
+            if tokens and not tokens[-1].isspace():
+                tokens.append(" ")
+            continue
+        tokens.extend(_split_non_space_chunk(segment))
+    return tokens
 
 
 def _measure_token(pdf: FPDF, token: str) -> float:
     return pdf.get_string_width(token)
+
+
+def _is_combining_mark(char: str) -> bool:
+    return unicodedata.combining(char) != 0 or char in _THAI_COMBINING_MARKS
+
+
+def _iter_text_clusters(text: str) -> list[str]:
+    clusters: list[str] = []
+    current = ""
+    for char in text:
+        if not current:
+            current = char
+            continue
+        if _is_combining_mark(char):
+            current += char
+            continue
+        clusters.append(current)
+        current = char
+    if current:
+        clusters.append(current)
+    return clusters or [text]
+
+
+def _split_token_to_fit(pdf: FPDF, token: str, max_width: float) -> list[str]:
+    if not token or token.isspace() or _measure_token(pdf, token) <= max_width:
+        return [token]
+
+    pieces: list[str] = []
+    current = ""
+    for cluster in _iter_text_clusters(token):
+        candidate = current + cluster
+        if current and _measure_token(pdf, candidate) > max_width:
+            pieces.append(current)
+            current = cluster
+            continue
+        current = candidate
+
+    if current:
+        pieces.append(current)
+
+    return pieces or [token]
+
+
+def _prepare_tokens_for_wrap(
+    pdf: FPDF,
+    tokens: list[str],
+    first_width: float,
+    other_width: float,
+) -> list[str]:
+    safe_width = max(min(first_width, other_width), 1.0)
+    prepared: list[str] = []
+    for token in tokens:
+        if not token:
+            continue
+        if token.isspace():
+            if prepared and not prepared[-1].isspace():
+                prepared.append(" ")
+            continue
+        prepared.extend(_split_token_to_fit(pdf, token, safe_width))
+    return prepared
+
+
+def _trim_line_tokens(tokens: list[str]) -> list[str]:
+    trimmed = list(tokens)
+    while trimmed and trimmed[-1].isspace():
+        trimmed.pop()
+    return trimmed
 
 
 def _wrap_tokens(
@@ -214,29 +329,26 @@ def _wrap_tokens(
     first_width: float,
     other_width: float,
 ) -> list[list[str]]:
+    prepared = _prepare_tokens_for_wrap(pdf, tokens, first_width, other_width)
     lines: list[list[str]] = []
     current: list[str] = []
     current_width = 0.0
     width_limit = first_width
-    line_idx = 0
 
-    for token in tokens:
+    for token in prepared:
         if not token:
             continue
 
-        is_space = token.isspace()
         token_width = _measure_token(pdf, token)
+        is_space = token.isspace()
 
         if not current and is_space:
             continue
 
         if current and current_width + token_width > width_limit:
-            while current and current[-1].isspace():
-                current_width -= _measure_token(pdf, current.pop())
-
-            if current:
-                lines.append(current)
-                line_idx += 1
+            trimmed = _trim_line_tokens(current)
+            if trimmed:
+                lines.append(trimmed)
                 width_limit = other_width
             current = []
             current_width = 0.0
@@ -247,11 +359,9 @@ def _wrap_tokens(
         current.append(token)
         current_width += token_width
 
-    while current and current[-1].isspace():
-        current.pop()
-
-    if current:
-        lines.append(current)
+    trimmed = _trim_line_tokens(current)
+    if trimmed:
+        lines.append(trimmed)
 
     return lines
 
@@ -283,10 +393,10 @@ def _can_safely_justify_line(
 ) -> bool:
     parts, gap_widths, line_width = _line_parts(pdf, tokens)
     gap_count = len(gap_widths)
-    if gap_count < 2 or line_width <= 0:
+    if len(parts) < 2 or gap_count < 1 or line_width <= 0:
         return False
 
-    fill_ratio = line_width / available_width
+    fill_ratio = line_width / max(available_width, 1.0)
     if fill_ratio < profile.justify_min_fill_ratio:
         return False
 
@@ -323,20 +433,25 @@ def _write_justified_line(
     line_height: float,
 ) -> None:
     parts, gap_widths, line_width = _line_parts(pdf, tokens)
-    if len(parts) < 2:
+    if len(parts) < 2 or not gap_widths:
         _write_left_aligned_line(pdf, tokens, x, width, line_height)
         return
 
-    extra_per_gap = (width - line_width) / len(gap_widths)
+    extra_per_gap = max((width - line_width) / len(gap_widths), 0.0)
     y = pdf.get_y()
+    original_margin = pdf.c_margin
+    pdf.c_margin = 0
     pdf.set_xy(x, y)
 
+    right_edge = x + width
     for idx, part in enumerate(parts):
-        part_width = _measure_token(pdf, part)
+        part_width = max(_measure_token(pdf, part), 0.01)
         pdf.cell(w=part_width, h=line_height, text=part)
         if idx < len(gap_widths):
-            pdf.set_x(pdf.get_x() + gap_widths[idx] + extra_per_gap)
+            next_x = pdf.get_x() + gap_widths[idx] + extra_per_gap
+            pdf.set_x(min(next_x, right_edge))
 
+    pdf.c_margin = original_margin
     pdf.set_xy(pdf.l_margin, y + line_height)
 
 
@@ -351,8 +466,16 @@ def _write_wrapped_lines(
 ) -> None:
     for idx, line in enumerate(lines):
         offset = first_offset_mm if idx == 0 else other_offset_mm
-        available_width = profile.content_width_mm - offset
+        available_width = max(profile.content_width_mm - offset, 1.0)
         x = profile.margin_left_mm + offset
+        measured_width = pdf.get_string_width("".join(line).strip())
+        if measured_width > available_width + 0.2:
+            logger.warning(
+                "PDF line width exceeded available width (%.2f > %.2f) after wrapping",
+                measured_width,
+                available_width,
+            )
+
         should_justify = (
             prefer_justify
             and idx < len(lines) - 1
@@ -387,9 +510,10 @@ def _write_paragraph(
         pdf.cell(w=pdf.get_string_width(prefix), h=profile.pdf_line_height_mm, text=prefix)
 
         if remainder:
+            remainder_tokens = _tokenize_for_wrap(remainder)
             remainder_lines = _wrap_tokens(
                 pdf,
-                _tokenize_for_wrap(remainder),
+                remainder_tokens,
                 profile.content_width_mm - (base_offset + prefix_width),
                 profile.content_width_mm - (base_offset + prefix_width),
             )

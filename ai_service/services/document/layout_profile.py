@@ -48,11 +48,11 @@ class ThaiLegalLayoutProfile:
     witness_top_gap_mm: float = 10.0
     signature_row_gap_mm: float = 3.0
 
-    justify_min_fill_ratio: float = 0.84
-    justify_max_extra_gap_mm: float = 1.35
+    justify_min_fill_ratio: float = 0.78
+    justify_max_extra_gap_mm: float = 1.15
 
-    heading_center_ratio: float = 0.82
-    heading_reduce_ratio: float = 0.92
+    heading_center_ratio: float = 0.78
+    heading_reduce_ratio: float = 0.88
 
     docx_line_spacing: float = 1.15
     docx_title_space_after_pt: float = 6.0

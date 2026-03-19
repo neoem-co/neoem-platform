@@ -97,13 +97,12 @@ def _set_run_font(run, size: int, font_name: str, bold: bool = False):
 
 def _resolve_paragraph_alignment(text: str):
     """Prefer Thai justify for real paragraphs, fallback for short/structured lines."""
-    thai_justify = getattr(WD_ALIGN_PARAGRAPH, "THAI_JUSTIFY", WD_ALIGN_PARAGRAPH.JUSTIFY)
     stripped = text.strip()
     if len(stripped) < 32:
         return WD_ALIGN_PARAGRAPH.LEFT
     if _is_structured_line(stripped) and len(stripped) < 56:
         return WD_ALIGN_PARAGRAPH.LEFT
-    return thai_justify
+    return WD_ALIGN_PARAGRAPH.JUSTIFY
 
 
 def _set_table_borderless(table) -> None:

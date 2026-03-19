@@ -6,6 +6,7 @@ import thFactoriesData from "@/data/thfactories.json";
 type FactoryDataFile = {
     factories: typeof enFactoriesData.factories;
     chatHistory: typeof enFactoriesData.chatHistory;
+    chatHistoryBySlug?: Record<string, typeof enFactoriesData.chatHistory>;
 };
 
 export type FactoryRecord = FactoryDataFile["factories"][number];
@@ -32,6 +33,7 @@ export function getFactoriesData(locale?: string): FactoryDataFile {
         return {
             factories: thFactoriesData.factories,
             chatHistory: [],
+            chatHistoryBySlug: {},
         };
     }
 
@@ -46,8 +48,12 @@ export function getFactoryBySlug(slug: string, locale?: string): FactoryRecord |
     return getFactories(locale).find((factory) => factory.slug === slug);
 }
 
-export function getFactoryChatHistory(locale?: string): FactoryChatMessage[] {
+export function getFactoryChatHistory(slug?: string, locale?: string): FactoryChatMessage[] {
     const dataset = getFactoriesData(locale);
+    const slugHistory = slug ? dataset.chatHistoryBySlug?.[slug] : undefined;
+    if (slugHistory && slugHistory.length > 0) {
+        return slugHistory as FactoryChatMessage[];
+    }
     if (dataset.chatHistory.length > 0) {
         return dataset.chatHistory as FactoryChatMessage[];
     }

@@ -163,6 +163,7 @@ class RiskCheckResponse(BaseModel):
     overall_risk: RiskLevel
     risk_score: float = Field(ge=0, le=100)
     risks: list[RiskItem] = Field(default_factory=list)
+    acceptable_findings: list[RiskItem] = Field(default_factory=list)
     mismatches: list[ChatContractMismatch] = Field(default_factory=list)
     legal_checklist: list[LegalReference] = Field(default_factory=list)
     summary_th: str = ""

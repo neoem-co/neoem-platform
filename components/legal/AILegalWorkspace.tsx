@@ -85,19 +85,19 @@ function useProgressStage(active: boolean, stages: ProgressStage[], intervalMs =
     const [index, setIndex] = useState(0);
 
     useEffect(() => {
-        if (!active) {
-            setIndex(0);
-            return;
+        const resetTimer = window.setTimeout(() => setIndex(0), 0);
+        if (!active || stages.length <= 1) {
+            return () => window.clearTimeout(resetTimer);
         }
-
-        setIndex(0);
-        if (stages.length <= 1) return;
 
         const timer = window.setInterval(() => {
             setIndex((prev) => Math.min(prev + 1, stages.length - 1));
         }, intervalMs);
 
-        return () => window.clearInterval(timer);
+        return () => {
+            window.clearTimeout(resetTimer);
+            window.clearInterval(timer);
+        };
     }, [active, intervalMs, stages.length]);
 
     return stages[Math.min(index, stages.length - 1)];
@@ -138,6 +138,7 @@ const templates = [
 interface RiskItem {
     id: string;
     type: "high" | "medium" | "low";
+    group?: "risk" | "acceptable";
     clause: string;
     description: string;
     page: number;
@@ -293,7 +294,7 @@ export function AILegalWorkspace({
                 {/* Main Content */}
                 <div className="flex-1 overflow-y-auto">
                     {activeTab === "draft" && <DraftPanel factoryName={factoryName} chatHistory={chatHistory} factoryInfo={factoryInfo} onDraftComplete={onDraftComplete} />}
-                    {activeTab === "risk" && <RiskPanel chatHistory={chatHistory} factoryInfo={factoryInfo} onRiskAnalysisComplete={onRiskAnalysisComplete} />}
+                    {activeTab === "risk" && <RiskPanelV2 chatHistory={chatHistory} factoryInfo={factoryInfo} onRiskAnalysisComplete={onRiskAnalysisComplete} />}
                     {activeTab === "esign" && <ESignaturePanel factoryName={factoryName} />}
                     {activeTab === "history" && <HistoryPanel />}
                 </div>
@@ -334,6 +335,7 @@ function DraftPanel({
     const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
     const [loading, setLoading] = useState(false);
     const [finalizing, setFinalizing] = useState(false);
+    const [recommendationLoading, setRecommendationLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [draftResult, setDraftResult] = useState<GenerateDraftResponse | null>(null);
     const [downloadUrls, setDownloadUrls] = useState<{ pdf_url: string | null; docx_url: string | null } | null>(null);
@@ -362,6 +364,7 @@ function DraftPanel({
         let active = true;
         const seedFromChat = async () => {
             if (chatHistory.length === 0) return;
+            setRecommendationLoading(true);
             try {
                 const ctx = await extractContext(chatHistory, factoryName, factoryInfo?.factory_id);
                 if (!active) return;
@@ -384,6 +387,10 @@ function DraftPanel({
                 }));
             } catch {
                 // Keep manual entry if extraction fails.
+            } finally {
+                if (active) {
+                    setRecommendationLoading(false);
+                }
             }
         };
         seedFromChat();
@@ -480,11 +487,17 @@ function DraftPanel({
         <div className="max-w-3xl mx-auto p-6 space-y-6">
             {/* AI Recommendation */}
             <div className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-primary/5 border border-primary/20">
-                <Sparkles className="h-4 w-4 text-primary flex-shrink-0" />
+                {recommendationLoading ? (
+                    <Loader2 className="h-4 w-4 text-primary flex-shrink-0 animate-spin" />
+                ) : (
+                    <Sparkles className="h-4 w-4 text-primary flex-shrink-0" />
+                )}
                 <p className="text-sm text-foreground">
-                    {recommendedTemplate
-                        ? <>💡 Based on your chat, we recommend: <span className="font-semibold text-primary">{recommendedTemplate}</span></>
-                        : <>💡 Select a template to generate a legally structured first draft.</>}
+                    {recommendationLoading
+                        ? "กำลังวิเคราะห์บทสนทนาเพื่อแนะนำประเภทสัญญาที่เหมาะสม..."
+                        : recommendedTemplate
+                            ? <>จากบทสนทนาของคุณ เราแนะนำ: <span className="font-semibold text-primary">{recommendedTemplate}</span></>
+                            : "เลือกประเภทสัญญาเพื่อเริ่มสร้างร่างสัญญาที่เป็นระบบ"}
                 </p>
             </div>
 
@@ -1185,6 +1198,582 @@ function RiskPanel({
 // ══════════════════════════════════════════════════
 // HISTORY PANEL (includes signing history)
 // ══════════════════════════════════════════════════
+function RiskPanelV2({
+    chatHistory,
+    factoryInfo,
+    onRiskAnalysisComplete,
+}: {
+    chatHistory: ChatMessagePayload[];
+    factoryInfo?: FactoryInfoPayload;
+    onRiskAnalysisComplete?: (result: {
+        overallRisk: RiskCheckResponse["overall_risk"];
+        summary: string;
+        highCount: number;
+        mediumCount: number;
+        lowCount: number;
+    }) => void;
+}) {
+    const [file, setFile] = useState<File | null>(null);
+    const [analyzing, setAnalyzing] = useState(false);
+    const [riskItems, setRiskItems] = useState<RiskItem[] | null>(null);
+    const [acceptableItems, setAcceptableItems] = useState<RiskItem[]>([]);
+    const [selectedRisk, setSelectedRisk] = useState<RiskItem | null>(null);
+    const [analysisSummary, setAnalysisSummary] = useState("");
+    const [analysisError, setAnalysisError] = useState<string | null>(null);
+    const [overallRisk, setOverallRisk] = useState<RiskCheckResponse["overall_risk"]>("medium");
+    const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+    const [focusedPage, setFocusedPage] = useState<number | null>(null);
+    const [mobileView, setMobileView] = useState<"summary" | "document">("summary");
+    const [explainLoadingId, setExplainLoadingId] = useState<string | null>(null);
+    const [explainErrorByRiskId, setExplainErrorByRiskId] = useState<Record<string, string>>({});
+    const [explainByRiskId, setExplainByRiskId] = useState<Record<string, RiskExplainResponse>>({});
+    const analyzeStage = useProgressStage(analyzing, RISK_ANALYZE_STAGES, 1500);
+    const explainStage = useProgressStage(Boolean(explainLoadingId), EXPLAIN_RISK_STAGES, 1400);
+    const lawyerCostSaved = 15000;
+    const allFindings = [...(riskItems || []), ...acceptableItems];
+
+    const mapRiskItem = (risk: RiskCheckResponse["risks"][number], group?: "risk" | "acceptable"): RiskItem => {
+        const type =
+            risk.level === "critical" || risk.level === "high"
+                ? "high"
+                : risk.level === "medium"
+                    ? "medium"
+                    : "low";
+
+        return {
+            id: risk.risk_id,
+            type,
+            group: group || (type === "low" || risk.level === "safe" ? "acceptable" : "risk"),
+            clause: risk.title_th || risk.title_en || risk.clause_ref || "ไม่ระบุข้อสัญญา",
+            description: risk.description_th || risk.description_en,
+            page: risk.anchors?.[0]?.page || 1,
+            level: risk.level,
+            clauseRef: risk.clause_ref || "",
+            category: risk.category || "general",
+            titleTh: risk.title_th || "",
+            titleEn: risk.title_en || "",
+            descriptionTh: risk.description_th || "",
+            descriptionEn: risk.description_en || "",
+            anchors: (risk.anchors || []).map((anchor) => ({
+                riskId: risk.risk_id,
+                page: anchor.page,
+                x: anchor.x,
+                y: anchor.y,
+                width: anchor.width,
+                height: anchor.height,
+                snippet: anchor.snippet,
+            })),
+        };
+    };
+
+    const dedupeRiskItems = (items: RiskItem[]) => {
+        const seen = new Set<string>();
+        return items.filter((item) => {
+            if (seen.has(item.id)) return false;
+            seen.add(item.id);
+            return true;
+        });
+    };
+
+    useEffect(() => {
+        if (!file) {
+            setPreviewUrl(null);
+            return;
+        }
+        const url = URL.createObjectURL(file);
+        setPreviewUrl(url);
+        return () => URL.revokeObjectURL(url);
+    }, [file]);
+
+    const handleUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files?.[0]) {
+            setFile(e.target.files[0]);
+            setAnalysisError(null);
+            setMobileView("summary");
+        }
+    };
+
+    const handleAnalyze = async () => {
+        setAnalyzing(true);
+        setAnalysisError(null);
+        try {
+            if (!file) return;
+            const response: RiskCheckResponse = await analyzeContractRisk(file, chatHistory, factoryInfo, "th");
+            const mappedRisks = response.risks.map((risk) => mapRiskItem(risk));
+            const activeRisks = mappedRisks.filter((risk) => risk.group !== "acceptable" && risk.type !== "low");
+            const fallbackAcceptable = mappedRisks.filter((risk) => risk.group === "acceptable" || risk.type === "low");
+            const mappedAcceptable = (response.acceptable_findings || []).map((finding) => mapRiskItem(finding, "acceptable"));
+            const nextAcceptable = dedupeRiskItems([...mappedAcceptable, ...fallbackAcceptable]).map((item) => ({
+                ...item,
+                group: "acceptable" as const,
+            }));
+            const firstFinding = activeRisks[0] || nextAcceptable[0] || null;
+
+            setRiskItems(activeRisks);
+            setAcceptableItems(nextAcceptable);
+            setSelectedRisk(firstFinding);
+            setFocusedPage(firstFinding?.anchors[0]?.page ?? firstFinding?.page ?? 1);
+            setAnalysisSummary(response.summary_th || response.summary_en || "วิเคราะห์เสร็จสิ้น");
+            setOverallRisk(response.overall_risk);
+            setExplainByRiskId({});
+            setExplainErrorByRiskId({});
+            setMobileView("summary");
+
+            onRiskAnalysisComplete?.({
+                overallRisk: response.overall_risk,
+                summary: response.summary_th || response.summary_en || "วิเคราะห์เสร็จสิ้น",
+                highCount: activeRisks.filter((risk) => risk.type === "high").length,
+                mediumCount: activeRisks.filter((risk) => risk.type === "medium").length,
+                lowCount: nextAcceptable.length,
+            });
+        } catch (err) {
+            setAnalysisError(err instanceof Error ? err.message : "Risk analysis failed");
+        } finally {
+            setAnalyzing(false);
+        }
+    };
+
+    const handleExplain = async (risk: RiskItem) => {
+        setExplainLoadingId(risk.id);
+        setExplainErrorByRiskId((prev) => ({ ...prev, [risk.id]: "" }));
+        try {
+            const payload: RiskExplainRequest = {
+                risk_id: risk.id,
+                title_th: risk.titleTh,
+                title_en: risk.titleEn || risk.clause,
+                level: risk.level,
+                clause_ref: risk.clauseRef || "N/A",
+                description_th: risk.descriptionTh,
+                description_en: risk.descriptionEn || risk.description,
+                recommendation_th: "",
+                recommendation_en: "",
+                category: risk.category || "general",
+            };
+            const response = await explainRisk(payload);
+            setExplainByRiskId((prev) => ({ ...prev, [risk.id]: response }));
+        } catch (err) {
+            const message = err instanceof Error ? err.message : "Explain request failed";
+            setExplainErrorByRiskId((prev) => ({ ...prev, [risk.id]: message }));
+        } finally {
+            setExplainLoadingId(null);
+        }
+    };
+
+    const handleDownloadSummary = () => {
+        if (!riskItems) return;
+        const riskSection = riskItems.length
+            ? riskItems
+                .map((risk, index) => `${index + 1}. [${risk.type.toUpperCase()}] ${risk.clause}\n   ประเด็น: ${risk.description}\n   หน้า: ${risk.page}\n`)
+                .join("\n")
+            : "ไม่พบประเด็นเสี่ยงสำคัญ\n";
+        const acceptableSection = acceptableItems.length
+            ? acceptableItems
+                .map((risk, index) => `${index + 1}. ${risk.clause}\n   สถานะ: ${risk.description}\n   หน้า: ${risk.page}\n`)
+                .join("\n")
+            : "ไม่มีข้อที่จัดอยู่ในหมวดครอบคลุมแล้ว\n";
+        const content = `สรุปผลตรวจความเสี่ยงสัญญา NEOEM AI\n${"=".repeat(40)}\n\nวันที่: ${new Date().toLocaleDateString("th-TH")}\nเอกสาร: ${file?.name || "สัญญา"}\n\nความเสี่ยงที่ควรตรวจต่อ\n${riskSection}\nข้อที่ครอบคลุมแล้ว / รับได้\n${acceptableSection}`;
+        const blob = new Blob([content], { type: "text/plain" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = "รายงานสรุปความเสี่ยงสัญญา.txt";
+        link.click();
+        URL.revokeObjectURL(url);
+    };
+
+    const handleDownloadPreview = () => {
+        if (!previewUrl || !file) return;
+        const link = document.createElement("a");
+        link.href = previewUrl;
+        link.download = file.name;
+        link.click();
+    };
+
+    const handleReset = () => {
+        setRiskItems(null);
+        setAcceptableItems([]);
+        setSelectedRisk(null);
+        setFile(null);
+        setPreviewUrl(null);
+        setFocusedPage(null);
+        setAnalysisSummary("");
+        setAnalysisError(null);
+        setExplainByRiskId({});
+        setExplainErrorByRiskId({});
+        setMobileView("summary");
+    };
+
+    const getRiskBgColor = (type: RiskItem["type"]) => {
+        switch (type) {
+            case "high":
+                return "bg-destructive/10";
+            case "medium":
+                return "bg-warning/10";
+            case "low":
+                return "bg-success/10";
+        }
+    };
+
+    const highCount = riskItems?.filter((risk) => risk.type === "high").length || 0;
+    const mediumCount = riskItems?.filter((risk) => risk.type === "medium").length || 0;
+    const acceptableCount = acceptableItems.length;
+    const highlightBoxes: RiskHighlight[] = allFindings.flatMap((risk) => risk.anchors);
+    const overallRiskLabel: Record<string, string> = {
+        critical: "วิกฤต",
+        high: "สูง",
+        medium: "กลาง",
+        low: "ต่ำ",
+        safe: "ปลอดภัย",
+    };
+    const overallRiskPercentMap: Record<string, number> = {
+        critical: 95,
+        high: 80,
+        medium: 60,
+        low: 35,
+        safe: 15,
+    };
+    const overallRiskHintMap: Record<string, string> = {
+        critical: "พบเงื่อนไขเสี่ยงสูงมาก ควรให้ผู้เชี่ยวชาญตรวจทานก่อนดำเนินการ",
+        high: "มีประเด็นสำคัญที่ควรเจรจาแก้ไขก่อนลงนาม",
+        medium: "มีจุดที่ควรทบทวนเพิ่มเติม แต่ยังสามารถจัดการได้",
+        low: "พบความเสี่ยงต่ำ และมีหลายข้อที่จัดการได้ในทางปฏิบัติ",
+        safe: "ภาพรวมเงื่อนไขอยู่ในเกณฑ์ที่เหมาะสมและค่อนข้างสมดุล",
+    };
+    const overallRiskToneClass: Record<string, string> = {
+        critical: "text-destructive",
+        high: "text-destructive",
+        medium: "text-warning",
+        low: "text-success",
+        safe: "text-success",
+    };
+    const overallRiskPercent = overallRiskPercentMap[overallRisk] ?? 60;
+    const gaugeAngle = Math.round((overallRiskPercent / 100) * 180) - 90;
+
+    const renderFindingCard = (risk: RiskItem, index: number, section: "risk" | "acceptable") => (
+        <Card
+            key={risk.id}
+            className={`cursor-pointer transition-all hover:shadow-md ${selectedRisk?.id === risk.id ? "ring-2 ring-primary" : ""} ${getRiskBgColor(risk.type)}`}
+            onClick={() => {
+                setSelectedRisk(risk);
+                setFocusedPage(risk.anchors[0]?.page ?? risk.page ?? 1);
+                setMobileView("document");
+            }}
+        >
+            <CardContent className="p-3 space-y-2">
+                <div className="flex items-start gap-2">
+                    <div className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 text-xs font-bold ${risk.type === "high" ? "bg-destructive text-destructive-foreground" : risk.type === "medium" ? "bg-warning text-warning-foreground" : "bg-success text-success-foreground"}`}>
+                        {index + 1}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                            <p className="font-semibold text-foreground text-sm">{risk.clause}</p>
+                            <span className={`text-[10px] px-2 py-0.5 rounded-full ${section === "acceptable" ? "bg-success/10 text-success" : risk.type === "high" ? "bg-destructive/10 text-destructive" : "bg-warning/10 text-warning"}`}>
+                                {section === "acceptable" ? "ครอบคลุมแล้ว" : risk.type === "high" ? "ต้องแก้ก่อนเซ็น" : "ควรทบทวน"}
+                            </span>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-0.5">{risk.description}</p>
+                        <p className="text-[11px] text-muted-foreground mt-1">หน้า {risk.page}</p>
+                    </div>
+                </div>
+                {selectedRisk?.id === risk.id && (
+                    <div className="mt-2 p-2.5 bg-card rounded-lg border">
+                        <p className={`text-xs font-medium mb-1 ${section === "acceptable" ? "text-success" : "text-primary"}`}>
+                            {section === "acceptable" ? "บริบทข้อสรุป" : "บริบทข้อเสี่ยง"}
+                        </p>
+                        <p className="text-xs text-muted-foreground">{risk.description}</p>
+                        <div className="flex gap-2 mt-2">
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-7 text-xs flex-1"
+                                onClick={(event) => {
+                                    event.stopPropagation();
+                                    void handleExplain(risk);
+                                }}
+                                disabled={explainLoadingId === risk.id}
+                            >
+                                {explainLoadingId === risk.id ? <><Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> กำลังอธิบาย...</> : "อธิบายเพิ่มเติม"}
+                            </Button>
+                            {section === "risk" && (
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="h-7 text-xs flex-1 text-primary border-primary/30"
+                                    onClick={(event) => event.stopPropagation()}
+                                >
+                                    Ask Lawyer
+                                </Button>
+                            )}
+                        </div>
+                        {explainLoadingId === risk.id && (
+                            <div className="flex items-start gap-2 mt-2 px-2.5 py-2 rounded-md border bg-secondary/20">
+                                <Loader2 className="h-3.5 w-3.5 mt-0.5 animate-spin text-primary flex-shrink-0" />
+                                <div>
+                                    <p className="text-xs font-medium text-foreground">{explainStage.title}</p>
+                                    <p className="text-[11px] text-muted-foreground mt-0.5">{explainStage.hint}</p>
+                                </div>
+                            </div>
+                        )}
+                        {explainErrorByRiskId[risk.id] && (
+                            <p className="text-xs text-destructive mt-2">{explainErrorByRiskId[risk.id]}</p>
+                        )}
+                        {explainByRiskId[risk.id] && (
+                            <div className="mt-2 p-2.5 rounded-md border bg-secondary/20 space-y-2">
+                                <p className="text-xs font-semibold text-foreground">คำอธิบายจาก AI</p>
+                                <p className="text-xs text-muted-foreground whitespace-pre-wrap">
+                                    {explainByRiskId[risk.id].explanation_th || explainByRiskId[risk.id].explanation_en}
+                                </p>
+                                {explainByRiskId[risk.id].business_impact.length > 0 && section === "risk" && (
+                                    <div>
+                                        <p className="text-xs font-medium text-foreground mb-1">ผลกระทบทางธุรกิจ</p>
+                                        <ul className="text-xs text-muted-foreground list-disc pl-4 space-y-0.5">
+                                            {explainByRiskId[risk.id].business_impact.map((item, idx) => (
+                                                <li key={`${risk.id}-impact-${idx}`}>{item}</li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                )}
+                                {explainByRiskId[risk.id].worst_case_scenario && section === "risk" && (
+                                    <div>
+                                        <p className="text-xs font-medium text-foreground mb-1">กรณีเลวร้ายที่สุด</p>
+                                        <p className="text-xs text-muted-foreground">{explainByRiskId[risk.id].worst_case_scenario}</p>
+                                    </div>
+                                )}
+                                {explainByRiskId[risk.id].compliance_notice && (
+                                    <p className="text-[11px] text-muted-foreground italic border-t pt-2">
+                                        {explainByRiskId[risk.id].compliance_notice}
+                                    </p>
+                                )}
+                            </div>
+                        )}
+                    </div>
+                )}
+            </CardContent>
+        </Card>
+    );
+
+    const renderSummaryPanel = () => (
+        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+            <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-success/10 border border-success/30">
+                <BadgeDollarSign className="h-4 w-4 text-success flex-shrink-0" />
+                <span className="text-xs font-medium text-success">Savings: ~฿{lawyerCostSaved.toLocaleString()}</span>
+            </div>
+
+            {analysisSummary && <p className="text-xs text-muted-foreground">{analysisSummary}</p>}
+
+            <div className="rounded-xl border bg-card p-4 space-y-3">
+                <div className="flex items-center justify-between gap-3">
+                    <p className="text-sm font-semibold text-foreground">ระดับความเสี่ยงรวมของสัญญา</p>
+                    <span className={`text-xs font-semibold px-2 py-1 rounded-full ${overallRisk === "critical" || overallRisk === "high" ? "bg-destructive/10 text-destructive" : overallRisk === "medium" ? "bg-warning/10 text-warning" : "bg-success/10 text-success"}`}>
+                        {overallRiskLabel[overallRisk] || overallRisk}
+                    </span>
+                </div>
+
+                <div className="relative mx-auto w-52 h-28 overflow-hidden">
+                    <div
+                        className="absolute inset-0 rounded-t-full border border-border"
+                        style={{
+                            background: "conic-gradient(from 180deg, rgb(34 197 94) 0deg, rgb(245 158 11) 90deg, rgb(239 68 68) 180deg)",
+                        }}
+                    />
+                    <div className="absolute left-3 right-3 top-3 bottom-0 rounded-t-full bg-card" />
+                    <div
+                        className="absolute left-1/2 bottom-0 h-24 w-[2px] origin-bottom rounded-full bg-foreground/80"
+                        style={{ transform: `translateX(-50%) rotate(${gaugeAngle}deg)` }}
+                    />
+                    <div className="absolute left-1/2 bottom-2 -translate-x-1/2 text-center">
+                        <p className={`text-2xl font-bold ${overallRiskToneClass[overallRisk] || "text-foreground"}`}>
+                            {overallRiskPercent}%
+                        </p>
+                    </div>
+                </div>
+
+                <p className="text-xs text-muted-foreground text-center">
+                    {overallRiskHintMap[overallRisk] || "กำลังประเมินความเสี่ยงโดยรวมของสัญญา"}
+                </p>
+            </div>
+
+            <div className="text-sm font-semibold text-foreground">สรุปผลการตรวจ</div>
+            <div className="grid grid-cols-3 gap-2">
+                <div className="p-2.5 rounded-lg bg-destructive/10 text-center">
+                    <div className="text-xl font-bold text-destructive">{highCount}</div>
+                    <div className="text-[10px] text-muted-foreground">สูง / วิกฤต</div>
+                </div>
+                <div className="p-2.5 rounded-lg bg-warning/10 text-center">
+                    <div className="text-xl font-bold text-warning">{mediumCount}</div>
+                    <div className="text-[10px] text-muted-foreground">ควรทบทวน</div>
+                </div>
+                <div className="p-2.5 rounded-lg bg-success/10 text-center">
+                    <div className="text-xl font-bold text-success">{acceptableCount}</div>
+                    <div className="text-[10px] text-muted-foreground">ครอบคลุมแล้ว</div>
+                </div>
+            </div>
+
+            <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                    <AlertTriangle className="h-4 w-4 text-destructive" />
+                    <p className="text-sm font-semibold text-foreground">ประเด็นเสี่ยงที่ควรตรวจต่อ</p>
+                </div>
+                {riskItems && riskItems.length > 0 ? (
+                    riskItems.map((risk, index) => renderFindingCard(risk, index, "risk"))
+                ) : (
+                    <Card className="bg-success/5 border-success/20">
+                        <CardContent className="p-4 flex items-start gap-3">
+                            <CheckCircle2 className="h-4 w-4 text-success mt-0.5" />
+                            <div>
+                                <p className="text-sm font-medium text-foreground">ยังไม่พบประเด็นเสี่ยงหลักที่ต้องรีบแก้ไข</p>
+                                <p className="text-xs text-muted-foreground mt-1">ระบบยังคงแสดงข้อที่ครอบคลุมแล้วด้านล่าง เพื่อให้ดูประกอบกับเอกสารจริงได้สะดวก</p>
+                            </div>
+                        </CardContent>
+                    </Card>
+                )}
+            </div>
+
+            <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                    <CheckCircle2 className="h-4 w-4 text-success" />
+                    <p className="text-sm font-semibold text-foreground">ข้อที่ครอบคลุมแล้ว / รับได้</p>
+                </div>
+                {acceptableItems.length > 0 ? (
+                    acceptableItems.map((risk, index) => renderFindingCard(risk, index, "acceptable"))
+                ) : (
+                    <Card className="bg-secondary/20">
+                        <CardContent className="p-4">
+                            <p className="text-sm font-medium text-foreground">ยังไม่มีข้อสรุปในหมวดนี้</p>
+                            <p className="text-xs text-muted-foreground mt-1">ถ้าระบบพบเงื่อนไขที่ครอบคลุมแล้วหรือความกังวลระดับต่ำ จะแสดงในส่วนนี้</p>
+                        </CardContent>
+                    </Card>
+                )}
+            </div>
+
+            <Button variant="outline" className="w-full lg:hidden" onClick={() => setMobileView("document")}>
+                <Eye className="h-4 w-4 mr-2" /> เปิดเอกสาร
+            </Button>
+
+            <Button variant="outline" className="w-full" onClick={handleReset}>
+                Analyze Another Document
+            </Button>
+        </div>
+    );
+
+    if (!riskItems) {
+        return (
+            <div className="flex items-center justify-center h-full">
+                <div className="max-w-md w-full p-6 space-y-6">
+                    <div className="flex items-center justify-center gap-2 px-4 py-2 rounded-full bg-success/10 border border-success/30">
+                        <BadgeDollarSign className="h-4 w-4 text-success" />
+                        <span className="text-sm font-medium text-success">
+                            Estimated Lawyer Cost Savings: ~฿{lawyerCostSaved.toLocaleString()}
+                        </span>
+                    </div>
+
+                    <h2 className="text-xl font-bold text-foreground text-center">อัปโหลดสัญญาเพื่อตรวจความเสี่ยง</h2>
+
+                    <label className="cursor-pointer block">
+                        <input type="file" accept=".pdf,.png,.jpg,.jpeg" onChange={handleUpload} className="hidden" />
+                        <div className={`border-2 border-dashed rounded-xl p-10 text-center transition-colors ${file ? "border-success bg-success/5" : "border-border hover:border-primary/50"}`}>
+                            {file ? (
+                                <div className="space-y-2">
+                                    <CheckCircle2 className="h-10 w-10 text-success mx-auto" />
+                                    <p className="font-medium text-foreground">{file.name}</p>
+                                    <p className="text-sm text-muted-foreground">{(file.size / 1024).toFixed(0)} KB</p>
+                                </div>
+                            ) : (
+                                <div className="space-y-2">
+                                    <Upload className="h-10 w-10 text-muted-foreground mx-auto" />
+                                    <p className="text-foreground font-medium">คลิกเพื่ออัปโหลด PDF หรือวางไฟล์</p>
+                                    <p className="text-sm text-muted-foreground">Supports PDF, PNG, JPG</p>
+                                </div>
+                            )}
+                        </div>
+                    </label>
+
+                    <Button onClick={handleAnalyze} disabled={!file || analyzing} className="w-full" size="lg">
+                        {analyzing ? <><Loader2 className="h-5 w-5 mr-2 animate-spin" /> กำลังวิเคราะห์ด้วย OCR + Legal AI...</> : <><Search className="h-5 w-5 mr-2" /> วิเคราะห์สัญญา</>}
+                    </Button>
+                    {analyzing && (
+                        <div className="flex items-start gap-3 px-4 py-3 rounded-lg border bg-secondary/20">
+                            <Loader2 className="h-4 w-4 mt-0.5 animate-spin text-primary flex-shrink-0" />
+                            <div>
+                                <p className="text-sm font-medium text-foreground">{analyzeStage.title}</p>
+                                <p className="text-xs text-muted-foreground mt-0.5">{analyzeStage.hint}</p>
+                            </div>
+                        </div>
+                    )}
+                    {analysisError && <p className="text-xs text-center text-destructive">{analysisError}</p>}
+                </div>
+            </div>
+        );
+    }
+
+    return (
+        <div className="flex h-full flex-col lg:flex-row">
+            <div className="lg:hidden border-b bg-card px-4 py-3 flex items-center justify-between gap-3 sticky top-0 z-10">
+                <div className="inline-flex rounded-lg border bg-background p-1">
+                    <button
+                        type="button"
+                        onClick={() => setMobileView("summary")}
+                        className={`px-3 py-1.5 text-xs rounded-md transition-colors ${mobileView === "summary" ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}
+                    >
+                        สรุปผล
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => setMobileView("document")}
+                        className={`px-3 py-1.5 text-xs rounded-md transition-colors ${mobileView === "document" ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}
+                    >
+                        เอกสาร
+                    </button>
+                </div>
+                <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={handleReset}>
+                    <X className="h-3.5 w-3.5 mr-1" /> เริ่มใหม่
+                </Button>
+            </div>
+
+            <div className={`${mobileView === "document" ? "flex" : "hidden"} lg:flex lg:w-[60%] border-r flex-col min-h-0`}>
+                <div className="h-10 border-b flex items-center justify-between px-4 bg-card flex-shrink-0 sticky top-0 z-10">
+                    <div className="flex items-center gap-2 text-sm">
+                        <Eye className="h-4 w-4" />
+                        <span className="text-foreground font-medium">Document Preview</span>
+                    </div>
+                    <Button variant="ghost" size="sm" className="h-7 text-xs" disabled={!previewUrl} onClick={handleDownloadPreview}>
+                        <Download className="h-3.5 w-3.5 mr-1" /> Download
+                    </Button>
+                </div>
+                <div className="flex-1 overflow-hidden bg-secondary/10 min-h-[55vh] lg:min-h-0">
+                    <RiskPdfViewer
+                        fileUrl={previewUrl}
+                        highlights={highlightBoxes}
+                        selectedRiskId={selectedRisk?.id || null}
+                        focusedPage={focusedPage}
+                        onHighlightClick={(riskId) => {
+                            const risk = allFindings.find((item) => item.id === riskId) || null;
+                            setSelectedRisk(risk);
+                            setFocusedPage(risk?.anchors[0]?.page ?? risk?.page ?? null);
+                            setMobileView("document");
+                        }}
+                    />
+                </div>
+            </div>
+
+            <div className={`${mobileView === "summary" ? "flex" : "hidden"} lg:flex lg:w-[40%] flex-col min-h-0`}>
+                <div className="h-10 border-b flex items-center justify-between px-4 bg-card flex-shrink-0">
+                    <span className="text-sm font-medium text-foreground">ผลการตรวจความเสี่ยง</span>
+                    <div className="flex items-center gap-1">
+                        <Button variant="outline" size="sm" className="h-7 text-xs" onClick={handleDownloadSummary}>
+                            <Download className="h-3.5 w-3.5 mr-1" /> Summary
+                        </Button>
+                        <Button variant="ghost" size="sm" className="h-7 text-xs hidden lg:inline-flex" onClick={handleReset}>
+                            <X className="h-3.5 w-3.5" />
+                        </Button>
+                    </div>
+                </div>
+                {renderSummaryPanel()}
+            </div>
+        </div>
+    );
+}
+
 function HistoryPanel() {
     const [contracts, setContracts] = useState<ContractHistoryItem[]>([]);
     const [loading, setLoading] = useState(true);

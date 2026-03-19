@@ -85,7 +85,7 @@ const DealRoom = () => {
     const factory = getFactoryBySlug(slug, locale);
     const [showTOS, setShowTOS] = useState(() => !loadDealRoomState(slug).tosAccepted);
     const [tosAccepted, setTosAccepted] = useState(() => loadDealRoomState(slug).tosAccepted);
-    const [messages, setMessages] = useState<Message[]>([...getFactoryChatHistory(locale) as Message[]]);
+    const [messages, setMessages] = useState<Message[]>([...getFactoryChatHistory(slug, locale) as Message[]]);
     const [inputValue, setInputValue] = useState("");
     const [showPaymentModal, setShowPaymentModal] = useState(false);
     const [showContractWarning, setShowContractWarning] = useState(false);

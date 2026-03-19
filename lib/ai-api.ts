@@ -53,6 +53,7 @@ export interface RiskCheckResponse {
   overall_risk: "critical" | "high" | "medium" | "low" | "safe";
   risk_score: number;
   risks: RiskItemResult[];
+  acceptable_findings?: RiskItemResult[];
   mismatches: ChatContractMismatch[];
   legal_checklist: { law_name: string; section: string; summary: string; relevance: string }[];
   summary_th: string;

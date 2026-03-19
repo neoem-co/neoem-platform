@@ -74,10 +74,11 @@ async def extract_context(request: ExtractContextRequest) -> ExtractContextRespo
     Extract deal information from chat history and produce an auto-filled Deal Sheet.
     This is Step 1/4 in the UI prototype.
     """
-    logger.info("Step 1: Extracting context from %d chat messages", len(request.chat_history))
+    clean_chat_history = _sanitize_chat_messages(request.chat_history)
+    logger.info("Step 1: Extracting context from %d chat messages", len(clean_chat_history))
 
     chat_text = "\n".join(
-        f"[{m.sender}] {m.message}" for m in request.chat_history if m.message.strip()
+        f"[{m.sender}] {m.message}" for m in clean_chat_history if m.message.strip()
     )
 
     if not chat_text:
@@ -504,6 +505,36 @@ def _parse_json_response(text: str) -> dict:
             pass
 
     raise ValueError(f"Could not extract JSON from LLM response ({len(text)} chars)")
+
+
+def _sanitize_chat_messages(
+    chat_history: list[ChatMessage],
+    *,
+    max_messages: int = 18,
+    max_chars: int = 4000,
+) -> list[ChatMessage]:
+    cleaned: list[ChatMessage] = []
+    for message in chat_history:
+        text = (message.message or "").strip()
+        if not text:
+            continue
+        if (message.sender or "").lower() == "system":
+            continue
+        if text.lower().startswith("uploaded:"):
+            continue
+        cleaned.append(message)
+
+    cleaned = cleaned[-max_messages:]
+    bounded: list[ChatMessage] = []
+    total_chars = 0
+    for message in reversed(cleaned):
+        text_len = len(message.message)
+        if bounded and total_chars + text_len > max_chars:
+            break
+        bounded.append(message)
+        total_chars += text_len
+
+    return list(reversed(bounded))
 
 
 def _save_file(path: str, content: bytes) -> None:

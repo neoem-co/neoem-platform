@@ -1477,6 +1477,70 @@
             ]
         }
     ],
+    "chatHistoryBySlug": {
+        "ilc-cosmetics": [
+            {
+                "id": "ilc-1",
+                "sender": "user",
+                "message": "Hi I am looking for an OEM partner for a premium mousse sunscreen SPF50 PA++++ for the Thai market. Initial launch target is 1,000 pieces.",
+                "timestamp": "2026-01-04T10:30:00Z"
+            },
+            {
+                "id": "ilc-2",
+                "sender": "factory",
+                "message": "Hello and thank you for reaching out. For sunscreen mousse we can support MOQ 1,000 units for standard packaging, with pilot samples ready in about 14 days after brief confirmation.",
+                "timestamp": "2026-01-04T10:32:00Z"
+            },
+            {
+                "id": "ilc-3",
+                "sender": "user",
+                "message": "We want a light whipped texture, non-sticky finish, water resistant, and no white cast. Formula ownership must stay with our brand.",
+                "timestamp": "2026-01-04T10:35:00Z"
+            },
+            {
+                "id": "ilc-4",
+                "sender": "factory",
+                "message": "Understood. We can develop to that brief. If development is funded by your brand, formula and product IP can be assigned to you, while our background manufacturing know-how remains ours.",
+                "timestamp": "2026-01-04T10:38:00Z"
+            },
+            {
+                "id": "ilc-5",
+                "sender": "user",
+                "message": "Please quote on 30% deposit, 40% after sample approval, and 30% before final shipment. We also need clear QC acceptance criteria and replacement for defective lots.",
+                "timestamp": "2026-01-04T10:41:00Z"
+            },
+            {
+                "id": "ilc-6",
+                "sender": "factory",
+                "message": "That payment structure is workable. For QC we can align to approved golden sample, microbiological limits, packaging appearance, net content tolerance, and SPF claim support documents where applicable.",
+                "timestamp": "2026-01-04T10:44:00Z"
+            },
+            {
+                "id": "ilc-7",
+                "sender": "user",
+                "message": "Who will handle FDA notification and artwork compliance review? We want the agreement to state that our brand owns trademarks and packaging artwork.",
+                "timestamp": "2026-01-04T10:48:00Z"
+            },
+            {
+                "id": "ilc-8",
+                "sender": "factory",
+                "message": "We can support dossier preparation and technical documents, but the brand should remain owner of trademarks and final artwork. FDA notification responsibility can be assigned to your brand with our document support.",
+                "timestamp": "2026-01-04T10:51:00Z"
+            },
+            {
+                "id": "ilc-9",
+                "sender": "user",
+                "message": "Lead time after bulk PO should be 45-60 days. If delivery is late without force majeure, we want a daily delay penalty and the right to terminate after material delay.",
+                "timestamp": "2026-01-04T10:55:00Z"
+            },
+            {
+                "id": "ilc-10",
+                "sender": "factory",
+                "message": "Noted. Our normal bulk lead time is around 50 days after artwork and sample approval. We can discuss a reasonable late-delivery penalty and a termination trigger tied to prolonged delay.",
+                "timestamp": "2026-01-04T10:58:00Z"
+            }
+        ]
+    },
     "chatHistory": [
         {
             "id": "1",

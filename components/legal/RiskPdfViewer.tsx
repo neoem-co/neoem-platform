@@ -53,16 +53,21 @@ export function RiskPdfViewer({
 
   useEffect(() => {
     if (!focusedPage) return;
-    setCurrentPage(focusedPage);
+    const frame = window.requestAnimationFrame(() => {
+      setCurrentPage(focusedPage);
+    });
+    return () => window.cancelAnimationFrame(frame);
   }, [focusedPage]);
 
   useEffect(() => {
     if (!fileUrl) {
-      setNumPages(0);
-      setCurrentPage(1);
-      setDocError(null);
-      setPageError(null);
-      return;
+      const frame = window.requestAnimationFrame(() => {
+        setNumPages(0);
+        setCurrentPage(1);
+        setDocError(null);
+        setPageError(null);
+      });
+      return () => window.cancelAnimationFrame(frame);
     }
     void sendPdfViewerLog("info", "pdf_file_loading", { fileUrl });
   }, [fileUrl]);
@@ -180,7 +185,7 @@ export function RiskPdfViewer({
                       key={`${hl.riskId}-${idx}`}
                       type="button"
                       className={`absolute pointer-events-auto border rounded-sm transition-colors ${selected
-                        ? "bg-destructive/30 border-destructive"
+                        ? "bg-destructive/30 border-destructive animate-pulse shadow-[0_0_0_2px_rgba(239,68,68,0.25)]"
                         : "bg-warning/25 border-warning/80 hover:bg-warning/35"
                         }`}
                       style={{
