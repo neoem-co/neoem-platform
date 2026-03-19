@@ -7,7 +7,7 @@ import { FactoryCard } from "@/components/home/FactoryCard";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { getFactories, getFactoryCategoryId, isThaiLocale } from "@/lib/factory-data";
+import { getFactories, isThaiLocale } from "@/lib/factory-data";
 import { createPageMetadata, getAbsoluteUrl, getLocalizedPath } from "@/lib/seo";
 
 type LocalePageCopy = {
@@ -140,10 +140,10 @@ function getPageCopy(locale: string): LocalePageCopy {
 }
 
 const categoryLinks = [
-  { id: "cosmetics", labelEn: "Cosmetics OEM", labelTh: "โรงงาน OEM เครื่องสำอาง" },
-  { id: "skincare", labelEn: "Skincare OEM", labelTh: "โรงงาน OEM สกินแคร์" },
-  { id: "supplements", labelEn: "Supplement OEM", labelTh: "โรงงาน OEM อาหารเสริม" },
-  { id: "packaging", labelEn: "Packaging OEM", labelTh: "โรงงาน OEM บรรจุภัณฑ์" },
+  { href: "/oem-cosmetics-factory", labelEn: "Cosmetics OEM", labelTh: "โรงงาน OEM เครื่องสำอาง" },
+  { href: "/oem-cosmetics-factory", labelEn: "Skincare OEM", labelTh: "โรงงาน OEM สกินแคร์" },
+  { href: "/oem-supplement-factory", labelEn: "Supplement OEM", labelTh: "โรงงาน OEM อาหารเสริม" },
+  { href: "/factories?category=packaging", labelEn: "Packaging OEM", labelTh: "โรงงาน OEM บรรจุภัณฑ์" },
 ];
 
 export async function generateMetadata({
@@ -302,8 +302,8 @@ export default async function FindOemFactoryPage({
               <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4 mt-8">
                 {categoryLinks.map((category) => (
                   <Link
-                    key={category.id}
-                    href={`/${locale}/factories?category=${getFactoryCategoryId({ slug: category.id, category: category.labelEn }) || category.id}`}
+                    key={`${category.href}-${category.labelEn}`}
+                    href={`/${locale}${category.href}`}
                     className="rounded-2xl border bg-background p-5 hover:border-primary/40 hover:shadow-sm transition-all"
                   >
                     <div className="flex items-center justify-between gap-3">
