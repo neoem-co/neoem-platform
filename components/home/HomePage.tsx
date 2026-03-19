@@ -10,7 +10,8 @@ import { DotMatrixBackground } from "@/components/home/DotMatrixBackground";
 import { getFactories } from "@/lib/factory-data";
 import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
-import { Rocket, ChevronRight, CheckCircle2, Palette, Shield, Scale } from "lucide-react";
+import { Rocket, ChevronRight, CheckCircle2, Palette, Shield, Scale, BookOpenText, FileSearch, BadgeCheck, MessagesSquare } from "lucide-react";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 
@@ -62,66 +63,133 @@ export function HomePage() {
 
       <FeatureShowcase />
 
-      <section className="py-14 bg-card/40 border-y">
+      <section className="relative py-16 md:py-20 overflow-hidden">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(249,115,22,0.12),transparent_35%),radial-gradient(circle_at_bottom_right,rgba(249,115,22,0.08),transparent_28%)]" />
         <div className="container">
-          <div className="max-w-3xl">
-            <h2 className="text-2xl md:text-3xl font-bold text-foreground">
-              {t("seoContent.title")}
-            </h2>
-            <p className="mt-3 text-muted-foreground text-base md:text-lg">
-              {t("seoContent.description")}
-            </p>
-          </div>
+          <div className="relative grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_380px]">
+            <article className="rounded-[28px] border bg-card/90 shadow-[0_18px_70px_-35px_rgba(15,23,42,0.35)] backdrop-blur">
+              <div className="p-6 md:p-8 lg:p-10">
+                <div className="flex flex-wrap items-center gap-3">
+                  <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-2 text-sm font-medium text-primary">
+                    <BookOpenText className="h-4 w-4" />
+                    SEO Article
+                  </div>
+                  <div className="text-xs uppercase tracking-[0.22em] text-muted-foreground">
+                    NEOEM Guide
+                  </div>
+                </div>
 
-          <div className="grid gap-4 md:grid-cols-3 mt-8">
-            <Card className="bg-background/80">
-              <CardContent className="p-5">
-                <h3 className="font-semibold text-foreground">
-                  {t("seoContent.highlights.verifiedTitle")}
-                </h3>
-                <p className="text-sm text-muted-foreground mt-2">
-                  {t("seoContent.highlights.verifiedDesc")}
-                </p>
-              </CardContent>
-            </Card>
-            <Card className="bg-background/80">
-              <CardContent className="p-5">
-                <h3 className="font-semibold text-foreground">
-                  {t("seoContent.highlights.matchTitle")}
-                </h3>
-                <p className="text-sm text-muted-foreground mt-2">
-                  {t("seoContent.highlights.matchDesc")}
-                </p>
-              </CardContent>
-            </Card>
-            <Card className="bg-background/80">
-              <CardContent className="p-5">
-                <h3 className="font-semibold text-foreground">
-                  {t("seoContent.highlights.launchTitle")}
-                </h3>
-                <p className="text-sm text-muted-foreground mt-2">
-                  {t("seoContent.highlights.launchDesc")}
-                </p>
-              </CardContent>
-            </Card>
-          </div>
+                <div className="mt-6 max-w-3xl">
+                  <h2 className="text-3xl md:text-4xl font-bold leading-tight text-foreground">
+                    {t("seoContent.title")}
+                  </h2>
+                  <p className="mt-4 text-base md:text-lg leading-8 text-muted-foreground">
+                    {t("seoContent.description")}
+                  </p>
+                </div>
 
-          <div className="mt-6">
-            <Link href={`/${locale}/find-oem-factory`} className="inline-flex items-center text-sm font-medium text-primary hover:underline">
-              {t("seoContent.guideCta")} <ChevronRight className="h-4 w-4 ml-1" />
-            </Link>
-          </div>
+                <div className="mt-8 grid gap-4 md:grid-cols-3">
+                  {[
+                    {
+                      icon: BadgeCheck,
+                      title: t("seoContent.highlights.verifiedTitle"),
+                      desc: t("seoContent.highlights.verifiedDesc"),
+                    },
+                    {
+                      icon: FileSearch,
+                      title: t("seoContent.highlights.matchTitle"),
+                      desc: t("seoContent.highlights.matchDesc"),
+                    },
+                    {
+                      icon: MessagesSquare,
+                      title: t("seoContent.highlights.launchTitle"),
+                      desc: t("seoContent.highlights.launchDesc"),
+                    },
+                  ].map((item, index) => (
+                    <div
+                      key={item.title}
+                      className="rounded-2xl border bg-background/85 p-5 shadow-sm"
+                    >
+                      <div className="flex items-center justify-between gap-4">
+                        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+                          <item.icon className="h-5 w-5" />
+                        </div>
+                        <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+                          0{index + 1}
+                        </div>
+                      </div>
+                      <h3 className="mt-4 text-base font-semibold text-foreground">{item.title}</h3>
+                      <p className="mt-2 text-sm leading-6 text-muted-foreground">{item.desc}</p>
+                    </div>
+                  ))}
+                </div>
 
-          <div className="mt-6 flex flex-wrap gap-2">
-            {categoryQuickLinks.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className="inline-flex items-center rounded-full border bg-background/90 px-4 py-2 text-sm font-medium text-foreground hover:border-primary/40 hover:text-primary transition-colors"
-              >
-                {link.label}
-              </Link>
-            ))}
+                <div className="mt-8 flex flex-wrap items-center gap-3">
+                  <Link href={`/${locale}/find-oem-factory`}>
+                    <Button className="gap-2">
+                      {t("seoContent.guideCta")}
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
+                  </Link>
+                  <p className="text-sm text-muted-foreground">
+                    {isThai
+                      ? "เริ่มจากคู่มือหลัก แล้วค่อยลงลึกตามหมวดสินค้า"
+                      : "Start with the main guide, then go deeper by category."}
+                  </p>
+                </div>
+              </div>
+            </article>
+
+            <aside className="space-y-4">
+              <Card className="overflow-hidden rounded-[28px] border bg-gradient-to-br from-primary/10 via-background to-background shadow-[0_18px_70px_-35px_rgba(15,23,42,0.35)]">
+                <CardContent className="p-6">
+                  <p className="text-xs uppercase tracking-[0.24em] text-primary/80">
+                    {isThai ? "หมวดที่คนค้นหาบ่อย" : "Popular Queries"}
+                  </p>
+                  <h3 className="mt-3 text-2xl font-semibold text-foreground">
+                    {isThai ? "เริ่มจากหมวดโรงงาน OEM ที่ใช่" : "Jump into the right OEM category"}
+                  </h3>
+                  <p className="mt-3 text-sm leading-6 text-muted-foreground">
+                    {isThai
+                      ? "เลือกหมวดที่ใกล้กับสินค้าของคุณที่สุด เพื่อเริ่มจากผลลัพธ์ที่ตรงความต้องการมากกว่า"
+                      : "Choose the category closest to your product so your search starts with more relevant factory options."}
+                  </p>
+
+                  <div className="mt-5 space-y-2">
+                    {categoryQuickLinks.map((link) => (
+                      <Link
+                        key={link.href}
+                        href={link.href}
+                        className="group flex items-center justify-between rounded-2xl border bg-background/90 px-4 py-3 text-sm font-medium text-foreground transition-colors hover:border-primary/40 hover:text-primary"
+                      >
+                        <span>{link.label}</span>
+                        <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                      </Link>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="rounded-[28px] border bg-card/95 shadow-[0_18px_70px_-35px_rgba(15,23,42,0.35)]">
+                <CardContent className="p-6">
+                  <p className="text-xs uppercase tracking-[0.24em] text-muted-foreground">
+                    {isThai ? "บทสรุปสั้น ๆ" : "At a Glance"}
+                  </p>
+                  <div className="mt-4 space-y-3">
+                    {[
+                      isThai ? "ดูโรงงานที่ผ่านการตรวจสอบก่อน" : "Start with verified factories",
+                      isThai ? "เทียบ MOQ และหมวดสินค้าให้ชัด" : "Compare MOQ and category fit",
+                      isThai ? "ค่อยต่อยอดสู่การคุยงานและเอกสาร" : "Move into outreach and documents next",
+                    ].map((item) => (
+                      <div key={item} className="flex items-start gap-3">
+                        <CheckCircle2 className="mt-0.5 h-4 w-4 flex-shrink-0 text-primary" />
+                        <p className="text-sm leading-6 text-muted-foreground">{item}</p>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </aside>
           </div>
         </div>
       </section>
@@ -234,21 +302,65 @@ export function HomePage() {
 
       <section className="py-16 bg-secondary/20">
         <div className="container">
-          <div className="max-w-3xl">
-            <h2 className="text-2xl md:text-3xl font-bold text-foreground">
-              {t("seoContent.faqTitle")}
-            </h2>
-          </div>
+          <div className="rounded-[30px] border bg-card/90 p-6 md:p-8 lg:p-10 shadow-[0_18px_70px_-35px_rgba(15,23,42,0.35)]">
+            <div className="max-w-3xl">
+              <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-2 text-sm font-medium text-primary">
+                <MessagesSquare className="h-4 w-4" />
+                Q&A
+              </div>
+              <h2 className="mt-5 text-3xl md:text-4xl font-bold text-foreground">
+                {t("seoContent.faqTitle")}
+              </h2>
+              <p className="mt-3 text-muted-foreground leading-7">
+                {isThai
+                  ? "คำตอบสั้น กระชับ และตรงประเด็นสำหรับคนที่กำลังหาโรงงาน OEM และอยากเริ่มจากข้อมูลที่อ่านง่าย"
+                  : "Short, direct answers for teams researching OEM factories and wanting clearer starting points."}
+              </p>
+            </div>
 
-          <div className="grid gap-4 mt-8">
-            {seoFaqs.map((faq) => (
-              <Card key={faq.question} className="bg-background/90">
-                <CardContent className="p-6">
-                  <h3 className="font-semibold text-foreground">{faq.question}</h3>
-                  <p className="text-muted-foreground mt-2">{faq.answer}</p>
+            <div className="mt-8 grid gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">
+              <Card className="rounded-[24px] border bg-background/80">
+                <CardContent className="p-2 md:p-4">
+                  <Accordion type="single" collapsible defaultValue="item-0" className="w-full">
+                    {seoFaqs.map((faq, index) => (
+                      <AccordionItem key={faq.question} value={`item-${index}`} className="border-b last:border-b-0">
+                        <AccordionTrigger className="px-4 text-left text-base font-semibold text-foreground hover:no-underline">
+                          {faq.question}
+                        </AccordionTrigger>
+                        <AccordionContent className="px-4 pb-5 text-sm leading-7 text-muted-foreground">
+                          {faq.answer}
+                        </AccordionContent>
+                      </AccordionItem>
+                    ))}
+                  </Accordion>
                 </CardContent>
               </Card>
-            ))}
+
+              <Card className="rounded-[24px] border bg-primary/[0.07]">
+                <CardContent className="p-6">
+                  <p className="text-xs uppercase tracking-[0.24em] text-primary/80">
+                    {isThai ? "อ่านต่อ" : "Next Read"}
+                  </p>
+                  <h3 className="mt-3 text-xl font-semibold text-foreground">
+                    {isThai ? "คู่มือและหน้าหมวดที่ควรเปิดต่อ" : "Guides and category pages to open next"}
+                  </h3>
+                  <div className="mt-5 space-y-3">
+                    <Link href={`/${locale}/find-oem-factory`} className="block rounded-2xl border bg-background/90 px-4 py-3 text-sm font-medium text-foreground hover:border-primary/40 hover:text-primary transition-colors">
+                      {t("seoContent.guideCta")}
+                    </Link>
+                    {categoryQuickLinks.map((link) => (
+                      <Link
+                        key={`faq-${link.href}`}
+                        href={link.href}
+                        className="block rounded-2xl border bg-background/90 px-4 py-3 text-sm font-medium text-foreground hover:border-primary/40 hover:text-primary transition-colors"
+                      >
+                        {link.label}
+                      </Link>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           </div>
         </div>
       </section>
