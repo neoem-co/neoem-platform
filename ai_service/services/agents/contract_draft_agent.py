@@ -12,6 +12,7 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import time
 import uuid
 from typing import Optional
 
@@ -339,6 +340,7 @@ async def finalize_contract(request: FinalizeRequest) -> FinalizeResponse:
     Step 4/4 in the UI prototype.
     """
     logger.info("Step 4: Finalizing contract '%s'", request.contract_title)
+    finalize_started_at = time.perf_counter()
     production_storage_required = is_production_runtime()
     if production_storage_required:
         try:
@@ -357,6 +359,7 @@ async def finalize_contract(request: FinalizeRequest) -> FinalizeResponse:
     # Generate documents
     if request.output_format in ("pdf", "both"):
         try:
+            pdf_started_at = time.perf_counter()
             from services.document.pdf_generator import generate_contract_pdf
             pdf_bytes = generate_contract_pdf(
                 title=request.contract_title,
@@ -364,6 +367,7 @@ async def finalize_contract(request: FinalizeRequest) -> FinalizeResponse:
                 articles=request.articles,
                 parties=request.parties,
             )
+            logger.info("PDF generated via fpdf2 in %.2fs", time.perf_counter() - pdf_started_at)
 
             pdf_path = f"contracts/{contract_id}.pdf"
 
@@ -386,6 +390,7 @@ async def finalize_contract(request: FinalizeRequest) -> FinalizeResponse:
 
     if request.output_format in ("docx", "both"):
         try:
+            docx_started_at = time.perf_counter()
             from services.document.docx_generator import generate_contract_docx
             docx_bytes = generate_contract_docx(
                 title=request.contract_title,
@@ -393,11 +398,11 @@ async def finalize_contract(request: FinalizeRequest) -> FinalizeResponse:
                 articles=request.articles,
                 parties=request.parties,
             )
+            logger.info("DOCX generation completed in %.2fs", time.perf_counter() - docx_started_at)
 
             docx_path = f"contracts/{contract_id}.docx"
 
             if production_storage_required or (settings.supabase_url and settings.supabase_key):
-                # Upload to Supabase Storage
                 docx_url = upload_contract_file(
                     docx_path,
                     docx_bytes,
@@ -405,7 +410,6 @@ async def finalize_contract(request: FinalizeRequest) -> FinalizeResponse:
                 )
                 logger.info("Uploaded DOCX to Supabase: %s", docx_url)
             else:
-                # Save locally
                 local_path = str(get_contracts_dir() / f"{contract_id}.docx")
                 _save_file(local_path, docx_bytes)
                 docx_url = f"/api/ai/contract-draft/contracts/{contract_id}/download/docx"
@@ -433,6 +437,8 @@ async def finalize_contract(request: FinalizeRequest) -> FinalizeResponse:
         else:
             history_path = str(get_contracts_dir() / f"{contract_id}_deal_sheet.json")
             _save_file(history_path, history_bytes)
+
+            logger.info("Finalize contract completed in %.2fs", time.perf_counter() - finalize_started_at)
 
     return FinalizeResponse(
         pdf_url=pdf_url,

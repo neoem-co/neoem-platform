@@ -28,6 +28,7 @@ from models.risk_check import (
     ExtractedClause,
     LegalReference,
     OEMFactoryInfo,
+    RiskAnchor,
     RiskCheckResponse,
     RiskItem,
     RiskLevel,
@@ -280,6 +281,7 @@ async def analyse_risks(
 
 async def run_risk_check_pipeline(
     ocr_result: dict,
+    ocr_layout: Optional[dict],
     chat_history: list[ChatMessage],
     factory_info: Optional[OEMFactoryInfo] = None,
     language: str = "both",
@@ -325,6 +327,7 @@ async def run_risk_check_pipeline(
 
     # Stage 6: Format response
     risks = _parse_risk_items(risk_data.get("risks", []))
+    _attach_risk_anchors(risks, ocr_layout)
     mismatches = _parse_mismatches(risk_data.get("mismatches", []))
 
     overall_str = risk_data.get("overall_risk", "medium")
@@ -353,17 +356,36 @@ async def run_risk_check_pipeline(
 
 
 def _parse_json_response(text: str) -> dict:
-    """Extract JSON from an LLM response that may contain markdown fences."""
-    text = text.strip()
-    # Remove markdown code fences
-    if text.startswith("```"):
-        lines = text.split("\n")
-        # Remove first and last lines
-        lines = lines[1:]
+    """Extract JSON from an LLM response that may contain markdown fences or extra text."""
+    cleaned = text.strip()
+
+    # Strategy 1: direct JSON parse
+    try:
+        return json.loads(cleaned)
+    except json.JSONDecodeError:
+        pass
+
+    # Strategy 2: markdown fenced block
+    if "```" in cleaned:
+        lines = cleaned.split("\n")
+        if lines and lines[0].strip().startswith("```"):
+            lines = lines[1:]
         if lines and lines[-1].strip() == "```":
             lines = lines[:-1]
-        text = "\n".join(lines)
-    return json.loads(text)
+        fenced = "\n".join(lines).strip()
+        try:
+            return json.loads(fenced)
+        except json.JSONDecodeError:
+            pass
+
+    # Strategy 3: first { ... } block in mixed text
+    first_brace = cleaned.find("{")
+    last_brace = cleaned.rfind("}")
+    if first_brace != -1 and last_brace > first_brace:
+        candidate = cleaned[first_brace:last_brace + 1]
+        return json.loads(candidate)
+
+    raise json.JSONDecodeError("No JSON object found", cleaned, 0)
 
 
 def _extract_topics(contract: StructuredContract) -> list[str]:
@@ -438,16 +460,35 @@ def _parse_risk_items(items: list[dict]) -> list[RiskItem]:
                     recommendation_th=item.get("recommendation_th", ""),
                     recommendation_en=item.get("recommendation_en", ""),
                     category=item.get("category", "general"),
-                    legal_refs=[
-                        LegalReference(**ref)
-                        for ref in item.get("legal_refs", [])
-                        if isinstance(ref, dict)
-                    ],
+                    legal_refs=_parse_legal_refs(item.get("legal_refs", [])),
                 )
             )
         except Exception as e:
             logger.warning("Skipping malformed risk item: %s", str(e))
     return results
+
+
+def _parse_legal_refs(raw_refs: object) -> list[LegalReference]:
+    """Parse legal references defensively so nullable fields do not drop full risk items."""
+    if not isinstance(raw_refs, list):
+        return []
+
+    parsed: list[LegalReference] = []
+    for ref in raw_refs:
+        if not isinstance(ref, dict):
+            continue
+        try:
+            parsed.append(
+                LegalReference(
+                    law_name=str(ref.get("law_name") or "ไม่ระบุ"),
+                    section=str(ref.get("section") or "ไม่ระบุ"),
+                    summary=str(ref.get("summary") or ""),
+                    relevance=str(ref.get("relevance") or ""),
+                )
+            )
+        except Exception as e:
+            logger.warning("Skipping malformed legal reference: %s", str(e))
+    return parsed
 
 
 def _parse_mismatches(items: list[dict]) -> list[ChatContractMismatch]:
@@ -472,3 +513,97 @@ def _parse_mismatches(items: list[dict]) -> list[ChatContractMismatch]:
         except Exception as e:
             logger.warning("Skipping malformed mismatch item: %s", str(e))
     return results
+
+
+def _attach_risk_anchors(risks: list[RiskItem], ocr_layout: Optional[dict]) -> None:
+    """
+    Best-effort mapping from risk text to OCR layout components.
+
+    Each matched risk receives 1-3 normalized boxes for UI highlighting.
+    """
+    if not ocr_layout:
+        return
+
+    pages = ocr_layout.get("pages", []) if isinstance(ocr_layout, dict) else []
+    if not pages:
+        return
+
+    flattened: list[dict] = []
+    for page in pages:
+        page_number = int(page.get("page_number", 1))
+        page_width = _safe_float(page.get("page_width"), 1.0)
+        page_height = _safe_float(page.get("page_height"), 1.0)
+        for comp in page.get("components", []):
+            text = str(comp.get("text") or "").strip()
+            bbox = comp.get("bbox") or []
+            if not text or len(bbox) != 4:
+                continue
+            x0, y0, x1, y1 = [_safe_float(v, 0.0) for v in bbox]
+            width = max(0.0, x1 - x0)
+            height = max(0.0, y1 - y0)
+            if width <= 0 or height <= 0:
+                continue
+
+            flattened.append(
+                {
+                    "page": page_number,
+                    "text": text,
+                    "bbox": [x0, y0, width, height],
+                    "page_width": page_width,
+                    "page_height": page_height,
+                    "match_text": text.lower(),
+                }
+            )
+
+    if not flattened:
+        return
+
+    for risk in risks:
+        q_parts = [
+            (risk.title_en or "").strip(),
+            (risk.title_th or "").strip(),
+            (risk.clause_ref or "").strip(),
+            (risk.description_en or "").strip()[:120],
+            (risk.description_th or "").strip()[:120],
+        ]
+        query_terms = [q.lower() for q in q_parts if q]
+
+        scored: list[tuple[int, dict]] = []
+        for comp in flattened:
+            score = 0
+            comp_text = comp["match_text"]
+            for term in query_terms:
+                if term and term in comp_text:
+                    score += min(8, len(term.split()))
+            if score > 0:
+                scored.append((score, comp))
+
+        if not scored:
+            continue
+
+        scored.sort(key=lambda pair: pair[0], reverse=True)
+        top = scored[:3]
+        anchors: list[RiskAnchor] = []
+        for _, comp in top:
+            x0, y0, w, h = comp["bbox"]
+            page_w = max(comp["page_width"], 1.0)
+            page_h = max(comp["page_height"], 1.0)
+            anchors.append(
+                RiskAnchor(
+                    page=int(comp["page"]),
+                    x=max(0.0, min(1.0, x0 / page_w)),
+                    y=max(0.0, min(1.0, y0 / page_h)),
+                    width=max(0.0, min(1.0, w / page_w)),
+                    height=max(0.0, min(1.0, h / page_h)),
+                    snippet=comp["text"][:220],
+                )
+            )
+
+        risk.anchors = anchors
+
+
+def _safe_float(value: object, default: float) -> float:
+    try:
+        return float(value)
+    except Exception:
+        return default

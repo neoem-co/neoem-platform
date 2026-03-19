@@ -154,3 +154,37 @@ class OCRService:
             logger.error("iApp OCR also failed: %s — returning PyMuPDF result", str(e))
             result["fallback_error"] = str(e)
             return result
+
+    async def extract_layout(self, file_bytes: bytes, filename: str = "document.pdf") -> dict:
+        """
+        Extract layout blocks for highlight overlays.
+
+        Strategy:
+        1. For PDFs: use PyMuPDF block extraction first (fast, local)
+        2. Fallback to iApp layout endpoint when local extraction fails/empty
+        """
+        layout_pages = []
+        try:
+            if filename.lower().endswith(".pdf"):
+                layout_pages = self._pymupdf.extract_with_layout(file_bytes)
+            if layout_pages:
+                return {
+                    "pages": layout_pages,
+                    "method": "pymupdf_layout",
+                }
+        except Exception as e:
+            logger.warning("PyMuPDF layout extraction failed: %s", str(e))
+
+        try:
+            iapp_layout = await self._iapp.extract_layout(file_bytes, filename)
+            return {
+                "pages": iapp_layout.get("pages", []),
+                "method": iapp_layout.get("method", "iapp_ocr_layout"),
+            }
+        except Exception as e:
+            logger.warning("iApp layout extraction failed: %s", str(e))
+
+        return {
+            "pages": [],
+            "method": "none",
+        }

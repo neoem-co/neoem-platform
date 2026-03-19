@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import logging
 import os
+import re
 from typing import Optional
 
 from fpdf import FPDF
@@ -14,6 +15,14 @@ from fpdf import FPDF
 from models.contract_draft import ContractArticle, PartyInfo
 
 logger = logging.getLogger(__name__)
+
+_ZWSP = "\u200b"
+_THAI_CHAR_RE = re.compile(r"[\u0E00-\u0E7F]")
+
+try:
+    from pythainlp.tokenize import word_tokenize as _thai_word_tokenize
+except Exception:
+    _thai_word_tokenize = None
 
 # ── Font paths ───────────────────────────────────────────────────────────────
 _FONT_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "fonts")
@@ -31,7 +40,6 @@ _CONTENT_W = _A4_W - _MARGIN_LEFT - _MARGIN_RIGHT
 
 # Thai typesetting constants
 _LINE_HEIGHT = 7          # mm per line (comfortable 1.0 spacing for 14pt)
-_PARA_INDENT = 12.5       # mm first-line indent (≈1 tab, standard Thai ย่อหน้า)
 _SECTION_GAP = 4          # mm gap between articles
 _HEADING_GAP_BEFORE = 6   # mm gap before article heading
 _HEADING_GAP_AFTER = 1    # mm gap after article heading
@@ -92,10 +100,8 @@ def generate_contract_pdf(
     # ── Preamble ─────────────────────────────────────────────────────────
     if preamble:
         pdf.set_font("Sarabun", "", 14)
-        for para_text in preamble.split("\n"):
-            para_text = para_text.strip()
-            if para_text:
-                _write_indented_para(pdf, para_text)
+        for para_text in _iter_paragraphs(preamble):
+            _write_preamble_para(pdf, para_text)
         pdf.ln(_SECTION_GAP)
 
     # ── Articles ─────────────────────────────────────────────────────────
@@ -115,11 +121,7 @@ def generate_contract_pdf(
         # Article body — justified with proper Thai indentation
         pdf.set_font("Sarabun", "", 14)
         body = article.body_th.strip()
-        for para in body.split("\n"):
-            para = para.strip()
-            if not para:
-                pdf.ln(_LINE_HEIGHT * 0.5)  # half-line gap for empty lines
-                continue
+        for para in _iter_paragraphs(body):
             _write_indented_para(pdf, para)
         pdf.ln(_SECTION_GAP)
 
@@ -166,10 +168,81 @@ def generate_contract_pdf(
 import re as _re
 
 _NUMBERED_PREFIX = _re.compile(
-    r"^(?:\d+[\.\)]|"       # 1. 1) 1.1 etc.
+    r"^(?:ข้อ\s*\d+|"        # ข้อ 1, ข้อ2
+    r"\d+(?:\.\d+)*[\.)]?|" # 1, 1.1, 1)
     r"\([ก-ฮa-zA-Z]\)|"    # (ก) (a)
     r"[ก-ฮ][\.)])"         # ก. ก)
 )
+
+
+def _iter_paragraphs(text: str) -> list[str]:
+    """Normalize text while preserving legal list/new-line structure."""
+    if not text:
+        return []
+    normalized = text.replace("\r\n", "\n").replace("\r", "\n")
+    blocks = _re.split(r"\n\s*\n+", normalized)
+    paragraphs: list[str] = []
+
+    for block in blocks:
+        lines = [part.strip() for part in block.split("\n") if part.strip()]
+        if not lines:
+            continue
+
+        buffer: list[str] = []
+        for line in lines:
+            line = _re.sub(r"[ \t]{2,}", " ", line).strip()
+            if not line:
+                continue
+
+            if _NUMBERED_PREFIX.match(line):
+                if buffer:
+                    paragraphs.append(" ".join(buffer).strip())
+                    buffer = []
+                paragraphs.append(line)
+            else:
+                buffer.append(line)
+
+        if buffer:
+            paragraphs.append(" ".join(buffer).strip())
+
+    return paragraphs
+
+
+def _resolve_pdf_align(text: str) -> str:
+    """Use smart justify/left hybrid to reduce awkward Thai spacing."""
+    spaces = text.count(" ")
+    thai_chars = len(_THAI_CHAR_RE.findall(text))
+    thai_ratio = thai_chars / max(len(text), 1)
+
+    # For Thai-heavy lines with very few spaces, forced justify can stretch unnaturally.
+    if thai_ratio >= 0.35 and spaces < 4:
+        return "L"
+    return "J"
+
+
+def _inject_thai_break_opportunities(text: str) -> str:
+    """Insert zero-width spaces between Thai tokens to improve wrapping."""
+    if not text or _thai_word_tokenize is None:
+        return text
+
+    if len(_THAI_CHAR_RE.findall(text)) < 6:
+        return text
+
+    tokens = _thai_word_tokenize(text, keep_whitespace=True)
+    if not tokens:
+        return text
+
+    out: list[str] = []
+    for i, token in enumerate(tokens):
+        out.append(token)
+        if i == len(tokens) - 1:
+            continue
+        next_token = tokens[i + 1]
+        if token.isspace() or next_token.isspace():
+            continue
+        if _THAI_CHAR_RE.search(token) and _THAI_CHAR_RE.search(next_token):
+            out.append(_ZWSP)
+    return "".join(out)
 
 
 def _write_indented_para(pdf: FPDF, text: str):
@@ -177,21 +250,28 @@ def _write_indented_para(pdf: FPDF, text: str):
     Plain paragraphs get Thai-style ย่อหน้า first-line indent.
     Numbered/lettered sub-items (1.1, (ก), etc.) are written flush-left.
     """
+    prepared = _inject_thai_break_opportunities(text)
     if _NUMBERED_PREFIX.match(text):
         # Sub-item — no indent, full content width
         pdf.multi_cell(
-            w=_CONTENT_W, h=_LINE_HEIGHT, text=text,
+            w=_CONTENT_W, h=_LINE_HEIGHT, text=prepared,
             align="J", new_x="LMARGIN", new_y="NEXT",
         )
     else:
-        # New paragraph — apply ย่อหน้า first-line indent
-        x0 = pdf.get_x()
-        pdf.set_x(x0 + _PARA_INDENT)
-        first_line_w = _CONTENT_W - _PARA_INDENT
+        # Body paragraph — no first-line indentation
         pdf.multi_cell(
-            w=first_line_w, h=_LINE_HEIGHT, text=text,
-            align="J", new_x="LMARGIN", new_y="NEXT",
+            w=_CONTENT_W, h=_LINE_HEIGHT, text=prepared,
+            align=_resolve_pdf_align(text), new_x="LMARGIN", new_y="NEXT",
         )
+
+
+def _write_preamble_para(pdf: FPDF, text: str):
+    """Write preamble without first-line indent and with safe justification."""
+    prepared = _inject_thai_break_opportunities(text)
+    pdf.multi_cell(
+        w=_CONTENT_W, h=_LINE_HEIGHT, text=prepared,
+        align=_resolve_pdf_align(text), new_x="LMARGIN", new_y="NEXT",
+    )
 
 
 def _draw_sig_pair(pdf: FPDF, col_w: float, left: PartyInfo, right: PartyInfo):

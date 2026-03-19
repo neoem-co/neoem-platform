@@ -20,6 +20,7 @@ import { AILegalWorkspace } from "@/components/legal/AILegalWorkspace";
 import { TOSModal } from "@/components/chat/TOSModal";
 import { MilestoneTracker } from "@/components/deal/MilestoneTracker";
 import { StickyPaymentWidget } from "@/components/deal/StickyPaymentWidget";
+import { extractContext, type DealSheet } from "@/lib/ai-api";
 import { getFactoryBySlug, getFactoryChatHistory } from "@/lib/factory-data";
 import factory1 from "@/public/assets/factory-1.jpg";
 import factory2 from "@/public/assets/factory-2.jpg";
@@ -96,6 +97,7 @@ const DealRoom = () => {
     const [trackerResetKey, setTrackerResetKey] = useState(0);
     const [showLegalWorkspace, setShowLegalWorkspace] = useState(false);
     const [legalWorkspaceTab, setLegalWorkspaceTab] = useState<"draft" | "risk" | "history" | "esign">("draft");
+    const [liveDealSheet, setLiveDealSheet] = useState<DealSheet | null>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -116,6 +118,36 @@ const DealRoom = () => {
             completedActions,
         }));
     }, [completedActions, depositPaid, riskAlert, slug, tosAccepted]);
+
+    useEffect(() => {
+        if (!factory) return;
+        let active = true;
+        const timer = window.setTimeout(async () => {
+            try {
+                const context = await extractContext(
+                    messages.map((m) => ({
+                        sender: m.sender,
+                        message: m.message,
+                        timestamp: m.timestamp,
+                    })),
+                    factory.name,
+                    factory.id,
+                );
+                if (active) {
+                    setLiveDealSheet(context.deal_sheet);
+                }
+            } catch {
+                if (active) {
+                    setLiveDealSheet(null);
+                }
+            }
+        }, 500);
+
+        return () => {
+            active = false;
+            window.clearTimeout(timer);
+        };
+    }, [factory?.id, factory?.name, messages]);
 
     const markActionCompleted = (action: string) => {
         setCompletedActions((prev) => (prev.includes(action) ? prev : [...prev, action]));
@@ -245,10 +277,10 @@ const DealRoom = () => {
                         </CardTitle>
                     </CardHeader>
                     <CardContent className="py-3 text-sm text-muted-foreground">
-                        <p><strong className="text-foreground">Product:</strong> Sunscreen SPF50 (Mousse)</p>
-                        <p><strong className="text-foreground">Quantity:</strong> 1,000 pieces</p>
-                        <p><strong className="text-foreground">Total:</strong> ฿120,000</p>
-                        <p><strong className="text-foreground">Delivery:</strong> 4-6 weeks</p>
+                        <p><strong className="text-foreground">Product:</strong> {liveDealSheet?.product?.name || "-"}</p>
+                        <p><strong className="text-foreground">Quantity:</strong> {liveDealSheet?.product?.quantity ? liveDealSheet.product.quantity.toLocaleString() : "-"} {liveDealSheet?.product?.unit || ""}</p>
+                        <p><strong className="text-foreground">Total:</strong> {typeof liveDealSheet?.total_price === "number" ? `฿${liveDealSheet.total_price.toLocaleString()}` : "-"}</p>
+                        <p><strong className="text-foreground">Delivery:</strong> {liveDealSheet?.delivery_date || liveDealSheet?.delivery_weeks || "-"}</p>
                     </CardContent>
                 </Card>
 

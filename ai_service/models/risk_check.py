@@ -111,6 +111,16 @@ class LegalReference(BaseModel):
     relevance: str
 
 
+class RiskAnchor(BaseModel):
+    """Normalized highlight box linked to a risk item."""
+    page: int = Field(ge=1)
+    x: float = Field(ge=0, le=1)
+    y: float = Field(ge=0, le=1)
+    width: float = Field(ge=0, le=1)
+    height: float = Field(ge=0, le=1)
+    snippet: str = ""
+
+
 # ─── Response Models ─────────────────────────────────────────────────────────
 
 
@@ -137,6 +147,7 @@ class RiskItem(BaseModel):
             "| 'termination' | 'penalty' | 'delivery' | 'quality' | 'general'"
         ),
     )
+    anchors: list[RiskAnchor] = Field(default_factory=list)
 
 
 class ChatContractMismatch(BaseModel):

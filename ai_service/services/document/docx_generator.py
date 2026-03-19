@@ -7,10 +7,11 @@ from __future__ import annotations
 
 import io
 import logging
+import re
 from typing import Optional
 
 from docx import Document as DocxDocument
-from docx.shared import Pt, Cm, Inches, RGBColor
+from docx.shared import Pt, Cm, RGBColor
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 
 from models.contract_draft import ContractArticle, PartyInfo
@@ -20,11 +21,63 @@ logger = logging.getLogger(__name__)
 # Thai font to use in DOCX — the system must have it installed.
 _THAI_DOCX_FONT = "Angsana New"
 
+_NUMBERED_PREFIX = re.compile(
+    r"^(?:ข้อ\s*\d+|"          # ข้อ 1, ข้อ2
+    r"\d+(?:\.\d+)*[\.)]?|"   # 1, 1.1, 1)
+    r"\([ก-ฮa-zA-Z0-9]+\)|"    # (ก) (a) (1)
+    r"[ก-ฮ][\.)])"              # ก. ก)
+)
+
+
+def _is_structured_line(text: str) -> bool:
+    return bool(_NUMBERED_PREFIX.match(text.strip()))
+
+
+def _iter_paragraphs(text: str) -> list[str]:
+    """Normalize text while preserving legal list/new-line structure."""
+    if not text:
+        return []
+    normalized = text.replace("\r\n", "\n").replace("\r", "\n")
+    blocks = re.split(r"\n\s*\n+", normalized)
+    paragraphs: list[str] = []
+
+    for block in blocks:
+        lines = [part.strip() for part in block.split("\n") if part.strip()]
+        if not lines:
+            continue
+
+        buffer: list[str] = []
+        for line in lines:
+            line = re.sub(r"[ \t]{2,}", " ", line).strip()
+            if not line:
+                continue
+
+            if _is_structured_line(line):
+                if buffer:
+                    paragraphs.append(" ".join(buffer).strip())
+                    buffer = []
+                paragraphs.append(line)
+            else:
+                buffer.append(line)
+
+        if buffer:
+            paragraphs.append(" ".join(buffer).strip())
+
+    return paragraphs
+
 
 def _set_run_font(run, size: int, font_name: str = _THAI_DOCX_FONT):
     """Set font name and size on a python-docx Run."""
     run.font.name = font_name
     run.font.size = Pt(size)
+
+
+def _resolve_paragraph_alignment(text: str):
+    """Prefer Thai-justify, fallback when text has too few natural break points."""
+    thai_justify = getattr(WD_ALIGN_PARAGRAPH, "THAI_JUSTIFY", WD_ALIGN_PARAGRAPH.JUSTIFY)
+    if text.count(" ") >= 2:
+        return thai_justify
+    return WD_ALIGN_PARAGRAPH.LEFT
 
 
 def generate_contract_docx(
@@ -64,14 +117,13 @@ def generate_contract_docx(
 
     # ── Preamble ─────────────────────────────────────────────────────────
     if preamble:
-        for para_text in preamble.split("\n"):
-            para_text = para_text.strip()
-            if para_text:
-                preamble_para = doc.add_paragraph(para_text)
-                preamble_para.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
-                preamble_para.paragraph_format.first_line_indent = Cm(1.5)
-                for run in preamble_para.runs:
-                    _set_run_font(run, 14)
+        for para_text in _iter_paragraphs(preamble):
+            preamble_para = doc.add_paragraph(para_text)
+            preamble_para.alignment = _resolve_paragraph_alignment(para_text)
+            preamble_para.paragraph_format.first_line_indent = Cm(0)
+            preamble_para.paragraph_format.space_after = Pt(3)
+            for run in preamble_para.runs:
+                _set_run_font(run, 14)
         doc.add_paragraph()
 
     # ── Articles ─────────────────────────────────────────────────────────
@@ -86,21 +138,15 @@ def generate_contract_docx(
             _set_run_font(run, 14)
 
         # Article body
-        body_para = doc.add_paragraph(article.body_th)
-        body_para.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
-        body_para.paragraph_format.first_line_indent = Cm(1.5)
-        for run in body_para.runs:
-            _set_run_font(run, 14)
+        for para_text in _iter_paragraphs(article.body_th):
+            body_para = doc.add_paragraph(para_text)
+            body_para.alignment = _resolve_paragraph_alignment(para_text)
+            body_para.paragraph_format.first_line_indent = Cm(0)
+            body_para.paragraph_format.space_after = Pt(2)
+            for run in body_para.runs:
+                _set_run_font(run, 14)
 
-        # English translation (if available)
-        if article.body_en:
-            en_para = doc.add_paragraph(article.body_en)
-            en_para.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
-            en_para.paragraph_format.first_line_indent = Cm(1.5)
-            for run in en_para.runs:
-                _set_run_font(run, 12)
-                run.font.color.rgb = RGBColor(0x66, 0x66, 0x66)
-                run.italic = True
+        # Keep DOCX content aligned with PDF output: Thai-only body content.
 
     # ── Signature block ──────────────────────────────────────────────────
     doc.add_paragraph()
