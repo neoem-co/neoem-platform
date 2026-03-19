@@ -2,12 +2,13 @@
 
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
+import type { StaticImageData } from "next/image";
 import { useLocale } from "next-intl";
 import { useParams, useRouter } from "next/navigation";
 import {
     Send, Paperclip, FileText, Download, Bot,
-    Sparkles, FileCheck, AlertTriangle, ChevronRight, X,
-    CreditCard, ArrowLeft, PanelRightClose, PanelRight,
+    Sparkles, FileCheck, AlertTriangle, ChevronRight,
+    ArrowLeft, PanelRightClose, PanelRight,
 } from "lucide-react";
 import { Navbar } from "@/components/layout/Navbar";
 import { Button } from "@/components/ui/button";
@@ -19,14 +20,14 @@ import { AILegalWorkspace } from "@/components/legal/AILegalWorkspace";
 import { TOSModal } from "@/components/chat/TOSModal";
 import { MilestoneTracker } from "@/components/deal/MilestoneTracker";
 import { StickyPaymentWidget } from "@/components/deal/StickyPaymentWidget";
-import factoriesData from "@/data/factories.json";
+import { getFactoryBySlug, getFactoryChatHistory } from "@/lib/factory-data";
 import factory1 from "@/public/assets/factory-1.jpg";
 import factory2 from "@/public/assets/factory-2.jpg";
 import factory3 from "@/public/assets/factory-3.jpg";
 import factory4 from "@/public/assets/factory-4.jpg";
 import factory5 from "@/public/assets/factory-5.jpg";
 
-const factoryImages: Record<string, any> = {
+const factoryImages: Record<string, StaticImageData> = {
     "factory-1": factory1, "factory-2": factory2, "factory-3": factory3,
     "factory-4": factory4, "factory-5": factory5,
 };
@@ -39,21 +40,60 @@ interface Message {
     attachment?: { type: string; name: string; size: string };
 }
 
+interface RiskAlertState {
+    level: "critical" | "high" | "medium" | "low" | "safe";
+    summary: string;
+    highCount: number;
+    mediumCount: number;
+    lowCount: number;
+}
+
+interface DealRoomState {
+    tosAccepted: boolean;
+    depositPaid: boolean;
+    riskAlert: RiskAlertState | null;
+    completedActions: string[];
+}
+
+function loadDealRoomState(slug: string): DealRoomState {
+    if (typeof window === "undefined") {
+        return { tosAccepted: false, depositPaid: false, riskAlert: null, completedActions: [] };
+    }
+
+    try {
+        const raw = window.localStorage.getItem(`neoem:deal-room:${slug}`);
+        if (!raw) return { tosAccepted: false, depositPaid: false, riskAlert: null, completedActions: [] };
+        const parsed = JSON.parse(raw) as DealRoomState;
+        return {
+            tosAccepted: parsed.tosAccepted ?? false,
+            depositPaid: parsed.depositPaid ?? false,
+            riskAlert: parsed.riskAlert ?? null,
+            completedActions: parsed.completedActions ?? [],
+        };
+    } catch {
+        return { tosAccepted: false, depositPaid: false, riskAlert: null, completedActions: [] };
+    }
+}
+
 const DealRoom = () => {
     const params = useParams();
     const slug = params.slug as string;
     const router = useRouter();
-    const factory = factoriesData.factories.find((f) => f.slug === slug);
     const locale = useLocale();
-    const [showTOS, setShowTOS] = useState(true);
-    const [tosAccepted, setTosAccepted] = useState(false);
-    const [messages, setMessages] = useState<Message[]>([...factoriesData.chatHistory as Message[]]);
+    const isThai = locale.startsWith("th");
+    const factory = getFactoryBySlug(slug, locale);
+    const [showTOS, setShowTOS] = useState(() => !loadDealRoomState(slug).tosAccepted);
+    const [tosAccepted, setTosAccepted] = useState(() => loadDealRoomState(slug).tosAccepted);
+    const [messages, setMessages] = useState<Message[]>([...getFactoryChatHistory(locale) as Message[]]);
     const [inputValue, setInputValue] = useState("");
     const [showPaymentModal, setShowPaymentModal] = useState(false);
     const [showContractWarning, setShowContractWarning] = useState(false);
     const [mobileAiOpen, setMobileAiOpen] = useState(false);
     const [aiPanelOpen, setAiPanelOpen] = useState(true);
-    const [depositPaid, setDepositPaid] = useState(false);
+    const [depositPaid, setDepositPaid] = useState(() => loadDealRoomState(slug).depositPaid);
+    const [riskAlert, setRiskAlert] = useState<RiskAlertState | null>(() => loadDealRoomState(slug).riskAlert);
+    const [completedActions, setCompletedActions] = useState<string[]>(() => loadDealRoomState(slug).completedActions);
+    const [trackerResetKey, setTrackerResetKey] = useState(0);
     const [showLegalWorkspace, setShowLegalWorkspace] = useState(false);
     const [legalWorkspaceTab, setLegalWorkspaceTab] = useState<"draft" | "risk" | "history" | "esign">("draft");
     const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -66,6 +106,32 @@ const DealRoom = () => {
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }, [messages]);
+
+    useEffect(() => {
+        if (typeof window === "undefined") return;
+        window.localStorage.setItem(`neoem:deal-room:${slug}`, JSON.stringify({
+            tosAccepted,
+            depositPaid,
+            riskAlert,
+            completedActions,
+        }));
+    }, [completedActions, depositPaid, riskAlert, slug, tosAccepted]);
+
+    const markActionCompleted = (action: string) => {
+        setCompletedActions((prev) => (prev.includes(action) ? prev : [...prev, action]));
+    };
+
+    const resetDealProgress = () => {
+        if (typeof window !== "undefined") {
+            window.localStorage.removeItem(`neoem:milestones:${slug}`);
+        }
+        setDepositPaid(false);
+        setRiskAlert(null);
+        setCompletedActions([]);
+        setShowPaymentModal(false);
+        setShowContractWarning(false);
+        setTrackerResetKey((prev) => prev + 1);
+    };
 
     const handleTOSAccept = () => { setTosAccepted(true); setShowTOS(false); };
 
@@ -82,6 +148,7 @@ const DealRoom = () => {
     }
 
     const imageUrl = factoryImages[factory.image] || factory1;
+    const imageSrc = typeof imageUrl === "string" ? imageUrl : imageUrl.src;
 
     const handleSend = () => {
         if (!inputValue.trim() || !tosAccepted) return;
@@ -110,11 +177,19 @@ const DealRoom = () => {
     };
 
     const handlePayDeposit = () => {
+        if (riskAlert && (riskAlert.level === "critical" || riskAlert.level === "high")) {
+            setShowContractWarning(true);
+            return;
+        }
         if (hasContractInChat) setShowContractWarning(true);
         else setShowPaymentModal(true);
     };
 
-    const handlePaymentSuccess = () => { setShowPaymentModal(false); setDepositPaid(true); };
+    const handlePaymentSuccess = () => {
+        setShowPaymentModal(false);
+        setDepositPaid(true);
+        router.push(`/${locale}/legal-nudge`);
+    };
 
     const handleMilestoneAction = (action: string) => {
         // Handle preview actions
@@ -133,11 +208,35 @@ const DealRoom = () => {
         }
     };
 
-    // Right panel content
-    const SidePanelContent = () => (
+    const sidePanelContent = (
         <div className="flex-1 flex flex-col overflow-hidden">
             <div className="flex-1 p-4 space-y-4 overflow-y-auto scrollbar-thin">
-                <MilestoneTracker onAction={handleMilestoneAction} />
+                <MilestoneTracker
+                    key={trackerResetKey}
+                    onAction={handleMilestoneAction}
+                    storageKey={`neoem:milestones:${slug}`}
+                    riskAlert={riskAlert}
+                    depositPaid={depositPaid}
+                    completedActions={completedActions}
+                />
+
+                {riskAlert && (riskAlert.level === "critical" || riskAlert.level === "high") && (
+                    <Card className="border-destructive/30 bg-destructive/5">
+                        <CardHeader className="py-3">
+                            <CardTitle className="text-sm flex items-center gap-2 text-destructive">
+                                <AlertTriangle className="h-4 w-4" /> {isThai ? "คำเตือนก่อนชำระเงิน" : "Payment Warning"}
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent className="py-3 text-sm text-muted-foreground">
+                            <p className="text-destructive font-medium">
+                                {isThai
+                                    ? "ตรวจพบข้อสัญญาที่มีความเสี่ยงสูงจากการรีวิวสัญญา"
+                                    : "High-risk clauses were detected in the contract review."}
+                            </p>
+                            <p className="mt-1">{riskAlert.summary}</p>
+                        </CardContent>
+                    </Card>
+                )}
 
                 <Card>
                     <CardHeader className="py-3">
@@ -166,11 +265,20 @@ const DealRoom = () => {
                     </Button>
                 </div>
 
-                <Card className="bg-secondary/30">
-                    <CardContent className="py-3">
+                <Card className="bg-secondary/30 border-dashed">
+                    <CardContent className="py-3 space-y-3">
                         <p className="text-xs text-muted-foreground">
                             💡 <strong>Tip:</strong> Both you and the factory see the same milestone status in real-time — full transparency.
                         </p>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="w-full justify-center text-xs"
+                            onClick={resetDealProgress}
+                        >
+                            Reset Demo to Step 3
+                        </Button>
                     </CardContent>
                 </Card>
             </div>
@@ -180,6 +288,13 @@ const DealRoom = () => {
                 amount={depositAmount}
                 status={depositPaid ? "paid" : "pending"}
                 onPay={handlePayDeposit}
+                warningMessage={
+                    riskAlert && (riskAlert.level === "critical" || riskAlert.level === "high")
+                        ? (isThai
+                            ? "พบประเด็นความเสี่ยงสูงในสัญญา กรุณาตรวจคำเตือนทางกฎหมายก่อนชำระเงิน"
+                            : "High-risk contract issues found. Review the legal warnings before releasing payment.")
+                        : null
+                }
             />
         </div>
     );
@@ -195,7 +310,7 @@ const DealRoom = () => {
                     <div className="flex items-center gap-3">
                         <Link href={`/${locale}/factory/${slug}`}><Button variant="ghost" size="icon"><ArrowLeft className="h-5 w-5" /></Button></Link>
                         <div className="flex items-center gap-2">
-                            <div className="w-8 h-8 rounded-full overflow-hidden"><img src={imageUrl.src || imageUrl} alt={factory.name} className="w-full h-full object-cover" /></div>
+                            <div className="w-8 h-8 rounded-full overflow-hidden"><img src={imageSrc} alt={factory.name} className="w-full h-full object-cover" /></div>
                             <div>
                                 <h2 className="font-semibold text-foreground text-sm">{factory.name}</h2>
                                 <p className="text-[10px] text-success">● Online</p>
@@ -206,7 +321,7 @@ const DealRoom = () => {
                         <SheetTrigger asChild><Button variant="outline" size="sm"><Bot className="h-4 w-4 mr-1" /> Timeline</Button></SheetTrigger>
                         <SheetContent side="bottom" className="h-[85vh] flex flex-col">
                             <SheetHeader><SheetTitle className="flex items-center gap-2"><Bot className="h-5 w-5 text-primary" /> AI Middleman Hub</SheetTitle></SheetHeader>
-                            <SidePanelContent />
+                            {sidePanelContent}
                         </SheetContent>
                     </Sheet>
                 </div>
@@ -230,7 +345,7 @@ const DealRoom = () => {
                     {/* Desktop Chat Header */}
                     <div className="hidden lg:flex p-4 border-b items-center justify-between bg-card">
                         <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-full overflow-hidden"><img src={imageUrl.src || imageUrl} alt={factory.name} className="w-full h-full object-cover" /></div>
+                            <div className="w-10 h-10 rounded-full overflow-hidden"><img src={imageSrc} alt={factory.name} className="w-full h-full object-cover" /></div>
                             <div>
                                 <h2 className="font-semibold text-foreground">{factory.name}</h2>
                                 <p className="text-xs text-success">● Online</p>
@@ -294,7 +409,7 @@ const DealRoom = () => {
                                 <h3 className="font-semibold text-foreground text-sm">AI Middleman Hub</h3>
                             </div>
                         </div>
-                        <SidePanelContent />
+                        {sidePanelContent}
                     </aside>
                 )}
             </div>
@@ -318,6 +433,17 @@ const DealRoom = () => {
                     rating: factory.rating,
                     verified: factory.verified,
                 }}
+                onDraftComplete={() => markActionCompleted("draft")}
+                onRiskAnalysisComplete={(result) => {
+                    markActionCompleted("risk");
+                    setRiskAlert({
+                        level: result.overallRisk,
+                        summary: result.summary,
+                        highCount: result.highCount,
+                        mediumCount: result.mediumCount,
+                        lowCount: result.lowCount,
+                    });
+                }}
             />
 
             <PaymentModal
@@ -333,6 +459,8 @@ const DealRoom = () => {
                 onClose={() => setShowContractWarning(false)}
                 onSkip={() => { setShowContractWarning(false); setShowPaymentModal(true); }}
                 onReview={() => { setShowContractWarning(false); openLegalWorkspace("risk"); }}
+                riskLevel={riskAlert?.level ?? null}
+                riskSummary={riskAlert?.summary ?? null}
             />
         </div>
     );

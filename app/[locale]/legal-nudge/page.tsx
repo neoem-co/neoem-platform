@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { useLocale } from "next-intl";
 import { PartyPopper, Building2, FileSearch, ArrowRight, ChevronRight, Rocket } from "lucide-react";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
@@ -6,6 +9,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 const LegalNudge = () => {
+    const locale = useLocale();
+
     return (
         <div className="min-h-screen bg-background flex flex-col">
             <Navbar />
@@ -47,7 +52,7 @@ const LegalNudge = () => {
                                                 Required for FDA registration and B2B contracts
                                             </p>
                                         </div>
-                                        <Link href="/brand-launchpad" className="w-full sm:w-auto">
+                                        <Link href={`/${locale}/brand-launchpad`} className="w-full sm:w-auto">
                                             <Button className="w-full sm:w-auto">
                                                 Fast Track
                                                 <ArrowRight className="h-4 w-4 ml-2" />
@@ -67,7 +72,7 @@ const LegalNudge = () => {
                                                 Verify your brand name is available for registration
                                             </p>
                                         </div>
-                                        <Link href="/brand-launchpad" className="w-full sm:w-auto">
+                                        <Link href={`/${locale}/brand-launchpad`} className="w-full sm:w-auto">
                                             <Button variant="outline" className="w-full sm:w-auto">
                                                 Check Now
                                                 <ArrowRight className="h-4 w-4 ml-2" />
@@ -79,13 +84,41 @@ const LegalNudge = () => {
 
                             <div className="pt-4">
                                 <Link
-                                    href="/dashboard"
+                                    href={`/${locale}/dashboard`}
                                     className="text-sm text-muted-foreground hover:text-foreground transition-colors inline-flex items-center gap-1"
                                 >
                                     Continue as Individual (Not Recommended)
                                     <ChevronRight className="h-4 w-4" />
                                 </Link>
                             </div>
+                        </CardContent>
+                    </Card>
+
+                    <Card className="border-success/30 bg-success/5 text-left">
+                        <CardHeader className="pb-2">
+                            <CardTitle className="text-lg">Check your progress here</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <p className="text-sm text-muted-foreground">
+                                Your deposit is complete. You can monitor production progress, payment milestones, legal updates, and delivery status from your dashboard anytime.
+                            </p>
+                            <div className="grid gap-2">
+                                {[
+                                    "Deposit payment confirmed",
+                                    "Factory contract under review",
+                                    "Production timeline updates in one place",
+                                ].map((item) => (
+                                    <div key={item} className="rounded-lg border bg-card px-4 py-3 text-sm text-foreground">
+                                        {item}
+                                    </div>
+                                ))}
+                            </div>
+                            <Link href={`/${locale}/dashboard`} className="inline-flex">
+                                <Button>
+                                    Go to Dashboard
+                                    <ChevronRight className="h-4 w-4 ml-2" />
+                                </Button>
+                            </Link>
                         </CardContent>
                     </Card>
 
@@ -101,7 +134,7 @@ const LegalNudge = () => {
                                     Complete your brand setup while waiting for production
                                 </p>
                             </div>
-                            <Link href="/brand-launchpad">
+                            <Link href={`/${locale}/brand-launchpad`}>
                                 <Button className="w-full sm:w-auto">
                                     Brand Launchpad
                                     <Rocket className="h-4 w-4 ml-2" />
@@ -112,12 +145,12 @@ const LegalNudge = () => {
 
                     {/* Quick Actions */}
                     <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
-                        <Link href="/dashboard" className="w-full sm:w-auto">
+                        <Link href={`/${locale}/dashboard`} className="w-full sm:w-auto">
                             <Button size="lg" className="w-full">
                                 Go to Dashboard
                             </Button>
                         </Link>
-                        <Link href="/factories" className="w-full sm:w-auto">
+                        <Link href={`/${locale}/factories`} className="w-full sm:w-auto">
                             <Button variant="outline" size="lg" className="w-full">
                                 Browse More Factories
                             </Button>

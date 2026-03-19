@@ -1,0 +1,1592 @@
+{
+    "factories": [
+        {
+            "id": "1",
+            "name": "บริษัท ไอ.แอล.ซี. จำกัด (มหาชน)",
+            "slug": "ilc-cosmetics",
+            "verified": true,
+            "image": "factory-1",
+            "location": "กรุงเทพมหานคร, ประเทศไทย",
+            "category": "เครื่องสำอาง",
+            "tags": [
+                "ผู้นำอุตสาหกรรม",
+                "50+ ปี",
+                "ระดับโลก"
+            ],
+            "rating": 4.9,
+            "reviewCount": 310,
+            "onTimeDelivery": 99,
+            "priceLevel": 4,
+            "moq": 1000,
+            "description": "ด้วยประสบการณ์กว่า 51 ปี ILC เป็นหนึ่งในผู้ผลิตเครื่องสำอางที่เก่าแก่และมั่นคงที่สุดของไทย ให้บริการวิจัยสูตรและผลิตระดับไฮเอนด์ให้กับแบรนด์ชั้นนำระดับโลก ",
+            "specialties": [
+                "ครีมกันแดด",
+                "ผลิตภัณฑ์ดูแลผิว",
+                "เมคอัพพื้นฐาน",
+                "น้ำหอม"
+            ],
+            "registeredCapital": 500000000,
+            "financialHealth": "ยอดเยี่ยม",
+            "revenueHistory": [
+                {
+                    "year": "2021",
+                    "revenue": 2020000000
+                },
+                {
+                    "year": "2022",
+                    "revenue": 1940000000
+                },
+                {
+                    "year": "2023",
+                    "revenue": 1860000000
+                }
+            ],
+            "machines": [
+                {
+                    "name": "สายบรรจุอัตโนมัติ",
+                    "capacity": "20,000 ชิ้น/วัน",
+                    "image": "filling"
+                },
+                {
+                    "name": "เครื่องผสมปริมาณสูง",
+                    "capacity": "5 ตัน/วัน",
+                    "image": "mixer"
+                }
+            ],
+            "certifications": [
+                "ISO 9001",
+                "ISO 14001"
+            ]
+        },
+        {
+            "id": "2",
+            "name": "บริษัท เอ็มพีซี อินโนเวชั่น แลบ จำกัด",
+            "slug": "mpc-innovation",
+            "verified": true,
+            "image": "factory-2",
+            "location": "กรุงเทพมหานคร, ประเทศไทย",
+            "category": "เครื่องสำอาง",
+            "tags": [
+                "เน้นนวัตกรรม",
+                "เทรนด์ใหม่",
+                "วิจัยและพัฒนา"
+            ],
+            "rating": 4.8,
+            "reviewCount": 185,
+            "onTimeDelivery": 97,
+            "priceLevel": 3,
+            "moq": 500,
+            "description": "ผู้นำด้านการผลิต OEM ที่ขับเคลื่อนด้วยนวัตกรรม มุ่งเน้นสกินแคร์ประสิทธิภาพสูงและการพัฒนาผลิตภัณฑ์ตามเทรนด์สำหรับแบรนด์ยุคใหม่ [1, 2, 7]",
+            "specialties": [
+                "เซรั่มเข้มข้น",
+                "เจลบำรุงผิว",
+                "ผลิตภัณฑ์รักษาสิว"
+            ],
+            "registeredCapital": 20000000,
+            "financialHealth": "แข็งแกร่ง",
+            "revenueHistory": [
+                {
+                    "year": "2021",
+                    "revenue": 120000000
+                },
+                {
+                    "year": "2022",
+                    "revenue": 145000000
+                },
+                {
+                    "year": "2023",
+                    "revenue": 178000000
+                }
+            ],
+            "machines": [
+                {
+                    "name": "สายบรรจุอัตโนมัติ",
+                    "capacity": "20,000 ชิ้น/วัน",
+                    "image": "filling"
+                },
+                {
+                    "name": "เครื่องผสมปริมาณสูง",
+                    "capacity": "5 ตัน/วัน",
+                    "image": "mixer"
+                }
+            ],
+            "certifications": [
+                "ISO 9001"
+            ]
+        },
+        {
+            "id": "3",
+            "name": "บริษัท ไลฟ์ พลัส ฟาร์มาซูติคอล จำกัด",
+            "slug": "life-plus-pharma",
+            "verified": true,
+            "image": "factory-3",
+            "location": "กรุงเทพมหานคร, ประเทศไทย",
+            "category": "เครื่องสำอาง",
+            "tags": [
+                "เกรดเวชภัณฑ์",
+                "อาหารเสริม",
+                "มาตรฐานโรงงานยา"
+            ],
+            "rating": 4.7,
+            "reviewCount": 220,
+            "onTimeDelivery": 96,
+            "priceLevel": 3,
+            "moq": 1000,
+            "description": "เชี่ยวชาญด้านเวชสำอางและผลิตภัณฑ์เสริมอาหารด้วยสถานประกอบการระดับมาตรฐานโรงงานยา และได้รับรางวัลอุตสาหกรรมยอดเยี่ยมหลายสมัย [2, 8, 9]",
+            "specialties": [
+                "เวชสำอาง",
+                "อาหารเสริมบำรุงผิว",
+                "คอลลาเจนผง"
+            ],
+            "registeredCapital": 50000000,
+            "financialHealth": "ยอดเยี่ยม",
+            "revenueHistory": [
+                {
+                    "year": "2021",
+                    "revenue": 350000000
+                },
+                {
+                    "year": "2022",
+                    "revenue": 380000000
+                },
+                {
+                    "year": "2023",
+                    "revenue": 420000000
+                }
+            ],
+            "certifications": [
+                "ISO 9001"
+            ],
+            "machines": [
+                {
+                    "name": "ถังผสมเกรดเภสัชกรรม",
+                    "capacity": "3 ตัน/รอบการผลิต",
+                    "image": "mixer"
+                },
+                {
+                    "name": "สายบรรจุเวชสำอาง",
+                    "capacity": "18,000 ชิ้น/วัน",
+                    "image": "filling"
+                }
+            ]
+        },
+        {
+            "id": "4",
+            "name": "บริษัท รีโว่เมด (ประเทศไทย) จำกัด",
+            "slug": "revomed-thailand",
+            "verified": true,
+            "image": "factory-4",
+            "location": "นนทบุรี, ประเทศไทย",
+            "category": "เครื่องสำอาง",
+            "tags": [
+                "Premium Service",
+                "International Export",
+                "World-Class"
+            ],
+            "rating": 4.9,
+            "reviewCount": 150,
+            "onTimeDelivery": 98,
+            "priceLevel": 5,
+            "moq": 3000,
+            "description": "ให้บริการแบบครบวงจรสำหรับแบรนด์ความงามระดับพรีเมียม มุ่งเน้นคุณภาพการผลิตระดับส่งออกและมาตรฐานระดับสากล ",
+            "specialties": [
+                "นวัตกรรมสารสกัด",
+                "สกินแคร์เกาหลี/ญี่ปุ่น",
+                "ผลิตภัณฑ์ดูแลเส้นผม"
+            ],
+            "registeredCapital": 20000000,
+            "financialHealth": "แข็งแกร่งมาก",
+            "revenueHistory": [
+                {
+                    "year": "2021",
+                    "revenue": 500000000
+                },
+                {
+                    "year": "2022",
+                    "revenue": 580000000
+                },
+                {
+                    "year": "2023",
+                    "revenue": 650000000
+                }
+            ],
+            "certifications": [],
+            "machines": [
+                {
+                    "name": "เครื่องผสมสุญญากาศแบบอิมัลซิฟาย",
+                    "capacity": "4 ตัน/รอบการผลิต",
+                    "image": "mixer"
+                },
+                {
+                    "name": "สายบรรจุและปิดฝาความเร็วสูง",
+                    "capacity": "25,000 ชิ้น/วัน",
+                    "image": "filling"
+                }
+            ]
+        },
+        {
+            "id": "5",
+            "name": "บริษัท พรีมา แคร์ อินเตอร์เนชั่นแนล จำกัด",
+            "slug": "prima-care",
+            "verified": true,
+            "image": "factory-5",
+            "location": "กรุงเทพมหานคร, ประเทศไทย",
+            "category": "เครื่องสำอาง",
+            "tags": [],
+            "rating": 4.6,
+            "reviewCount": 275,
+            "onTimeDelivery": 95,
+            "priceLevel": 3,
+            "moq": 500,
+            "description": "พันธมิตรที่ไว้วางใจได้สำหรับผู้ประกอบการรายย่อย นำเสนอโซลูชันการผลิตที่ยืดหยุ่นสำหรับผลิตภัณฑ์ดูแลผิวและเครื่องสำอาง [1, 4, 10]",
+            "specialties": [
+                "ครีมบำรุงผิวหน้า",
+                "เมคอัพสีสัน",
+                "ชุดทดลองตลาด"
+            ],
+            "registeredCapital": 10000000,
+            "financialHealth": "มั่นคง",
+            "revenueHistory": [
+                {
+                    "year": "2021",
+                    "revenue": 85000000
+                },
+                {
+                    "year": "2022",
+                    "revenue": 92000000
+                },
+                {
+                    "year": "2023",
+                    "revenue": 105000000
+                }
+            ],
+            "certifications": [],
+            "machines": [
+                {
+                    "name": "เครื่องผสมสูตรต้นแบบ",
+                    "capacity": "1.5 ตัน/รอบการผลิต",
+                    "image": "mixer"
+                },
+                {
+                    "name": "สายแพ็กบรรจุภัณฑ์ยืดหยุ่น",
+                    "capacity": "12,000 ชิ้น/วัน",
+                    "image": "packaging"
+                }
+            ]
+        },
+        {
+            "id": "6",
+            "name": "บริษัท นูทริกซ์ โปรดักชั่น จำกัด",
+            "slug": "nutrix-food",
+            "verified": true,
+            "image": "factory-6",
+            "location": "ปทุมธานี, ประเทศไทย",
+            "category": "อาหาร",
+            "tags": [
+                "อาหารเสริม",
+                "Cleanroom",
+                "สารสกัดเข้มข้น"
+            ],
+            "rating": 4.8,
+            "reviewCount": 190,
+            "onTimeDelivery": 98,
+            "priceLevel": 3,
+            "moq": 2000,
+            "description": "ผู้เชี่ยวชาญด้านการผลิตผลิตภัณฑ์เสริมอาหารและอาหารฟังก์ชัน ด้วยสิ่งอำนวยความสะดวกในห้องสะอาดระดับโลก [4, 11]",
+            "specialties": [
+                "แคปซูลอาหารเสริม",
+                "ผงชงดื่ม",
+                "โปรตีนพืช"
+            ],
+            "registeredCapital": 40000000,
+            "financialHealth": "ยอดเยี่ยม",
+            "revenueHistory": [
+                {
+                    "year": "2021",
+                    "revenue": 210000000
+                },
+                {
+                    "year": "2022",
+                    "revenue": 245000000
+                },
+                {
+                    "year": "2023",
+                    "revenue": 290000000
+                }
+            ],
+            "certifications": [],
+            "machines": [
+                {
+                    "name": "ระบบผสมอาหารเสริม",
+                    "capacity": "6 ตัน/วัน",
+                    "image": "mixer"
+                },
+                {
+                    "name": "เครื่องบรรจุซอง",
+                    "capacity": "80,000 ซอง/วัน",
+                    "image": "filling"
+                }
+            ]
+        },
+        {
+            "id": "7",
+            "name": "บริษัท เอ็นอาร์ อินสแตนท์ โปรดิวซ์ จำกัด (มหาชน) (NRF)",
+            "slug": "nrf-food",
+            "verified": true,
+            "image": "factory-7",
+            "location": "สมุทรสาคร, ประเทศไทย",
+            "category": "อาหาร",
+            "tags": [
+                "มหาชน",
+                "Plant-based",
+                "ยั่งยืน",
+                "ส่งออกทั่วโลก"
+            ],
+            "rating": 4.8,
+            "reviewCount": 420,
+            "onTimeDelivery": 98,
+            "priceLevel": 4,
+            "moq": 10000,
+            "description": "ผู้นำระดับโลกในการผลิตอาหารรสชาติพื้นเมืองและอาหารจากพืช มุ่งเน้นกระบวนการผลิตที่ยั่งยืนและลดคาร์บอน ",
+            "specialties": [
+                "อาหารแพลนต์เบส",
+                "อาหารกึ่งสำเร็จรูป",
+                "ซอสปรุงรสส่งออก"
+            ],
+            "registeredCapital": 1417660000,
+            "financialHealth": "ยอดเยี่ยม",
+            "revenueHistory": [
+                {
+                    "year": "2021",
+                    "revenue": 2180000000
+                },
+                {
+                    "year": "2022",
+                    "revenue": 2420000000
+                },
+                {
+                    "year": "2023",
+                    "revenue": 3040000000
+                }
+            ],
+            "certifications": [],
+            "machines": [
+                {
+                    "name": "สายฆ่าเชื้อรีทอร์ท",
+                    "capacity": "40,000 แพ็ก/วัน",
+                    "image": "factory"
+                },
+                {
+                    "name": "สายแพ็กถุงอัตโนมัติ",
+                    "capacity": "60,000 ชิ้น/วัน",
+                    "image": "packaging"
+                }
+            ]
+        },
+        {
+            "id": "8",
+            "name": "บริษัท บัตเตอร์ฟลาย ออร์แกนิค จำกัด",
+            "slug": "butterfly-organic",
+            "verified": true,
+            "image": "factory-8",
+            "location": "กรุงเทพมหานคร, ประเทศไทย",
+            "category": "อาหาร",
+            "tags": [
+                "Organic",
+                "Dairy",
+                "Plant Milk",
+                "Organic Ice Cream"
+            ],
+            "rating": 4.9,
+            "reviewCount": 110,
+            "onTimeDelivery": 99,
+            "priceLevel": 4,
+            "moq": 100,
+            "description": "โรงงาน OEM ผลิตภัณฑ์นมและโยเกิร์ตออร์แกนิครายแรกของไทย มุ่งเน้นสินค้าเพื่อสุขภาพระดับพรีเมียม ",
+            "specialties": [
+                "โยเกิร์ตออร์แกนิค",
+                "นมอัลมอนด์",
+                "นมวัวออร์แกนิค"
+            ],
+            "registeredCapital": 25000000,
+            "financialHealth": "แข็งแกร่ง",
+            "revenueHistory": [
+                {
+                    "year": "2021",
+                    "revenue": 115000000
+                },
+                {
+                    "year": "2022",
+                    "revenue": 130000000
+                },
+                {
+                    "year": "2023",
+                    "revenue": 155000000
+                }
+            ],
+            "certifications": [],
+            "machines": [
+                {
+                    "name": "ระบบถังหมัก",
+                    "capacity": "10,000 ลิตร/รอบการผลิต",
+                    "image": "mixer"
+                },
+                {
+                    "name": "สายบรรจุปลอดเชื้อ",
+                    "capacity": "15,000 ขวด/วัน",
+                    "image": "filling"
+                }
+            ]
+        },
+        {
+            "id": "9",
+            "name": "บริษัท วี.ไทยฟู้ด โปรดักท์ จำกัด",
+            "slug": "vthai-food",
+            "verified": true,
+            "image": "factory-9",
+            "location": "สมุทรปราการ, ประเทศไทย",
+            "category": "อาหาร",
+            "tags": [
+                "ผู้เชี่ยวชาญด้านซอส",
+                "ส่งออก 30 ประเทศ",
+                "กำลังผลิตสูง"
+            ],
+            "rating": 4.7,
+            "reviewCount": 140,
+            "onTimeDelivery": 97,
+            "priceLevel": 3,
+            "moq": 5000,
+            "description": "ผู้ผลิตและส่งออกซอสและเครื่องปรุงรสรายใหญ่ของไทย ให้บริการ OEM ด้วยเทคโนโลยีการแปรรูปอาหารที่ทันสมัย ",
+            "specialties": [
+                "ซอสปรุงรส",
+                "น้ำจิ้มไก่",
+                "อาหารกึ่งสำเร็จรูปแช่แข็ง"
+            ],
+            "registeredCapital": 20000000,
+            "financialHealth": "แข็งแกร่งมาก",
+            "revenueHistory": [
+                {
+                    "year": "2021",
+                    "revenue": 450000000
+                },
+                {
+                    "year": "2022",
+                    "revenue": 480000000
+                },
+                {
+                    "year": "2023",
+                    "revenue": 520000000
+                }
+            ],
+            "certifications": [],
+            "machines": [
+                {
+                    "name": "หม้อต้มซอสอุตสาหกรรม",
+                    "capacity": "5 ตัน/รอบการผลิต",
+                    "image": "mixer"
+                },
+                {
+                    "name": "สายบรรจุร้อนลงขวด",
+                    "capacity": "22,000 ชิ้น/วัน",
+                    "image": "filling"
+                }
+            ]
+        },
+        {
+            "id": "10",
+            "name": "บริษัท เนเจอร์ เบสท์ฟู้ด จำกัด",
+            "slug": "nbf-food",
+            "verified": true,
+            "image": "factory-10",
+            "location": "สมุทรปราการ, ประเทศไทย",
+            "category": "อาหาร",
+            "tags": [
+                "สาหร่ายรายแรก",
+                "ขนมขบเคี้ยวเพื่อสุขภาพ",
+                "อบกรอบ"
+            ],
+            "rating": 4.7,
+            "reviewCount": 165,
+            "onTimeDelivery": 96,
+            "priceLevel": 3,
+            "moq": 1000,
+            "description": "ผู้บุกเบิกการผลิตสาหร่ายรายแรกในไทย เชี่ยวชาญการผลิตขนมขบเคี้ยวเพื่อสุขภาพด้วยเทคโนโลยีการผลิตที่ถูกสุขลักษณะ ",
+            "specialties": [
+                "สาหร่ายอบกรอบ",
+                "ขนมแปรรูป",
+                "วัตถุดิบอาหารเอเชีย"
+            ],
+            "registeredCapital": 30000000,
+            "financialHealth": "มั่นคง",
+            "revenueHistory": [
+                {
+                    "year": "2021",
+                    "revenue": 180000000
+                },
+                {
+                    "year": "2022",
+                    "revenue": 195000000
+                },
+                {
+                    "year": "2023",
+                    "revenue": 220000000
+                }
+            ],
+            "certifications": [],
+            "machines": [
+                {
+                    "name": "เตาอบต่อเนื่อง",
+                    "capacity": "3 ตัน/วัน",
+                    "image": "factory"
+                },
+                {
+                    "name": "ถังคลุกเครื่องปรุงขนม",
+                    "capacity": "10,000 แพ็ก/กะ",
+                    "image": "mixer"
+                }
+            ]
+        },
+        {
+            "id": "11",
+            "name": "บริษัท อุตสาหกรรมมิตรมงคล จำกัด",
+            "slug": "mmk-household",
+            "verified": true,
+            "image": "factory-11",
+            "location": "กรุงเทพมหานคร, ประเทศไทย",
+            "category": "ของใช้ในบ้าน",
+            "tags": [
+                "Cleaning Products",
+                "Personal Care Products",
+                "Household Products"
+            ],
+            "rating": 4.8,
+            "reviewCount": 130,
+            "onTimeDelivery": 98,
+            "priceLevel": 3,
+            "moq": 2000,
+            "description": "ผู้เชี่ยวชาญการผลิตสินค้าอุปโภคบริโภคและผลิตภัณฑ์ทำความสะอาดบ้านด้วยระบบควบคุมการผลิตอัตโนมัติ ",
+            "specialties": [
+                "ผลิตภัณฑ์ซักล้าง",
+                "น้ำยาถูพื้น",
+                "สบู่เหลวและแชมพู"
+            ],
+            "registeredCapital": 80000000,
+            "financialHealth": "แข็งแกร่งมาก",
+            "revenueHistory": [
+                {
+                    "year": "2021",
+                    "revenue": 1140000000
+                },
+                {
+                    "year": "2022",
+                    "revenue": 1210000000
+                },
+                {
+                    "year": "2023",
+                    "revenue": 1280000000
+                }
+            ],
+            "certifications": [],
+            "machines": [
+                {
+                    "name": "ถังผสมของเหลว",
+                    "capacity": "8 ตัน/รอบการผลิต",
+                    "image": "mixer"
+                },
+                {
+                    "name": "สายบรรจุขวดผลิตภัณฑ์ในบ้าน",
+                    "capacity": "30,000 ชิ้น/วัน",
+                    "image": "filling"
+                }
+            ]
+        },
+        {
+            "id": "12",
+            "name": "บริษัท พาอุส (ไทยแลนด์) จำกัด",
+            "slug": "paus-household",
+            "verified": true,
+            "image": "factory-12",
+            "location": "ระยอง, ประเทศไทย",
+            "category": "ของใช้ในบ้าน",
+            "tags": [
+                "งานไม้แม่นยำ",
+                "Japan Partner",
+                "เฟอร์นิเจอร์"
+            ],
+            "rating": 4.7,
+            "reviewCount": 95,
+            "onTimeDelivery": 97,
+            "priceLevel": 4,
+            "moq": 500,
+            "description": "ผลิตชิ้นส่วนห้องครัวและงานตกแต่งภายในคุณภาพสูงด้วยวิศวกรรมที่แม่นยำและเทคโนโลยีการเคลือบผิวขั้นสูง ",
+            "specialties": [
+                "บานประตูชุดครัว",
+                "ชิ้นส่วนเฟอร์นิเจอร์ไม้",
+                "งานพ่นสีอุตสาหกรรม"
+            ],
+            "registeredCapital": 20000000,
+            "financialHealth": "มั่นคง",
+            "revenueHistory": [
+                {
+                    "year": "2021",
+                    "revenue": 85000000
+                },
+                {
+                    "year": "2022",
+                    "revenue": 98000000
+                },
+                {
+                    "year": "2023",
+                    "revenue": 115000000
+                }
+            ],
+            "certifications": [],
+            "machines": [
+                {
+                    "name": "สายผลิตชิ้นส่วน CNC",
+                    "capacity": "งานผลิตความแม่นยำสูง",
+                    "image": "factory"
+                },
+                {
+                    "name": "ระบบพ่นเคลือบสีฝุ่น",
+                    "capacity": "2,500 ชิ้น/วัน",
+                    "image": "packaging"
+                }
+            ]
+        },
+        {
+            "id": "13",
+            "name": "บริษัท คาวาลทิส (ประเทศไทย) จำกัด",
+            "slug": "cavaltis-household",
+            "verified": true,
+            "image": "factory-13",
+            "location": "กรุงเทพมหานคร, ประเทศไทย",
+            "category": "ของใช้ในบ้าน",
+            "tags": [
+                "ผลิตภัณฑ์ฆ่าเชื้อ",
+                "สารเคมีเฉพาะทาง",
+                "ความปลอดภัย"
+            ],
+            "rating": 4.6,
+            "reviewCount": 75,
+            "onTimeDelivery": 96,
+            "priceLevel": 3,
+            "moq": 1000,
+            "description": "ให้บริการโซลูชันด้านสุขอนามัยและผลิตภัณฑ์ฆ่าเชื้อเฉพาะทางสำหรับที่อยู่อาศัยและอุตสาหกรรม [12, 1, 13]",
+            "specialties": [
+                "เจลล้างมือแอลกอฮอล์",
+                "น้ำยาฆ่าเชื้อเกรดโรงพยาบาล",
+                "ผลิตภัณฑ์กำจัดกลิ่น"
+            ],
+            "registeredCapital": 15000000,
+            "financialHealth": "ดี",
+            "revenueHistory": [
+                {
+                    "year": "2021",
+                    "revenue": 65000000
+                },
+                {
+                    "year": "2022",
+                    "revenue": 72000000
+                },
+                {
+                    "year": "2023",
+                    "revenue": 88000000
+                }
+            ],
+            "certifications": [],
+            "machines": [
+                {
+                    "name": "เครื่องปั๊มขึ้นรูปโลหะ",
+                    "capacity": "4,000 ชิ้น/วัน",
+                    "image": "factory"
+                },
+                {
+                    "name": "สายปรับผิวชิ้นงาน",
+                    "capacity": "การผลิตต่อเนื่อง",
+                    "image": "packaging"
+                }
+            ]
+        },
+        {
+            "id": "14",
+            "name": "บริษัท ก. รัตนกฤต จำกัด",
+            "slug": "k-rattanagrit",
+            "verified": true,
+            "image": "factory-14",
+            "location": "กรุงเทพมหานคร, ประเทศไทย",
+            "category": "ของใช้ในบ้าน",
+            "tags": [
+                "พลาสติก Food Grade",
+                "การผลิตจำนวนมาก",
+                "ราคาประหยัด"
+            ],
+            "rating": 4.5,
+            "reviewCount": 88,
+            "onTimeDelivery": 95,
+            "priceLevel": 2,
+            "moq": 5000,
+            "description": "ผู้ผลิตของใช้ในบ้านที่เป็นพลาสติกปริมาณมาก มุ่งเน้นความทนทานและเป็นไปตามระเบียบความปลอดภัยด้านอาหาร [12, 1, 13]",
+            "specialties": [
+                "ช้อนส้อมพลาสติก",
+                "กล่องถนอมอาหาร",
+                "อุปกรณ์ในห้องครัว"
+            ],
+            "registeredCapital": 10000000,
+            "financialHealth": "มั่นคง",
+            "revenueHistory": [
+                {
+                    "year": "2021",
+                    "revenue": 45000000
+                },
+                {
+                    "year": "2022",
+                    "revenue": 52000000
+                },
+                {
+                    "year": "2023",
+                    "revenue": 58000000
+                }
+            ],
+            "certifications": [],
+            "machines": [
+                {
+                    "name": "เครื่องฉีดขึ้นรูปพลาสติก",
+                    "capacity": "6,000 ชิ้น/วัน",
+                    "image": "factory"
+                },
+                {
+                    "name": "สายพานประกอบสินค้า",
+                    "capacity": "10,000 ชิ้น/กะ",
+                    "image": "filling"
+                }
+            ]
+        },
+        {
+            "id": "15",
+            "name": "บริษัท ไลอ้อน (ประเทศไทย) จำกัด",
+            "slug": "lion-thailand",
+            "verified": true,
+            "image": "factory-15",
+            "location": "ชลบุรี, ประเทศไทย",
+            "category": "ของใช้ในบ้าน",
+            "tags": [],
+            "rating": 4.9,
+            "reviewCount": 550,
+            "onTimeDelivery": 99,
+            "priceLevel": 4,
+            "moq": 10000,
+            "description": "ผู้ผลิตสินค้าอุปโภคบริโภคระดับโลก โดดเด่นด้านความยั่งยืนและการผลิตขนาดมหภาคที่มีประสิทธิภาพสูง ",
+            "specialties": [
+                "ผงซักฟอก",
+                "ยาสีฟันและแปรงสีฟัน",
+                "ผลิตภัณฑ์ดูแลเด็ก"
+            ],
+            "registeredCapital": 350000000,
+            "financialHealth": "ยอดเยี่ยม",
+            "revenueHistory": [
+                {
+                    "year": "2021",
+                    "revenue": 3182000000
+                },
+                {
+                    "year": "2022",
+                    "revenue": 2970000000
+                },
+                {
+                    "year": "2023",
+                    "revenue": 2857000000
+                }
+            ],
+            "certifications": [],
+            "machines": [
+                {
+                    "name": "ถังปฏิกรณ์ผสมน้ำยาซักล้าง",
+                    "capacity": "12 ตัน/รอบการผลิต",
+                    "image": "mixer"
+                },
+                {
+                    "name": "สายบรรจุกล่องความเร็วสูง",
+                    "capacity": "45,000 ชิ้น/วัน",
+                    "image": "packaging"
+                }
+            ]
+        },
+        {
+            "id": "16",
+            "name": "บริษัท เอส เอ็น ซี ฟอร์เมอร์ จำกัด (มหาชน) (SNC)",
+            "slug": "snc-electrical",
+            "verified": true,
+            "image": "factory-16",
+            "location": "สมุทรปราการ, ประเทศไทย",
+            "category": "เครื่องใช้ไฟฟ้า",
+            "tags": [
+                "ชิ้นส่วนแอร์",
+                "หุ่นยนต์การผลิต",
+                "มหาชน"
+            ],
+            "rating": 4.9,
+            "reviewCount": 480,
+            "onTimeDelivery": 99,
+            "priceLevel": 4,
+            "moq": 1000,
+            "description": "ผู้ให้บริการชิ้นส่วนและการประกอบเครื่องปรับอากาศชั้นนำด้วยระบบการผลิตหุ่นยนต์และแม่พิมพ์ขั้นสูง ",
+            "specialties": [
+                "ชุดประกอบแอร์",
+                "ตู้เก็บเครื่องมือ",
+                "งานปั๊มโลหะความละเอียดสูง"
+            ],
+            "registeredCapital": 362220439,
+            "financialHealth": "ยอดเยี่ยม",
+            "revenueHistory": [
+                {
+                    "year": "2021",
+                    "revenue": 15398000000
+                },
+                {
+                    "year": "2022",
+                    "revenue": 19071000000
+                },
+                {
+                    "year": "2023",
+                    "revenue": 9333000000
+                }
+            ],
+            "certifications": [],
+            "machines": [
+                {
+                    "name": "สายปั๊มชิ้นส่วน CNC",
+                    "capacity": "5,000 ชิ้น/วัน",
+                    "image": "factory"
+                },
+                {
+                    "name": "เซลล์ประกอบอัตโนมัติ",
+                    "capacity": "12,000 ชิ้น/กะ",
+                    "image": "filling"
+                }
+            ]
+        },
+        {
+            "id": "17",
+            "name": "บริษัท กันยงอีเลคทริก จำกัด (มหาชน) (KYE)",
+            "slug": "kye-mitsubishi",
+            "verified": true,
+            "image": "factory-17",
+            "location": "สมุทรปราการ, ประเทศไทย",
+            "category": "เครื่องใช้ไฟฟ้า",
+            "tags": [
+                "Mitsubishi Partner",
+                "ตู้เย็น",
+                "มาตรฐานญี่ปุ่น"
+            ],
+            "rating": 4.8,
+            "reviewCount": 320,
+            "onTimeDelivery": 98,
+            "priceLevel": 4,
+            "moq": 5000,
+            "description": "ผู้ผลิตเครื่องใช้ไฟฟ้าในบ้านชั้นเลิศภายใต้ความร่วมมือกับมิตซูบิชิ เชี่ยวชาญด้านตู้เย็นและพัดลมไฟฟ้า ",
+            "specialties": [
+                "ตู้เย็น",
+                "พัดลมระบายอากาศ",
+                "มอเตอร์ไฟฟ้า"
+            ],
+            "registeredCapital": 198000000,
+            "financialHealth": "แข็งแกร่งมาก",
+            "revenueHistory": [
+                {
+                    "year": "2021",
+                    "revenue": 8341000000
+                },
+                {
+                    "year": "2022",
+                    "revenue": 7965000000
+                },
+                {
+                    "year": "2023",
+                    "revenue": 8465000000
+                }
+            ],
+            "certifications": [],
+            "machines": [
+                {
+                    "name": "เครื่องพันขดลวดมอเตอร์",
+                    "capacity": "3,500 ชิ้น/วัน",
+                    "image": "factory"
+                },
+                {
+                    "name": "สถานีทดสอบความปลอดภัยไฟฟ้า",
+                    "capacity": "ตรวจสอบครบ 100% ก่อนส่งมอบ",
+                    "image": "lab"
+                }
+            ]
+        },
+        {
+            "id": "18",
+            "name": "บริษัท กุลธรเคอร์บี้ จำกัด (มหาชน)",
+            "slug": "kkc-compressor",
+            "verified": true,
+            "image": "factory-18",
+            "location": "กรุงเทพมหานคร, ประเทศไทย",
+            "category": "เครื่องใช้ไฟฟ้า",
+            "tags": [
+                "คอมเพรสเซอร์",
+                "หัวใจเครื่องเย็น",
+                "มหาชน"
+            ],
+            "rating": 4.7,
+            "reviewCount": 210,
+            "onTimeDelivery": 97,
+            "priceLevel": 4,
+            "moq": 2000,
+            "description": "ศูนย์กลางเทคโนโลยีทำความเย็นในไทย เชี่ยวชาญการผลิตคอมเพรสเซอร์และชุดควบแน่นที่มีความแม่นยำสูง ",
+            "specialties": [
+                "คอมเพรสเซอร์ลูกสูบ",
+                "ระบบทำความเย็นอุตสาหกรรม",
+                "มอเตอร์คอมเพรสเซอร์"
+            ],
+            "registeredCapital": 150000000,
+            "financialHealth": "มั่นคง",
+            "revenueHistory": [
+                {
+                    "year": "2021",
+                    "revenue": 6714000000
+                },
+                {
+                    "year": "2022",
+                    "revenue": 6097000000
+                },
+                {
+                    "year": "2023",
+                    "revenue": 3297000000
+                }
+            ],
+            "certifications": [],
+            "machines": [
+                {
+                    "name": "เครื่องพันคอยล์คอมเพรสเซอร์",
+                    "capacity": "2,800 ชิ้น/วัน",
+                    "image": "factory"
+                },
+                {
+                    "name": "สถานีทดสอบการรั่ว",
+                    "capacity": "ตรวจสอบต่อเนื่อง",
+                    "image": "lab"
+                }
+            ]
+        },
+        {
+            "id": "19",
+            "name": "บริษัท เอ็นพีอี อินดัสตรี (ไทยแลนด์) จำกัด",
+            "slug": "npe-audio",
+            "verified": true,
+            "image": "factory-19",
+            "location": "กรุงเทพมหานคร, ประเทศไทย",
+            "category": "เครื่องใช้ไฟฟ้า",
+            "tags": [
+                "ระบบเสียง",
+                "งานโลหะ CNC",
+                "เครื่องเสียง PA"
+            ],
+            "rating": 4.6,
+            "reviewCount": 155,
+            "onTimeDelivery": 96,
+            "priceLevel": 3,
+            "moq": 100,
+            "description": "ผู้เชี่ยวชาญด้านอุปกรณ์เครื่องเสียงและงานโลหะแผ่นที่มีความแม่นยำ ให้บริการประกอบแผงวงจรอิเล็กทรอนิกส์ [11, 3, 14]",
+            "specialties": [
+                "เครื่องขยายเสียง",
+                "ตู้ลำโพง",
+                "เคสอุปกรณ์อิเล็กทรอนิกส์"
+            ],
+            "registeredCapital": 5000000,
+            "financialHealth": "ดี",
+            "revenueHistory": [
+                {
+                    "year": "2021",
+                    "revenue": 180000000
+                },
+                {
+                    "year": "2022",
+                    "revenue": 210000000
+                },
+                {
+                    "year": "2023",
+                    "revenue": 240000000
+                }
+            ],
+            "certifications": [],
+            "machines": [
+                {
+                    "name": "สายประกอบแผงวงจร PCB",
+                    "capacity": "20,000 บอร์ด/วัน",
+                    "image": "factory"
+                },
+                {
+                    "name": "ห้องสอบเทียบระบบเสียง",
+                    "capacity": "ทดสอบการทำงานเต็มรูปแบบ",
+                    "image": "lab"
+                }
+            ]
+        },
+        {
+            "id": "20",
+            "name": "บริษัท สยามอินเตอร์คูล จำกัด",
+            "slug": "siam-intercool",
+            "verified": true,
+            "image": "factory-20",
+            "location": "กรุงเทพมหานคร, ประเทศไทย",
+            "category": "เครื่องใช้ไฟฟ้า",
+            "tags": [],
+            "rating": 4.8,
+            "reviewCount": 125,
+            "onTimeDelivery": 97,
+            "priceLevel": 4,
+            "moq": 50,
+            "description": "ผู้นำด้านการรับจ้างผลิตตู้แช่เชิงพาณิชย์ มุ่งเน้นการออกแบบตามความต้องการและประสิทธิภาพการใช้พลังงาน ",
+            "specialties": [
+                "ตู้แช่เครื่องดื่ม",
+                "ตู้แช่แข็งอาหาร",
+                "ระบบคูลลิ่งแบบสั่งผลิต"
+            ],
+            "registeredCapital": 20000000,
+            "financialHealth": "แข็งแกร่ง",
+            "revenueHistory": [
+                {
+                    "year": "2021",
+                    "revenue": 320000000
+                },
+                {
+                    "year": "2022",
+                    "revenue": 380000000
+                },
+                {
+                    "year": "2023",
+                    "revenue": 450000000
+                }
+            ],
+            "certifications": [],
+            "machines": [
+                {
+                    "name": "เครื่องปั๊มฟินคอยล์",
+                    "capacity": "4,500 ชุดคอยล์/วัน",
+                    "image": "factory"
+                },
+                {
+                    "name": "ห้องทดสอบประสิทธิภาพความเย็น",
+                    "capacity": "ทดสอบเป็นรอบการผลิต",
+                    "image": "lab"
+                }
+            ]
+        },
+        {
+            "id": "21",
+            "name": "บริษัท ฟรีดอม โฟลว์ จำกัด",
+            "slug": "freedom-flow",
+            "verified": true,
+            "image": "factory-21",
+            "location": "มหาสารคาม, ประเทศไทย",
+            "category": "เสื้อผ้า",
+            "tags": [],
+            "rating": 4.8,
+            "reviewCount": 145,
+            "onTimeDelivery": 98,
+            "priceLevel": 3,
+            "moq": 100,
+            "description": "โรงงานผลิตเสื้อผ้า OEM ครบวงจร เชี่ยวชาญเสื้อกีฬาคุณภาพสูงและเสื้อผ้าสมัยใหม่สำหรับแบรนด์ในและต่างประเทศ [15, 16, 11]",
+            "specialties": [
+                "เสื้อพิมพ์ลาย",
+                "เสื้อโปโล",
+                "ชุดทีมกีฬา"
+            ],
+            "registeredCapital": 10000000,
+            "financialHealth": "แข็งแกร่ง",
+            "revenueHistory": [
+                {
+                    "year": "2021",
+                    "revenue": 55000000
+                },
+                {
+                    "year": "2022",
+                    "revenue": 68000000
+                },
+                {
+                    "year": "2023",
+                    "revenue": 82000000
+                }
+            ],
+            "certifications": [],
+            "machines": [
+                {
+                    "name": "สายเย็บอุตสาหกรรม",
+                    "capacity": "1,200 ชิ้น/วัน",
+                    "image": "factory"
+                },
+                {
+                    "name": "เครื่องพิมพ์ฮีตทรานส์เฟอร์",
+                    "capacity": "2,500 ลาย/วัน",
+                    "image": "packaging"
+                }
+            ]
+        },
+        {
+            "id": "22",
+            "name": "บริษัท วินนาร์ การ์เม้นท์ จำกัด",
+            "slug": "winnaar-garment",
+            "verified": true,
+            "image": "factory-22",
+            "location": "กรุงเทพมหานคร, ประเทศไทย",
+            "category": "เสื้อผ้า",
+            "tags": [
+                "พิมพ์ดิจิทัล",
+                "ไม่มีขั้นต่ำ",
+                "รวดเร็ว"
+            ],
+            "rating": 4.9,
+            "reviewCount": 210,
+            "onTimeDelivery": 99,
+            "priceLevel": 3,
+            "moq": 1,
+            "description": "โรงงานพิมพ์ผ้าและผลิตเสื้อผ้าชั้นนำ เน้นความเร็ว ความยืดหยุ่น และงานพิมพ์คุณภาพสูงโดยไม่จำกัดขั้นต่ำ ",
+            "specialties": [
+                "เสื้อแฟชั่น",
+                "งานพิมพ์ซับลิเมชั่น",
+                "ผ้าพิมพ์ลาย"
+            ],
+            "registeredCapital": 5000000,
+            "financialHealth": "ยอดเยี่ยม",
+            "revenueHistory": [
+                {
+                    "year": "2021",
+                    "revenue": 35000000
+                },
+                {
+                    "year": "2022",
+                    "revenue": 48000000
+                },
+                {
+                    "year": "2023",
+                    "revenue": 65000000
+                }
+            ],
+            "certifications": [],
+            "machines": [
+                {
+                    "name": "เครื่องตัดผ้าอัตโนมัติ",
+                    "capacity": "3,000 ชิ้น/วัน",
+                    "image": "factory"
+                },
+                {
+                    "name": "ชุดเครื่องปักอัตโนมัติ",
+                    "capacity": "1,500 โลโก้/วัน",
+                    "image": "lab"
+                }
+            ]
+        },
+        {
+            "id": "23",
+            "name": "บริษัท โปโลเมคเกอร์ จำกัด (PMK)",
+            "slug": "pmk-polo",
+            "verified": true,
+            "image": "factory-23",
+            "location": "กรุงเทพมหานคร, ประเทศไทย",
+            "category": "เสื้อผ้า",
+            "tags": [
+                "ยูนิฟอร์มองค์กร",
+                "งานปักคุณภาพ",
+                "ประสบการณ์สูง"
+            ],
+            "rating": 4.7,
+            "reviewCount": 380,
+            "onTimeDelivery": 97,
+            "priceLevel": 2,
+            "moq": 30,
+            "description": "ผู้ผลิตเสื้อผ้ายูนิฟอร์มองค์กรชั้นนำของไทย ให้บริการครบวงจรตั้งแต่การทำแพทเทิร์นไปจนถึงงานปักและสกรีน ",
+            "specialties": [
+                "เสื้อโปโล",
+                "เสื้อเชิ้ตพนักงาน",
+                "ชุดช็อปช่าง"
+            ],
+            "registeredCapital": 14000000,
+            "financialHealth": "แข็งแกร่งมาก",
+            "revenueHistory": [
+                {
+                    "year": "2021",
+                    "revenue": 280000000
+                },
+                {
+                    "year": "2022",
+                    "revenue": 310000000
+                },
+                {
+                    "year": "2023",
+                    "revenue": 350000000
+                }
+            ],
+            "certifications": [],
+            "machines": [
+                {
+                    "name": "สายเย็บเสื้อโปโล",
+                    "capacity": "1,800 ชิ้น/วัน",
+                    "image": "factory"
+                },
+                {
+                    "name": "เครื่องสกรีนหมุน",
+                    "capacity": "2,000 ลาย/วัน",
+                    "image": "packaging"
+                }
+            ]
+        },
+        {
+            "id": "24",
+            "name": "เซอร์คูลาร์โออีเอ็ม (เซอร์คูลาร์ คลับ)",
+            "slug": "circular-club",
+            "verified": true,
+            "image": "factory-24",
+            "location": "กรุงเทพมหานคร, ประเทศไทย",
+            "category": "เสื้อผ้า",
+            "tags": [],
+            "rating": 4.9,
+            "reviewCount": 85,
+            "onTimeDelivery": 98,
+            "priceLevel": 4,
+            "moq": 50,
+            "description": "โรงงานผลิตเสื้อผ้ายั่งยืน เชี่ยวชาญการนำเศษผ้าและวัสดุรีไซเคิลมาผลิตใหม่โดยไม่ใช้น้ำ ",
+            "specialties": [
+                "เสื้อผ้ารีไซเคิล",
+                "ผ้ายืดออร์แกนิค",
+                "สินค้าแฟชั่นรักษ์โลก"
+            ],
+            "registeredCapital": 10000000,
+            "financialHealth": "มั่นคง",
+            "revenueHistory": [
+                {
+                    "year": "2021",
+                    "revenue": 25000000
+                },
+                {
+                    "year": "2022",
+                    "revenue": 42000000
+                },
+                {
+                    "year": "2023",
+                    "revenue": 58000000
+                }
+            ],
+            "certifications": [],
+            "machines": [
+                {
+                    "name": "สายคัดแยกสิ่งทอรีไซเคิล",
+                    "capacity": "2 ตัน/วัน",
+                    "image": "factory"
+                },
+                {
+                    "name": "เซลล์เย็บงานล็อตเล็ก",
+                    "capacity": "600 ชิ้น/วัน",
+                    "image": "filling"
+                }
+            ]
+        },
+        {
+            "id": "25",
+            "name": "เทเลอร์ สตูดิโอ แบงค็อก",
+            "slug": "tailor-studio",
+            "verified": true,
+            "image": "factory-25",
+            "location": "กรุงเทพมหานคร, ประเทศไทย",
+            "category": "เสื้อผ้า",
+            "tags": [],
+            "rating": 4.8,
+            "reviewCount": 65,
+            "onTimeDelivery": 96,
+            "priceLevel": 5,
+            "moq": 30,
+            "description": "เชี่ยวชาญการผลิตเสื้อผ้าแฟชั่นชั้นสูงสำหรับห้องเสื้อหรูและดีไซน์เนอร์อิสระ เน้นรายละเอียดและการตัดเย็บประณีต ",
+            "specialties": [
+                "เดรสระดับพรีเมียม",
+                "ชุดออกงาน",
+                "แพทเทิร์นเฉพาะตัว"
+            ],
+            "registeredCapital": 5000000,
+            "financialHealth": "มั่นคง",
+            "revenueHistory": [
+                {
+                    "year": "2021",
+                    "revenue": 18000000
+                },
+                {
+                    "year": "2022",
+                    "revenue": 22000000
+                },
+                {
+                    "year": "2023",
+                    "revenue": 28000000
+                }
+            ],
+            "certifications": [
+                "Excellence in Craftsmanship"
+            ],
+            "machines": [
+                {
+                    "name": "โต๊ะตัดแพตเทิร์น",
+                    "capacity": "รองรับงานสั่งผลิตขนาดเล็ก",
+                    "image": "lab"
+                },
+                {
+                    "name": "สถานีตัดเย็บเฉพาะทาง",
+                    "capacity": "150 ชิ้น/สัปดาห์",
+                    "image": "factory"
+                }
+            ]
+        },
+        {
+            "id": "26",
+            "name": "บริษัท วิมา แพ็คเกจจิ้ง จำกัด",
+            "slug": "wima-pkg",
+            "verified": true,
+            "image": "factory-26",
+            "location": "สมุทรสาคร, ประเทศไทย",
+            "category": "บรรจุภัณฑ์",
+            "tags": [],
+            "rating": 4.8,
+            "reviewCount": 115,
+            "onTimeDelivery": 98,
+            "priceLevel": 4,
+            "moq": 1000,
+            "description": "ผู้ผลิตบรรจุภัณฑ์เครื่องสำอางหรูหราแบบครบวงจร ตั้งแต่การออกแบบแม่พิมพ์ไปจนถึงงานสกรีนและพิมพ์ลาย ",
+            "specialties": [],
+            "registeredCapital": 1000000,
+            "financialHealth": "แข็งแกร่ง",
+            "revenueHistory": [
+                {
+                    "year": "2021",
+                    "revenue": 45000000
+                },
+                {
+                    "year": "2022",
+                    "revenue": 58000000
+                },
+                {
+                    "year": "2023",
+                    "revenue": 72000000
+                }
+            ],
+            "certifications": [],
+            "machines": [
+                {
+                    "name": "เครื่องพิมพ์เฟล็กโซกราฟิก",
+                    "capacity": "120,000 ชิ้น/วัน",
+                    "image": "packaging"
+                },
+                {
+                    "name": "สายลามิเนต",
+                    "capacity": "18,000 แผ่น/กะ",
+                    "image": "factory"
+                }
+            ]
+        },
+        {
+            "id": "27",
+            "name": "บริษัท นครชัยพลาสติก จำกัด",
+            "slug": "nkc-plastic",
+            "verified": true,
+            "image": "factory-27",
+            "location": "สมุทรสาคร, ประเทศไทย",
+            "category": "บรรจุภัณฑ์",
+            "tags": [
+                "ถุงอุตสาหกรรม",
+                "PE/PP Plastic",
+                "ทนทานสูง"
+            ],
+            "rating": 4.6,
+            "reviewCount": 92,
+            "onTimeDelivery": 97,
+            "priceLevel": 2,
+            "moq": 150,
+            "description": "เชี่ยวชาญการผลิตถุงพลาสติกคุณภาพสูงสำหรับงานอุตสาหกรรมและพาณิชย์ มุ่งเน้นความทนทานและการใช้งานหนัก ",
+            "specialties": [
+                "ถุงหูหิ้วอุตสาหกรรม",
+                "ถุงพลาสติกเกรดหนา",
+                "ถุงบรรจุภัณฑ์เคมี"
+            ],
+            "registeredCapital": 5000000,
+            "financialHealth": "มั่นคง",
+            "revenueHistory": [
+                {
+                    "year": "2021",
+                    "revenue": 28000000
+                },
+                {
+                    "year": "2022",
+                    "revenue": 32000000
+                },
+                {
+                    "year": "2023",
+                    "revenue": 38000000
+                }
+            ],
+            "certifications": [],
+            "machines": [
+                {
+                    "name": "เครื่องเป่าขึ้นรูป",
+                    "capacity": "25,000 ขวด/วัน",
+                    "image": "factory"
+                },
+                {
+                    "name": "เครื่องฉีดขึ้นรูป",
+                    "capacity": "18,000 ชิ้น/วัน",
+                    "image": "mixer"
+                }
+            ]
+        },
+        {
+            "id": "28",
+            "name": "บริษัท ยืนยง เอ็นเตอร์ไพรส์ จำกัด (YYE)",
+            "slug": "yye-packaging",
+            "verified": true,
+            "image": "factory-28",
+            "location": "สมุทรปราการ, ประเทศไทย",
+            "category": "บรรจุภัณฑ์",
+            "tags": [
+                "สูญญากาศ Food Grade",
+                "กล่องอาหาร",
+                "กำลังผลิตสูง"
+            ],
+            "rating": 4.7,
+            "reviewCount": 105,
+            "onTimeDelivery": 96,
+            "priceLevel": 3,
+            "moq": 500,
+            "description": "ผู้นำด้านบรรจุภัณฑ์พลาสติกขึ้นรูปสูญญากาศสำหรับอุตสาหกรรมอาหารและเบเกอรี่ ให้ความสำคัญกับสุขอนามัย ",
+            "specialties": [],
+            "registeredCapital": 200000000,
+            "financialHealth": "แข็งแกร่ง",
+            "revenueHistory": [
+                {
+                    "year": "2021",
+                    "revenue": 62000000
+                },
+                {
+                    "year": "2022",
+                    "revenue": 75000000
+                },
+                {
+                    "year": "2023",
+                    "revenue": 88000000
+                }
+            ],
+            "certifications": [],
+            "machines": [
+                {
+                    "name": "เครื่องพิมพ์ออฟเซ็ต",
+                    "capacity": "90,000 กล่อง/วัน",
+                    "image": "packaging"
+                },
+                {
+                    "name": "เครื่องไดคัท",
+                    "capacity": "35,000 แผ่น/วัน",
+                    "image": "factory"
+                }
+            ]
+        },
+        {
+            "id": "29",
+            "name": "บริษัท หงษ์ไทย บรรจุภัณฑ์ จำกัด",
+            "slug": "hongthai-pkg",
+            "verified": true,
+            "image": "factory-29",
+            "location": "กรุงเทพมหานคร, ประเทศไทย",
+            "category": "บรรจุภัณฑ์",
+            "tags": [],
+            "rating": 4.8,
+            "reviewCount": 240,
+            "onTimeDelivery": 98,
+            "priceLevel": 3,
+            "moq": 500,
+            "description": "ผู้ให้บริการโซลูชันกล่องกระดาษลูกฟูกคุณภาพสูง มุ่งเน้นการใช้วัสดุที่ย่อยสลายได้และมีความแข็งแรงในการรับน้ำหนัก [12, 1, 13]",
+            "specialties": [
+                "กล่องลังส่งออก",
+                "บรรจุภัณฑ์กระดาษลูกฟูก",
+                "ถาดกระดาษขึ้นรูป"
+            ],
+            "registeredCapital": 40000000,
+            "financialHealth": "แข็งแกร่งมาก",
+            "revenueHistory": [
+                {
+                    "year": "2021",
+                    "revenue": 210000000
+                },
+                {
+                    "year": "2022",
+                    "revenue": 245000000
+                },
+                {
+                    "year": "2023",
+                    "revenue": 280000000
+                }
+            ],
+            "certifications": [],
+            "machines": [
+                {
+                    "name": "สายขึ้นรูปถุงกระดาษ",
+                    "capacity": "40,000 ใบ/วัน",
+                    "image": "packaging"
+                },
+                {
+                    "name": "สายพิมพ์สำหรับบรรจุภัณฑ์อาหาร",
+                    "capacity": "ระบบม้วนความเร็วสูง",
+                    "image": "factory"
+                }
+            ]
+        },
+        {
+            "id": "30",
+            "name": "บริษัท อินทัชธนากร จำกัด (Indraporn Pack)",
+            "slug": "indraporn-pkg",
+            "verified": true,
+            "image": "factory-30",
+            "location": "กรุงเทพมหานคร, ประเทศไทย",
+            "category": "บรรจุภัณฑ์",
+            "tags": [],
+            "rating": 4.6,
+            "reviewCount": 78,
+            "onTimeDelivery": 96,
+            "priceLevel": 3,
+            "moq": 3000,
+            "description": "เชี่ยวชาญด้านฟิล์มพลาสติกหลายชั้นและซองลามิเนตสำหรับการถนอมอาหารด้วยเทคโนโลยี Barrier ขั้นสูง [12, 1, 13]",
+            "specialties": [
+                "ซองฟอยล์ลามิเนต",
+                "ม้วนฟิล์มบรรจุภัณฑ์",
+                "ถุงพิมพ์พลาสติกบรรจุอาหาร"
+            ],
+            "registeredCapital": 20000000,
+            "financialHealth": "มั่นคง",
+            "revenueHistory": [
+                {
+                    "year": "2021",
+                    "revenue": 95000000
+                },
+                {
+                    "year": "2022",
+                    "revenue": 110000000
+                },
+                {
+                    "year": "2023",
+                    "revenue": 125000000
+                }
+            ],
+            "certifications": [],
+            "machines": [
+                {
+                    "name": "สายผลิตกล่องลูกฟูก",
+                    "capacity": "28,000 กล่อง/วัน",
+                    "image": "packaging"
+                },
+                {
+                    "name": "เครื่องพับและติดกาวอัตโนมัติ",
+                    "capacity": "22,000 ชิ้น/วัน",
+                    "image": "factory"
+                }
+            ]
+        }
+    ]
+}

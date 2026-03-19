@@ -22,12 +22,16 @@
         "category": "หมวดหมู่",
         "location": "สถานที่",
         "moqRange": "จำนวนขั้นต่ำ (MOQ)",
+        "rating": "เรตติ้ง",
         "certifications": "การรับรอง",
         "resultsFor": "ผลลัพธ์สำหรับ \"{query}\"",
         "allFactories": "โรงงานทั้งหมด",
         "factoriesFound": "พบ {count} โรงงาน",
         "noMatches": "ไม่พบโรงงานที่ตรงตามเงื่อนไขของคุณ",
         "recommended": "โรงงานแนะนำ",
+        "smartMatchTitle": "โรงงานแนะนำโดย Smart Match",
+        "smartMatchDescription": "คัดโรงงานที่เหมาะที่สุดจากเจตนาการค้นหา คุณภาพโรงงาน และรีวิวเชิงบวก",
+        "otherResults": "โรงงานที่ตรงกับการค้นหาอื่น ๆ",
         "pcs": "ชิ้น"
     },
     "HomePage": {

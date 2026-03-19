@@ -2,39 +2,72 @@
 
 import { useState, useMemo, Suspense, useEffect } from "react";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
-import { Filter, SlidersHorizontal, X, Search } from "lucide-react";
+import { Filter, SlidersHorizontal, X, Search, Sparkles, Star } from "lucide-react";
 import { Navbar } from "@/components/layout/Navbar";
 import { FactoryCard } from "@/components/home/FactoryCard";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Slider } from "@/components/ui/slider";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import factoriesData from "@/data/factories.json";
-import { useTranslations } from "next-intl";
-
-const locations = ["Bangkok", "Samut Prakan", "Pathum Thani", "Chonburi", "Nonthaburi"];
-const certifications = ["ISO 9001", "GMP", "FDA Approved", "Halal", "Organic", "OEKO-TEX"];
-const categories = ["Cosmetics", "Supplements", "Packaging", "Clothing", "Skincare"];
+import { useLocale, useTranslations } from "next-intl";
+import {
+    getFactories,
+    getFactoryCategoryId,
+    getFactorySearchableText,
+} from "@/lib/factory-data";
 
 const FactoriesContent = () => {
     const t = useTranslations("Factories");
     const commonT = useTranslations("Common");
+    const locale = useLocale();
     const searchParams = useSearchParams();
     const router = useRouter();
     const pathname = usePathname();
+    const factories = useMemo(() => getFactories(locale), [locale]);
     const query = searchParams.get("q") || "";
     const categoryParam = searchParams.get("category") || "";
+    const initialCategorySelection = useMemo(
+        () => (categoryParam ? [categoryParam.toLowerCase()] : []),
+        [categoryParam]
+    );
 
     const [searchInput, setSearchInput] = useState(query);
     const [selectedLocations, setSelectedLocations] = useState<string[]>([]);
     const [selectedCertifications, setSelectedCertifications] = useState<string[]>([]);
-    const [selectedCategories, setSelectedCategories] = useState<string[]>(
-        categoryParam ? [categoryParam] : []
-    );
+    const [selectedCategories, setSelectedCategories] = useState<string[] | null>(null);
     const [moqRange, setMoqRange] = useState([0, 5000]);
+    const [minRating, setMinRating] = useState(0);
     const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
     const [recommendedIds, setRecommendedIds] = useState<string[]>([]);
-    const [isLoadingAI, setIsLoadingAI] = useState(false);
+    const activeSelectedCategories = selectedCategories ?? initialCategorySelection;
+
+    const categoryOptions = useMemo(() => {
+        const labelsById = new Map<string, string>();
+
+        factories.forEach((factory) => {
+            const id = getFactoryCategoryId(factory);
+            if (!labelsById.has(id)) {
+                labelsById.set(id, factory.category);
+            }
+        });
+
+        return Array.from(labelsById.entries()).map(([id, label]) => ({ id, label }));
+    }, [factories]);
+
+    const categoryLabels = useMemo(
+        () => new Map(categoryOptions.map((category) => [category.id, category.label] as const)),
+        [categoryOptions]
+    );
+
+    const locations = useMemo(
+        () => Array.from(new Set(factories.map((factory) => factory.location))).sort(),
+        [factories]
+    );
+
+    const certifications = useMemo(
+        () => Array.from(new Set(factories.flatMap((factory) => factory.certifications || []))).sort(),
+        [factories]
+    );
 
     // Fetch semantic search recommendations
     useEffect(() => {
@@ -44,19 +77,15 @@ const FactoriesContent = () => {
                 return;
             }
 
-            setIsLoadingAI(true);
             try {
                 const res = await fetch(`/api/ai/search/semantic?q=${encodeURIComponent(query)}`);
                 if (res.ok) {
-                    const data = await res.json();
-                    const ids = data.recommended.map((r: any) => r.id);
-                    setRecommendedIds(ids);
+                    const data = await res.json() as { recommended?: Array<{ id: string }> };
+                    setRecommendedIds((data.recommended || []).map((item) => item.id));
                 }
             } catch (error) {
                 console.error("Failed to fetch semantic search results:", error);
                 setRecommendedIds([]);
-            } finally {
-                setIsLoadingAI(false);
             }
         };
 
@@ -75,21 +104,15 @@ const FactoriesContent = () => {
     };
 
     const filteredFactories = useMemo(() => {
-        const filtered = factoriesData.factories.filter((factory) => {
+        const filtered = factories.filter((factory) => {
             if (query) {
                 const searchLower = query.toLowerCase();
-                const matchesSearch =
-                    factory.name.toLowerCase().includes(searchLower) ||
-                    factory.description.toLowerCase().includes(searchLower) ||
-                    factory.specialties.some((s) => s.toLowerCase().includes(searchLower)) ||
-                    factory.category.toLowerCase().includes(searchLower);
+                const matchesSearch = getFactorySearchableText(factory, locale).includes(searchLower);
                 if (!matchesSearch) return false;
             }
 
-            if (selectedCategories.length > 0) {
-                if (!selectedCategories.some((c) =>
-                    factory.category.toLowerCase() === c.toLowerCase()
-                )) return false;
+            if (activeSelectedCategories.length > 0) {
+                if (!activeSelectedCategories.includes(getFactoryCategoryId(factory))) return false;
             }
 
             if (selectedLocations.length > 0) {
@@ -98,24 +121,27 @@ const FactoriesContent = () => {
 
             if (selectedCertifications.length > 0) {
                 if (!selectedCertifications.some((c) =>
-                    factory.tags.some((t) => t.includes(c))
+                    (factory.certifications || []).some((certification) => certification.includes(c))
                 )) return false;
             }
 
             if (factory.moq < moqRange[0] || factory.moq > moqRange[1]) return false;
+            if (factory.rating < minRating) return false;
 
             return true;
         });
+        return filtered;
+    }, [activeSelectedCategories, factories, locale, minRating, query, selectedLocations, selectedCertifications, moqRange]);
 
-        // Sort: Recommended first
-        return [...filtered].sort((a, b) => {
-            const aRec = recommendedIds.includes(a.id);
-            const bRec = recommendedIds.includes(b.id);
-            if (aRec && !bRec) return -1;
-            if (!aRec && bRec) return 1;
-            return 0;
-        });
-    }, [query, selectedCategories, selectedLocations, selectedCertifications, moqRange, recommendedIds]);
+    const recommendedFactories = useMemo(
+        () => filteredFactories.filter((factory) => recommendedIds.includes(factory.id)).slice(0, 3),
+        [filteredFactories, recommendedIds]
+    );
+
+    const standardFactories = useMemo(
+        () => filteredFactories.filter((factory) => !recommendedIds.includes(factory.id)),
+        [filteredFactories, recommendedIds]
+    );
 
     const toggleFilter = (
         value: string,
@@ -129,22 +155,37 @@ const FactoriesContent = () => {
         }
     };
 
+    const toggleCategoryFilter = (value: string) => {
+        if (activeSelectedCategories.includes(value)) {
+            setSelectedCategories(activeSelectedCategories.filter((category) => category !== value));
+        } else {
+            setSelectedCategories([...activeSelectedCategories, value]);
+        }
+    };
+
     const clearFilters = () => {
         setSelectedLocations([]);
         setSelectedCertifications([]);
         setSelectedCategories([]);
         setMoqRange([0, 5000]);
+        setMinRating(0);
     };
 
     const hasActiveFilters =
         selectedLocations.length > 0 ||
         selectedCertifications.length > 0 ||
-        selectedCategories.length > 0 ||
+        activeSelectedCategories.length > 0 ||
+        minRating > 0 ||
         moqRange[0] > 0 ||
         moqRange[1] < 5000;
 
-    // Filter Panel Content (shared between desktop sidebar and mobile sheet)
-    const FilterContent = () => (
+    const activeFilterCount =
+        activeSelectedCategories.length +
+        selectedLocations.length +
+        selectedCertifications.length +
+        (minRating > 0 ? 1 : 0);
+
+    const filterContent = (
         <div className="space-y-6">
             <div className="flex items-center justify-between">
                 <h3 className="font-semibold text-foreground flex items-center gap-2">
@@ -162,15 +203,13 @@ const FactoriesContent = () => {
             <div className="space-y-3">
                 <h4 className="text-sm font-medium text-foreground">{t("category")}</h4>
                 <div className="space-y-2">
-                    {categories.map((cat) => (
-                        <label key={cat} className="flex items-center gap-2 cursor-pointer">
+                    {categoryOptions.map((category) => (
+                        <label key={category.id} className="flex items-center gap-2 cursor-pointer">
                             <Checkbox
-                                checked={selectedCategories.includes(cat.toLowerCase())}
-                                onCheckedChange={() =>
-                                    toggleFilter(cat.toLowerCase(), selectedCategories, setSelectedCategories)
-                                }
+                                checked={activeSelectedCategories.includes(category.id)}
+                                onCheckedChange={() => toggleCategoryFilter(category.id)}
                             />
-                            <span className="text-sm text-muted-foreground">{cat}</span>
+                            <span className="text-sm text-muted-foreground">{category.label}</span>
                         </label>
                     ))}
                 </div>
@@ -208,6 +247,27 @@ const FactoriesContent = () => {
                 <div className="flex items-center justify-between text-xs text-muted-foreground">
                     <span>{moqRange[0]} {t("pcs")}</span>
                     <span>{moqRange[1]} {t("pcs")}</span>
+                </div>
+            </div>
+
+            {/* Rating */}
+            <div className="space-y-3">
+                <h4 className="text-sm font-medium text-foreground">{t("rating")}</h4>
+                <Slider
+                    value={[minRating]}
+                    onValueChange={(value) => setMinRating(value[0] ?? 0)}
+                    min={0}
+                    max={5}
+                    step={0.5}
+                    className="mt-4"
+                />
+                <div className="flex items-center justify-between text-xs text-muted-foreground">
+                    <span>0</span>
+                    <span className="inline-flex items-center gap-1 font-medium text-foreground">
+                        <Star className="h-3.5 w-3.5 fill-[#FF7A00] text-[#FF7A00]" />
+                        {minRating.toFixed(1)}+
+                    </span>
+                    <span>5.0</span>
                 </div>
             </div>
 
@@ -257,7 +317,7 @@ const FactoriesContent = () => {
                                     <SlidersHorizontal className="h-4 w-4" />
                                     {hasActiveFilters && (
                                         <span className="ml-1 w-5 h-5 rounded-full bg-primary text-primary-foreground text-xs flex items-center justify-center">
-                                            {selectedCategories.length + selectedLocations.length + selectedCertifications.length}
+                                            {activeFilterCount}
                                         </span>
                                     )}
                                 </Button>
@@ -267,7 +327,7 @@ const FactoriesContent = () => {
                                     <SheetTitle>{t("filters")}</SheetTitle>
                                 </SheetHeader>
                                 <div className="mt-6">
-                                    <FilterContent />
+                                    {filterContent}
                                 </div>
                             </SheetContent>
                         </Sheet>
@@ -287,7 +347,7 @@ const FactoriesContent = () => {
                         </p>
                     </div>
                     <div className="bg-card border rounded-lg p-4">
-                        <FilterContent />
+                        {filterContent}
                     </div>
                 </div>
 
@@ -306,13 +366,13 @@ const FactoriesContent = () => {
                     {/* Active Filters */}
                     {hasActiveFilters && (
                         <div className="flex items-center gap-2 flex-wrap mb-4">
-                            {selectedCategories.map((cat) => (
+                            {activeSelectedCategories.map((cat) => (
                                 <span
                                     key={cat}
                                     className="inline-flex items-center gap-1 px-3 py-1 bg-primary/10 text-primary rounded-full text-sm"
                                 >
-                                    {cat}
-                                    <button onClick={() => toggleFilter(cat, selectedCategories, setSelectedCategories)}>
+                                    {categoryLabels.get(cat) || cat}
+                                    <button onClick={() => toggleCategoryFilter(cat)}>
                                         <X className="h-3 w-3" />
                                     </button>
                                 </span>
@@ -328,6 +388,15 @@ const FactoriesContent = () => {
                                     </button>
                                 </span>
                             ))}
+                            {minRating > 0 && (
+                                <span className="inline-flex items-center gap-1 px-3 py-1 bg-[#FF7A00]/10 text-[#FF7A00] rounded-full text-sm">
+                                    <Star className="h-3 w-3 fill-current" />
+                                    {t("rating")} {minRating.toFixed(1)}+
+                                    <button onClick={() => setMinRating(0)}>
+                                        <X className="h-3 w-3" />
+                                    </button>
+                                </span>
+                            )}
                         </div>
                     )}
 
@@ -339,15 +408,50 @@ const FactoriesContent = () => {
                             </Button>
                         </div>
                     ) : (
-                        <div className="grid gap-4 md:grid-cols-1">
-                            {filteredFactories.map((factory) => (
-                                <FactoryCard
-                                    key={factory.id}
-                                    factory={factory}
-                                    variant="horizontal"
-                                    isRecommended={recommendedIds.includes(factory.id)}
-                                />
-                            ))}
+                        <div className="space-y-6">
+                            {recommendedFactories.length > 0 && (
+                                <section className="rounded-2xl border-2 border-[#FF7A00] bg-gradient-to-br from-[#FF7A00]/10 via-background to-background p-4 md:p-5">
+                                    <div className="flex items-start gap-3 mb-4">
+                                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#FF7A00] text-white shadow-sm">
+                                            <Sparkles className="h-5 w-5" />
+                                        </div>
+                                        <div>
+                                            <h2 className="text-lg font-bold text-foreground">{t("smartMatchTitle")}</h2>
+                                            <p className="text-sm text-muted-foreground">{t("smartMatchDescription")}</p>
+                                        </div>
+                                    </div>
+                                    <div className="grid gap-4 md:grid-cols-1">
+                                        {recommendedFactories.map((factory) => (
+                                            <FactoryCard
+                                                key={factory.id}
+                                                factory={factory}
+                                                variant="horizontal"
+                                                isRecommended={true}
+                                            />
+                                        ))}
+                                    </div>
+                                </section>
+                            )}
+
+                            {standardFactories.length > 0 && (
+                                <section className="space-y-4">
+                                    {recommendedFactories.length > 0 && (
+                                        <div>
+                                            <h2 className="text-lg font-semibold text-foreground">{t("otherResults")}</h2>
+                                            <p className="text-sm text-muted-foreground">{t("factoriesFound", { count: standardFactories.length })}</p>
+                                        </div>
+                                    )}
+                                    <div className="grid gap-4 md:grid-cols-1">
+                                        {standardFactories.map((factory) => (
+                                            <FactoryCard
+                                                key={factory.id}
+                                                factory={factory}
+                                                variant="horizontal"
+                                            />
+                                        ))}
+                                    </div>
+                                </section>
+                            )}
                         </div>
                     )}
                 </main>
