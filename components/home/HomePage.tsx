@@ -18,6 +18,21 @@ export function HomePage() {
   const t = useTranslations("HomePage");
   const locale = useLocale();
   const topFactories = getFactories(locale).slice(0, 4);
+  const isThai = locale.toLowerCase().startsWith("th");
+  const categoryQuickLinks = [
+    {
+      href: `/${locale}/oem-cosmetics-factory`,
+      label: isThai ? "โรงงาน OEM เครื่องสำอาง" : "Cosmetics OEM",
+    },
+    {
+      href: `/${locale}/oem-skincare-factory`,
+      label: isThai ? "โรงงาน OEM สกินแคร์" : "Skincare OEM",
+    },
+    {
+      href: `/${locale}/oem-supplement-factory`,
+      label: isThai ? "โรงงาน OEM อาหารเสริม" : "Supplement OEM",
+    },
+  ];
   const seoFaqs = [
     {
       question: t("seoContent.faq.q1"),
@@ -95,6 +110,18 @@ export function HomePage() {
             <Link href={`/${locale}/find-oem-factory`} className="inline-flex items-center text-sm font-medium text-primary hover:underline">
               {t("seoContent.guideCta")} <ChevronRight className="h-4 w-4 ml-1" />
             </Link>
+          </div>
+
+          <div className="mt-6 flex flex-wrap gap-2">
+            {categoryQuickLinks.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className="inline-flex items-center rounded-full border bg-background/90 px-4 py-2 text-sm font-medium text-foreground hover:border-primary/40 hover:text-primary transition-colors"
+              >
+                {link.label}
+              </Link>
+            ))}
           </div>
         </div>
       </section>

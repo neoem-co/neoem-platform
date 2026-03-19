@@ -11,6 +11,7 @@ const publicRouteSuffixes = [
   "brand-launchpad",
   "find-oem-factory",
   "oem-cosmetics-factory",
+  "oem-skincare-factory",
   "oem-supplement-factory",
 ];
 const locales = ["en", "th"] as const;

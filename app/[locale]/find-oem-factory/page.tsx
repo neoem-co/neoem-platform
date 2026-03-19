@@ -141,7 +141,7 @@ function getPageCopy(locale: string): LocalePageCopy {
 
 const categoryLinks = [
   { href: "/oem-cosmetics-factory", labelEn: "Cosmetics OEM", labelTh: "โรงงาน OEM เครื่องสำอาง" },
-  { href: "/oem-cosmetics-factory", labelEn: "Skincare OEM", labelTh: "โรงงาน OEM สกินแคร์" },
+  { href: "/oem-skincare-factory", labelEn: "Skincare OEM", labelTh: "โรงงาน OEM สกินแคร์" },
   { href: "/oem-supplement-factory", labelEn: "Supplement OEM", labelTh: "โรงงาน OEM อาหารเสริม" },
   { href: "/factories?category=packaging", labelEn: "Packaging OEM", labelTh: "โรงงาน OEM บรรจุภัณฑ์" },
 ];
