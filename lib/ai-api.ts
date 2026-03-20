@@ -42,6 +42,14 @@ const EXTRACT_CONTEXT_PRIORITY_PATTERNS = [
   /ip|intellectual property|formula ownership|artwork|tooling|penalty|terminate/i,
 ];
 
+const EXTRACT_CONTEXT_ANCHOR_PATTERNS = [
+  /this is .* from /i,
+  /we are based at /i,
+  /tax id/i,
+  /delivery should go to /i,
+  /the product should be /i,
+];
+
 function scoreExtractContextMessage(message: ChatMessagePayload) {
   const text = (message.message || "").trim();
   if (!text) return -1;
@@ -79,12 +87,32 @@ function normalizeChatHistory(chatHistory: ChatMessagePayload[]) {
     }))
     .filter((item) => item.score >= 0);
 
-  const prioritized = scored
+  const anchorIndexes = new Set<number>();
+  const firstUserIndex = normalized.findIndex((message) => message.sender === "user");
+  const firstFactoryIndex = normalized.findIndex((message) => message.sender === "factory");
+  if (firstUserIndex >= 0) anchorIndexes.add(firstUserIndex);
+  if (firstFactoryIndex >= 0) anchorIndexes.add(firstFactoryIndex);
+
+  for (const item of scored) {
+    if (EXTRACT_CONTEXT_ANCHOR_PATTERNS.some((pattern) => pattern.test(item.message.message))) {
+      anchorIndexes.add(item.index);
+    }
+  }
+
+  const anchored = scored
+    .filter((item) => anchorIndexes.has(item.index))
+    .sort((left, right) => left.index - right.index);
+
+  const remainingSlots = Math.max(EXTRACT_CONTEXT_MAX_MESSAGES - anchored.length, 0);
+  const prioritizedRemainder = scored
+    .filter((item) => !anchorIndexes.has(item.index))
     .sort((left, right) => {
       if (right.score !== left.score) return right.score - left.score;
       return right.index - left.index;
     })
-    .slice(0, EXTRACT_CONTEXT_MAX_MESSAGES)
+    .slice(0, remainingSlots);
+
+  const prioritized = [...anchored, ...prioritizedRemainder]
     .sort((left, right) => left.index - right.index)
     .map((item) => item.message);
 

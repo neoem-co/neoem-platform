@@ -841,6 +841,13 @@ def _sanitize_chat_messages(
         "ราคา", "มัดจำ", "ชำระ", "งวด", "จำนวน", "ขั้นต่ำ", "ส่งมอบ", "คุณภาพ", "มาตรฐาน",
         "อย", "ทรัพย์สินทางปัญญา", "ค่าปรับ", "ยกเลิก",
     )
+    anchor_patterns = (
+        "this is ",
+        "we are based at ",
+        "tax id",
+        "delivery should go to ",
+        "the product should be ",
+    )
 
     def _score_message(message: ChatMessage) -> int:
         text = (message.message or "").strip().lower()
@@ -873,14 +880,32 @@ def _sanitize_chat_messages(
         (index, message, _score_message(message))
         for index, message in enumerate(cleaned)
     ]
+    anchor_indexes: set[int] = set()
+    first_user_index = next((index for index, message in enumerate(cleaned) if (message.sender or "").lower() == "user"), None)
+    first_factory_index = next((index for index, message in enumerate(cleaned) if (message.sender or "").lower() == "factory"), None)
+    if first_user_index is not None:
+        anchor_indexes.add(first_user_index)
+    if first_factory_index is not None:
+        anchor_indexes.add(first_factory_index)
+
+    for index, message, score in scored:
+        text = (message.message or "").strip().lower()
+        if score >= 0 and any(pattern in text for pattern in anchor_patterns):
+            anchor_indexes.add(index)
+
+    anchored = [
+        item for item in scored
+        if item[0] in anchor_indexes and item[2] >= 0
+    ]
+    remaining_slots = max(max_messages - len(anchored), 0)
     prioritized = [
         message
         for _, message, _ in sorted(
-            [item for item in scored if item[2] >= 0],
+            [item for item in scored if item[2] >= 0 and item[0] not in anchor_indexes],
             key=lambda item: (item[2], item[0]),
             reverse=True,
-        )[:max_messages]
-    ]
+        )[:remaining_slots]
+    ] + [message for _, message, _ in sorted(anchored, key=lambda item: item[0])]
     prioritized_set = {id(message) for message in prioritized}
     cleaned = [
         message
