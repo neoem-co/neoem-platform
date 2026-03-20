@@ -462,6 +462,7 @@ export async function extractContext(
         chat_history: normalizeChatHistory(chatHistory),
         factory_name: factoryName,
         factory_id: factoryId,
+        force_refresh: options.forceRefresh ?? false,
       }),
       signal: AbortSignal.timeout(AI_TIMEOUT),
     });

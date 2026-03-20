@@ -60,17 +60,16 @@ interface DealRoomState {
 function hasCoreDealSheetAutofill(context: ExtractContextResponse | null) {
     const dealSheet = context?.deal_sheet;
     if (!dealSheet) return false;
-    const checks = [
-        Boolean(dealSheet.client?.company),
-        Boolean(dealSheet.client?.address),
-        Boolean(dealSheet.vendor?.company),
-        Boolean(dealSheet.vendor?.address),
-        Boolean(dealSheet.product?.specs),
-        Boolean(dealSheet.product?.packaging),
-        Boolean(dealSheet.delivery_address),
-        Boolean(dealSheet.regulatory_terms?.registration_owner || dealSheet.regulatory_terms?.document_support_by),
-    ];
-    return checks.filter(Boolean).length >= 6;
+    return Boolean(
+        dealSheet.client?.company &&
+        dealSheet.client?.address &&
+        dealSheet.vendor?.company &&
+        dealSheet.vendor?.address &&
+        dealSheet.product?.specs &&
+        dealSheet.product?.packaging &&
+        dealSheet.delivery_address &&
+        (dealSheet.regulatory_terms?.registration_owner || dealSheet.regulatory_terms?.document_support_by),
+    );
 }
 
 function loadDealRoomState(slug: string): DealRoomState {

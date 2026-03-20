@@ -176,6 +176,7 @@ class ExtractContextRequest(BaseModel):
     chat_history: list[ChatMessage]
     factory_id: Optional[str] = None
     factory_name: Optional[str] = None
+    force_refresh: bool = False
 
 
 class DealSheet(BaseModel):

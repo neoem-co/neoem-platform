@@ -85,7 +85,7 @@ async def extract_context(request: ExtractContextRequest) -> ExtractContextRespo
         request.factory_name,
     )
     cached = _EXTRACT_CONTEXT_CACHE.get(cache_key)
-    if cached:
+    if cached and not request.force_refresh:
         _EXTRACT_CONTEXT_CACHE.move_to_end(cache_key)
         logger.info("Step 1: Reusing cached context extraction for %s", request.factory_id or "unknown")
         return cached
