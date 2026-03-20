@@ -7,7 +7,7 @@ from __future__ import annotations
 from enum import Enum
 from typing import Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 
 # ─── Enums ───────────────────────────────────────────────────────────────────
@@ -101,6 +101,25 @@ class DealContext(BaseModel):
     agreed_delivery: Optional[str] = None
     factory_name: Optional[str] = None
     factory_certifications: list[str] = Field(default_factory=list)
+
+    @field_validator("agreed_price", mode="before")
+    @classmethod
+    def _normalize_agreed_price(cls, value):
+        if value in (None, ""):
+            return None
+        if isinstance(value, (int, float)):
+            return float(value)
+        if isinstance(value, str):
+            import re
+
+            match = re.search(r"(\d[\d,]*(?:\.\d+)?)", value.replace(" ", ""))
+            if match:
+                try:
+                    return float(match.group(1).replace(",", ""))
+                except ValueError:
+                    return None
+            return None
+        return None
 
 
 class LegalReference(BaseModel):
