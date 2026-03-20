@@ -1400,7 +1400,7 @@ function RiskPanel({
                             </span>
                         </div>
 
-                        <div className="relative mx-auto w-52 h-28 overflow-hidden">
+                        <div className="relative mx-auto w-56 h-32 overflow-hidden">
                             <div
                                 className="absolute inset-0 rounded-t-full border border-border"
                                 style={{
@@ -1410,11 +1410,14 @@ function RiskPanel({
                             <div className="absolute left-3 right-3 top-3 bottom-0 rounded-t-full bg-card" />
 
                             <div
-                                className="absolute left-1/2 bottom-0 h-24 w-[2px] origin-bottom rounded-full bg-foreground/80"
+                                className="absolute left-1/2 bottom-10 h-14 w-1.5 origin-bottom rounded-full bg-foreground/85 shadow-sm"
                                 style={{ transform: `translateX(-50%) rotate(${gaugeAngle}deg)` }}
-                            />
+                            >
+                                <span className="absolute left-1/2 top-0 h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-foreground" />
+                            </div>
+                            <div className="absolute left-1/2 bottom-9 h-3.5 w-3.5 -translate-x-1/2 rounded-full border border-card/80 bg-foreground" />
 
-                            <div className="absolute left-1/2 bottom-2 -translate-x-1/2 text-center">
+                            <div className="absolute left-1/2 bottom-1 -translate-x-1/2 text-center">
                                 <p className={`text-2xl font-bold ${overallRiskToneClass[overallRisk] || "text-foreground"}`}>
                                     {overallRiskPercent}%
                                 </p>
@@ -1909,7 +1912,7 @@ function RiskPanelV2({
                     </span>
                 </div>
 
-                <div className="relative mx-auto w-52 h-28 overflow-hidden">
+                <div className="relative mx-auto w-56 h-32 overflow-hidden">
                     <div
                         className="absolute inset-0 rounded-t-full border border-border"
                         style={{
@@ -1918,10 +1921,13 @@ function RiskPanelV2({
                     />
                     <div className="absolute left-3 right-3 top-3 bottom-0 rounded-t-full bg-card" />
                     <div
-                        className="absolute left-1/2 bottom-0 h-24 w-[2px] origin-bottom rounded-full bg-foreground/80"
+                        className="absolute left-1/2 bottom-10 h-14 w-1.5 origin-bottom rounded-full bg-foreground/85 shadow-sm"
                         style={{ transform: `translateX(-50%) rotate(${gaugeAngle}deg)` }}
-                    />
-                    <div className="absolute left-1/2 bottom-2 -translate-x-1/2 text-center">
+                    >
+                        <span className="absolute left-1/2 top-0 h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-foreground" />
+                    </div>
+                    <div className="absolute left-1/2 bottom-9 h-3.5 w-3.5 -translate-x-1/2 rounded-full border border-card/80 bg-foreground" />
+                    <div className="absolute left-1/2 bottom-1 -translate-x-1/2 text-center">
                         <p className={`text-2xl font-bold ${overallRiskToneClass[overallRisk] || "text-foreground"}`}>
                             {overallRiskPercent}%
                         </p>
