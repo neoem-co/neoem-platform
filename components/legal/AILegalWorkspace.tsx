@@ -377,7 +377,12 @@ function summarizePaymentTerms(dealSheet?: DealSheet | null) {
                     : milestone.amount_fixed
                         ? `฿${milestone.amount_fixed.toLocaleString()}`
                         : milestone.label || "milestone";
-                return `${amount} ${milestone.due_event || milestone.label || ""}`.trim();
+                const dueEvent = milestone.due_event?.trim() || "";
+                const label = milestone.label?.trim() || "";
+                const suffix = dueEvent && dueEvent.toLowerCase() !== label.toLowerCase()
+                    ? dueEvent
+                    : label;
+                return `${amount} ${suffix}`.trim();
             })
             .join(" / ");
     }
@@ -385,11 +390,19 @@ function summarizePaymentTerms(dealSheet?: DealSheet | null) {
 }
 
 function summarizeQualityStandards(dealSheet?: DealSheet | null) {
+    return (dealSheet?.quality_terms?.standards || []).filter(Boolean).join(", ");
+}
+
+function summarizeRegulatoryResponsibility(dealSheet?: DealSheet | null) {
+    const registrationOwner = dealSheet?.regulatory_terms?.registration_owner || "";
+    const documentSupportBy = dealSheet?.regulatory_terms?.document_support_by || "";
+    const labelComplianceOwner = dealSheet?.regulatory_terms?.label_compliance_owner || "";
     const parts = [
-        ...(dealSheet?.quality_terms?.standards || []),
-        dealSheet?.quality_terms?.defect_remedy || "",
+        registrationOwner ? `FDA / registration: ${registrationOwner}` : "",
+        documentSupportBy ? `Document support: ${documentSupportBy}` : "",
+        labelComplianceOwner ? `Artwork / label compliance: ${labelComplianceOwner}` : "",
     ].filter(Boolean);
-    return parts.join(", ");
+    return parts.join(" | ");
 }
 
 function summarizeAdditionalClauses(dealSheet?: DealSheet | null) {
@@ -441,7 +454,7 @@ function applyDealSheetToForm(
         paymentTerms: summarizePaymentTerms(ctx.deal_sheet) || previous.paymentTerms,
         qualityStandards: summarizeQualityStandards(ctx.deal_sheet) || previous.qualityStandards,
         qcBasis: ctx.deal_sheet.quality_terms?.qc_basis || previous.qcBasis,
-        regulatoryResponsibility: ctx.deal_sheet.regulatory_terms?.registration_owner || previous.regulatoryResponsibility,
+        regulatoryResponsibility: summarizeRegulatoryResponsibility(ctx.deal_sheet) || previous.regulatoryResponsibility,
         warrantyPeriod: ctx.deal_sheet.quality_terms?.warranty_period_days?.toString() || previous.warrantyPeriod,
         ipOwnership: normalizeIpOwnershipForUi(ctx.deal_sheet.commercial_terms?.ip_ownership) || previous.ipOwnership,
         additionalClauses: summarizeAdditionalClauses(ctx.deal_sheet) || previous.additionalClauses,

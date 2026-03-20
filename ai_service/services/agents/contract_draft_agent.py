@@ -13,6 +13,7 @@ import asyncio
 import hashlib
 import json
 import logging
+import re
 import time
 import uuid
 from collections import OrderedDict
@@ -116,6 +117,7 @@ async def extract_context(request: ExtractContextRequest) -> ExtractContextRespo
         )
 
     deal_sheet = _build_deal_sheet(data)
+    deal_sheet = _enrich_deal_sheet_from_chat(clean_chat_history, deal_sheet, request.factory_name)
     template_str = str(data.get("suggested_template") or TemplateType.SALES_CONTRACT.value)
     try:
         suggested_template = TemplateType(template_str)
@@ -506,6 +508,171 @@ def _build_deal_sheet(data: dict[str, Any]) -> DealSheet:
         additional_notes=data.get("additional_notes"),
         confidence=data.get("confidence", 0),
     )
+
+
+def _enrich_deal_sheet_from_chat(
+    chat_history: list[ChatMessage],
+    deal_sheet: DealSheet,
+    factory_name: str | None = None,
+) -> DealSheet:
+    user_messages = [message.message.strip() for message in chat_history if (message.sender or "").lower() == "user"]
+    factory_messages = [message.message.strip() for message in chat_history if (message.sender or "").lower() == "factory"]
+
+    if not deal_sheet.client:
+        deal_sheet.client = PartyInfo(role="buyer")
+    if not deal_sheet.vendor:
+        deal_sheet.vendor = PartyInfo(role="seller", name=factory_name or "")
+    if not deal_sheet.product:
+        deal_sheet.product = ProductInfo()
+    if not deal_sheet.quality_terms:
+        deal_sheet.quality_terms = QualityTerms()
+    if not deal_sheet.regulatory_terms:
+        deal_sheet.regulatory_terms = RegulatoryTerms()
+    if not deal_sheet.commercial_terms:
+        deal_sheet.commercial_terms = CommercialTerms()
+
+    user_text = "\n".join(user_messages)
+    factory_text = "\n".join(factory_messages)
+    combined_text = "\n".join(message.message.strip() for message in chat_history if message.message.strip())
+
+    _apply_party_details(deal_sheet.client, user_text, is_buyer=True)
+    _apply_party_details(deal_sheet.vendor, factory_text, is_buyer=False)
+
+    if not deal_sheet.product.specs:
+        product_brief_match = re.search(
+            r"(The product should be .*?)(?:\. Formula ownership|\. We want|$)",
+            user_text,
+            re.IGNORECASE | re.DOTALL,
+        )
+        if product_brief_match:
+            deal_sheet.product.specs = _clean_sentence(product_brief_match.group(1))
+
+    if not deal_sheet.product.packaging:
+        packaging_match = re.search(
+            r"in an (.*?)(?:\.|, We want|, and)",
+            user_text,
+            re.IGNORECASE | re.DOTALL,
+        )
+        if packaging_match:
+            deal_sheet.product.packaging = _clean_sentence(packaging_match.group(1))
+
+    if not deal_sheet.delivery_address:
+        delivery_match = re.search(
+            r"Delivery should go to (.*?)(?:\.| We also need|$)",
+            user_text,
+            re.IGNORECASE | re.DOTALL,
+        )
+        if delivery_match:
+            deal_sheet.delivery_address = _clean_sentence(delivery_match.group(1))
+
+    if not deal_sheet.payment_milestones:
+        deal_sheet.payment_milestones = _extract_payment_milestones(user_text)
+
+    if not deal_sheet.total_price:
+        total_match = re.search(r"THB\s*([0-9,]+)", combined_text, re.IGNORECASE)
+        if total_match:
+            deal_sheet.total_price = float(total_match.group(1).replace(",", ""))
+
+    if not deal_sheet.delivery_weeks:
+        weeks_match = re.search(r"(\d+\s*(?:to|-)\s*\d+\s*days)", combined_text, re.IGNORECASE)
+        if weeks_match:
+            deal_sheet.delivery_weeks = _clean_sentence(weeks_match.group(1))
+
+    if not deal_sheet.quality_terms.qc_basis:
+        qc_match = re.search(
+            r"For QC we can align to (.*?)(?:\. If bulk goods fail|$)",
+            factory_text,
+            re.IGNORECASE | re.DOTALL,
+        )
+        if qc_match:
+            deal_sheet.quality_terms.qc_basis = _clean_sentence(qc_match.group(1))
+
+    if not deal_sheet.quality_terms.defect_remedy:
+        remedy_match = re.search(
+            r"If bulk goods fail .*?, we can (.*?)(?:\.|$)",
+            factory_text,
+            re.IGNORECASE | re.DOTALL,
+        )
+        if remedy_match:
+            deal_sheet.quality_terms.defect_remedy = _clean_sentence(remedy_match.group(1))
+
+    if not deal_sheet.regulatory_terms.registration_owner and re.search(r"FDA notification responsibility can be assigned to your brand", factory_text, re.IGNORECASE):
+        deal_sheet.regulatory_terms.registration_owner = "buyer"
+    if not deal_sheet.regulatory_terms.document_support_by and re.search(r"ILC providing the manufacturing documents and technical support", factory_text, re.IGNORECASE):
+        deal_sheet.regulatory_terms.document_support_by = "seller"
+    if not deal_sheet.regulatory_terms.label_compliance_owner and re.search(r"artwork compliance", factory_text, re.IGNORECASE):
+        deal_sheet.regulatory_terms.label_compliance_owner = "shared"
+
+    if not deal_sheet.commercial_terms.payment_terms_summary and deal_sheet.payment_milestones:
+        deal_sheet.commercial_terms.payment_terms_summary = " / ".join(
+            filter(
+                None,
+                [
+                    f"{int(m.amount_percentage)}% {m.due_event}".strip()
+                    if m.amount_percentage is not None else ""
+                    for m in deal_sheet.payment_milestones
+                ],
+            )
+        )
+
+    return deal_sheet
+
+
+def _apply_party_details(party: PartyInfo, text: str, *, is_buyer: bool) -> None:
+    if is_buyer:
+        intro_match = re.search(
+            r"this is\s+(?P<name>[^.,]+)\s+from\s+(?P<company>.*?)(?:\.|\s+We are based at)",
+            text,
+            re.IGNORECASE | re.DOTALL,
+        )
+        address_match = re.search(
+            r"We are based at\s+(?P<address>.*?)(?:\s+and our tax ID is|\.)",
+            text,
+            re.IGNORECASE | re.DOTALL,
+        )
+        tax_match = re.search(r"tax ID is\s*(?P<tax>\d{10,15})", text, re.IGNORECASE)
+    else:
+        intro_match = re.search(
+            r"this is\s+(?P<name>[^.,]+)\s+from\s+(?P<company>.*?)(?:,\s+(?P<address>.*?))?(?:\.|\s+Our manufacturing tax ID)",
+            text,
+            re.IGNORECASE | re.DOTALL,
+        )
+        address_match = None
+        tax_match = re.search(r"tax ID .*?(\d{10,15})", text, re.IGNORECASE)
+
+    if intro_match:
+        if not party.name:
+            party.name = _clean_sentence(intro_match.group("name"))
+        if not party.company:
+            party.company = _clean_sentence(intro_match.group("company"))
+        if not party.address:
+            address = intro_match.groupdict().get("address")
+            if address:
+                party.address = _clean_sentence(address)
+    if address_match and not party.address:
+        party.address = _clean_sentence(address_match.group("address"))
+    if tax_match and not party.tax_id:
+        party.tax_id = tax_match.group(1)
+
+
+def _extract_payment_milestones(text: str) -> list[PaymentMilestone]:
+    payment_match = re.search(
+        r"(\d+)%\s+deposit,\s*(\d+)%\s+after sample approval,\s*and\s*(\d+)%\s+before final shipment",
+        text,
+        re.IGNORECASE,
+    )
+    if not payment_match:
+        return []
+    first, second, third = payment_match.groups()
+    return [
+        PaymentMilestone(label="deposit", amount_percentage=float(first), due_event="deposit"),
+        PaymentMilestone(label="sample approval", amount_percentage=float(second), due_event="after sample approval"),
+        PaymentMilestone(label="final shipment", amount_percentage=float(third), due_event="before final shipment"),
+    ]
+
+
+def _clean_sentence(value: str) -> str:
+    return re.sub(r"\s+", " ", value).strip(" .,\n\t")
 
 
 def _model_from_payload(model_cls, payload):
