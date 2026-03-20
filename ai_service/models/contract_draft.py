@@ -10,9 +10,6 @@ from typing import Optional
 from pydantic import BaseModel, Field, field_validator
 
 
-# ─── Enums ───────────────────────────────────────────────────────────────────
-
-
 class TemplateType(str, Enum):
     SALES_CONTRACT = "sales_contract"
     HIRE_OF_WORK = "hire_of_work"
@@ -42,7 +39,8 @@ class CommercialTerm(str, Enum):
     NON_EXCLUSIVE = "non_exclusive"
 
 
-# ─── Request Models ──────────────────────────────────────────────────────────
+def _normalize_blank_string(value):
+    return "" if value is None else value
 
 
 class ChatMessage(BaseModel):
@@ -53,6 +51,7 @@ class ChatMessage(BaseModel):
 
 class PartyInfo(BaseModel):
     """Information about a contract party."""
+
     name: str = ""
     role: str = Field(default="", description="'buyer' | 'seller' | 'vendor' | 'client'")
     company: Optional[str] = None
@@ -61,38 +60,119 @@ class PartyInfo(BaseModel):
 
     @field_validator("name", "role", "company", "address", "tax_id", mode="before")
     @classmethod
-    def _normalize_empty_strings(cls, v):
-        return "" if v is None else v
+    def _normalize_empty_strings(cls, value):
+        return _normalize_blank_string(value)
 
 
 class ProductInfo(BaseModel):
     """Product details for the contract."""
-    name: str
+
+    name: str = ""
     specs: Optional[str] = None
-    quantity: Optional[int] = None
+    quantity: Optional[float] = None
     unit: str = "pieces"
+    packaging: Optional[str] = None
+    target_market: Optional[str] = None
+
+    @field_validator("name", "specs", "unit", "packaging", "target_market", mode="before")
+    @classmethod
+    def _normalize_strings(cls, value):
+        return _normalize_blank_string(value)
+
+
+class PaymentMilestone(BaseModel):
+    """Structured payment milestone for OEM deals."""
+
+    label: str = ""
+    amount_percentage: Optional[float] = None
+    amount_fixed: Optional[float] = None
+    due_event: Optional[str] = None
+    notes: Optional[str] = None
+
+    @field_validator("label", "due_event", "notes", mode="before")
+    @classmethod
+    def _normalize_strings(cls, value):
+        return _normalize_blank_string(value)
+
+
+class QualityTerms(BaseModel):
+    """Structured quality / QC information."""
+
+    standards: list[str] = Field(default_factory=list)
+    qc_basis: Optional[str] = None
+    acceptance_window_days: Optional[int] = None
+    defect_remedy: Optional[str] = None
+    warranty_period_days: Optional[int] = None
+
+    @field_validator("qc_basis", "defect_remedy", mode="before")
+    @classmethod
+    def _normalize_strings(cls, value):
+        return _normalize_blank_string(value)
+
+
+class RegulatoryTerms(BaseModel):
+    """Regulatory / FDA responsibility split."""
+
+    registration_owner: Optional[str] = None
+    document_support_by: Optional[str] = None
+    label_compliance_owner: Optional[str] = None
+    target_market: Optional[str] = None
+    notes: Optional[str] = None
+
+    @field_validator(
+        "registration_owner",
+        "document_support_by",
+        "label_compliance_owner",
+        "target_market",
+        "notes",
+        mode="before",
+    )
+    @classmethod
+    def _normalize_strings(cls, value):
+        return _normalize_blank_string(value)
 
 
 class CommercialTerms(BaseModel):
     """Commercial terms section."""
+
     commercial_type: CommercialTerm = CommercialTerm.STANDARD
     ip_ownership: IPOwnership = IPOwnership.BUYER
     ip_details: Optional[str] = None
     penalty_type: PenaltyType = PenaltyType.NONE
     penalty_details: Optional[str] = None
+    payment_terms_summary: Optional[str] = None
+    artwork_ownership: Optional[str] = None
+    tooling_ownership: Optional[str] = None
+    tooling_return_required: Optional[bool] = None
+    lead_time_days: Optional[int] = None
+    termination_trigger: Optional[str] = None
 
-    @field_validator("ip_ownership", mode="before")
+    @field_validator(
+        "ip_ownership",
+        mode="before",
+    )
     @classmethod
-    def _normalize_ip(cls, v: str) -> str:
+    def _normalize_ip(cls, value: str) -> str:
         aliases = {"seller": "factory", "joint": "shared", "manufacturer": "factory"}
-        return aliases.get(v, v) if isinstance(v, str) else v
+        return aliases.get(value, value) if isinstance(value, str) else value
 
-
-# — Step 1: Extract context from chat ————————————————————————————————————————
+    @field_validator(
+        "ip_details",
+        "penalty_details",
+        "payment_terms_summary",
+        "artwork_ownership",
+        "tooling_ownership",
+        "termination_trigger",
+        mode="before",
+    )
+    @classmethod
+    def _normalize_strings(cls, value):
+        return _normalize_blank_string(value)
 
 
 class ExtractContextRequest(BaseModel):
-    """Step 1 — send chat history, get auto-filled deal sheet."""
+    """Step 1 - send chat history, get auto-filled deal sheet."""
+
     chat_history: list[ChatMessage]
     factory_id: Optional[str] = None
     factory_name: Optional[str] = None
@@ -100,6 +180,7 @@ class ExtractContextRequest(BaseModel):
 
 class DealSheet(BaseModel):
     """Structured deal information extracted from chat context."""
+
     vendor: Optional[PartyInfo] = None
     client: Optional[PartyInfo] = None
     product: Optional[ProductInfo] = None
@@ -107,6 +188,10 @@ class DealSheet(BaseModel):
     currency: str = "THB"
     delivery_date: Optional[str] = None
     delivery_weeks: Optional[str] = None
+    delivery_address: Optional[str] = None
+    payment_milestones: list[PaymentMilestone] = Field(default_factory=list)
+    quality_terms: Optional[QualityTerms] = None
+    regulatory_terms: Optional[RegulatoryTerms] = None
     commercial_terms: Optional[CommercialTerms] = None
     additional_notes: Optional[str] = None
     confidence: float = Field(
@@ -116,9 +201,15 @@ class DealSheet(BaseModel):
         description="How confident the extraction is (0-100).",
     )
 
+    @field_validator("currency", "delivery_date", "delivery_weeks", "delivery_address", "additional_notes", mode="before")
+    @classmethod
+    def _normalize_strings(cls, value):
+        return _normalize_blank_string(value)
+
 
 class ExtractContextResponse(BaseModel):
     """Response from Step 1."""
+
     deal_sheet: DealSheet
     suggested_template: TemplateType = TemplateType.SALES_CONTRACT
     auto_filled_fields: list[str] = Field(
@@ -127,11 +218,9 @@ class ExtractContextResponse(BaseModel):
     )
 
 
-# — Step 2/3: Generate draft contract ————————————————————————————————————————
-
-
 class GenerateDraftRequest(BaseModel):
-    """Step 2+3 — take the (possibly user-edited) deal sheet + template choice and generate articles."""
+    """Step 2+3 - take the (possibly user-edited) deal sheet + template choice and generate articles."""
+
     template_type: TemplateType
     deal_sheet: DealSheet
     parties: list[PartyInfo] = Field(default_factory=list)
@@ -141,10 +230,12 @@ class GenerateDraftRequest(BaseModel):
     delivery_date: Optional[str] = None
     commercial_terms: Optional[CommercialTerms] = None
     language: str = Field(default="th", description="'th' | 'en' | 'both'")
+    skip_polish: bool = False
 
 
 class ContractArticle(BaseModel):
     """A single article in the generated contract."""
+
     article_number: int
     title_th: str
     title_en: str = ""
@@ -155,6 +246,7 @@ class ContractArticle(BaseModel):
 
 class GenerateDraftResponse(BaseModel):
     """Response from Step 2+3."""
+
     contract_title: str
     contract_filename: str
     articles: list[ContractArticle] = Field(default_factory=list)
@@ -162,13 +254,12 @@ class GenerateDraftResponse(BaseModel):
     preamble_th: str = ""
     preamble_en: str = ""
     retrieval_debug: dict[str, list[dict[str, str]]] = Field(default_factory=dict)
-
-
-# — Step 4: Finalize & download ——————————————————————————————————————————————
+    polish_applied: bool = True
 
 
 class FinalizeRequest(BaseModel):
-    """Step 4 — finalize the contract with any user edits."""
+    """Step 4 - finalize the contract with any user edits."""
+
     contract_title: str
     articles: list[ContractArticle]
     preamble_th: str = ""
@@ -179,10 +270,12 @@ class FinalizeRequest(BaseModel):
         default="both",
         description="'pdf' | 'docx' | 'both'",
     )
+    polish_before_export: bool = False
 
 
 class FinalizeResponse(BaseModel):
-    """Response from Step 4 — download links."""
+    """Response from Step 4 - download links."""
+
     pdf_url: Optional[str] = None
     docx_url: Optional[str] = None
     contract_id: str

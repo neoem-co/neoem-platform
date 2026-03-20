@@ -20,7 +20,8 @@ import { AILegalWorkspace } from "@/components/legal/AILegalWorkspace";
 import { TOSModal } from "@/components/chat/TOSModal";
 import { MilestoneTracker } from "@/components/deal/MilestoneTracker";
 import { StickyPaymentWidget } from "@/components/deal/StickyPaymentWidget";
-import { extractContext, type DealSheet } from "@/lib/ai-api";
+import { extractContext, type ExtractContextResponse } from "@/lib/ai-api";
+import { deriveDealSupervisorState } from "@/lib/deal-supervisor";
 import { getFactoryBySlug, getFactoryChatHistory } from "@/lib/factory-data";
 import factory1 from "@/public/assets/factory-1.jpg";
 import factory2 from "@/public/assets/factory-2.jpg";
@@ -97,17 +98,41 @@ const DealRoom = () => {
     const [trackerResetKey, setTrackerResetKey] = useState(0);
     const [showLegalWorkspace, setShowLegalWorkspace] = useState(false);
     const [legalWorkspaceTab, setLegalWorkspaceTab] = useState<"draft" | "risk" | "history" | "esign">("draft");
-    const [liveDealSheet, setLiveDealSheet] = useState<DealSheet | null>(null);
+    const [liveExtractContext, setLiveExtractContext] = useState<ExtractContextResponse | null>(null);
+    const [summaryRefreshing, setSummaryRefreshing] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const hasContractInChat = messages.some((m) => m.attachment?.type === "application/pdf");
     const depositAmount = 36000;
     const totalDealValue = 120000;
+    const liveDealSheet = liveExtractContext?.deal_sheet || null;
+    const supervisor = deriveDealSupervisorState({
+        extractContext: liveExtractContext,
+        riskAlert,
+        depositPaid,
+        completedActions,
+        hasContractInChat,
+    });
 
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }, [messages]);
+
+    useEffect(() => {
+        const nextState = loadDealRoomState(slug);
+        setShowTOS(!nextState.tosAccepted);
+        setTosAccepted(nextState.tosAccepted);
+        setMessages([...getFactoryChatHistory(slug, locale) as Message[]]);
+        setDepositPaid(nextState.depositPaid);
+        setRiskAlert(nextState.riskAlert);
+        setCompletedActions(nextState.completedActions);
+        setShowLegalWorkspace(false);
+        setLegalWorkspaceTab("draft");
+        setLiveExtractContext(null);
+        setSummaryRefreshing(false);
+        setTrackerResetKey((prev) => prev + 1);
+    }, [locale, slug]);
 
     useEffect(() => {
         if (typeof window === "undefined") return;
@@ -123,6 +148,7 @@ const DealRoom = () => {
         if (!factory) return;
         let active = true;
         const timer = window.setTimeout(async () => {
+            setSummaryRefreshing(true);
             try {
                 const context = await extractContext(
                     messages.map((m) => ({
@@ -134,11 +160,15 @@ const DealRoom = () => {
                     factory.id,
                 );
                 if (active) {
-                    setLiveDealSheet(context.deal_sheet);
+                    setLiveExtractContext(context);
                 }
             } catch {
                 if (active) {
-                    setLiveDealSheet(null);
+                    setLiveExtractContext(null);
+                }
+            } finally {
+                if (active) {
+                    setSummaryRefreshing(false);
                 }
             }
         }, 500);
@@ -147,7 +177,7 @@ const DealRoom = () => {
             active = false;
             window.clearTimeout(timer);
         };
-    }, [factory?.id, factory?.name, messages]);
+    }, [factory, messages]);
 
     const markActionCompleted = (action: string) => {
         setCompletedActions((prev) => (prev.includes(action) ? prev : [...prev, action]));
@@ -273,14 +303,58 @@ const DealRoom = () => {
                 <Card>
                     <CardHeader className="py-3">
                         <CardTitle className="text-sm flex items-center gap-2">
-                            <Sparkles className="h-4 w-4 text-primary" /> Live Summary
+                            <Sparkles className="h-4 w-4 text-primary" /> AI Deal Supervisor
                         </CardTitle>
                     </CardHeader>
                     <CardContent className="py-3 text-sm text-muted-foreground">
-                        <p><strong className="text-foreground">Product:</strong> {liveDealSheet?.product?.name || "-"}</p>
+                        <p className="text-[11px] uppercase tracking-wider text-muted-foreground/80">Current Deal State</p>
+                        <p className="mt-1 font-medium text-foreground">{supervisor.currentState}</p>
+                        <p className="mt-3 text-[11px] uppercase tracking-wider text-muted-foreground/80">Next Best Action</p>
+                        <p className="mt-1 font-medium text-foreground">{supervisor.nextAction}</p>
+                        {summaryRefreshing && <p className="mt-2 text-xs text-primary">Updating summary...</p>}
+                    </CardContent>
+                </Card>
+
+                <Card>
+                    <CardHeader className="py-3">
+                        <CardTitle className="text-sm">Deal Summary</CardTitle>
+                    </CardHeader>
+                    <CardContent className="py-3 text-sm text-muted-foreground space-y-2">
+                        {supervisor.summaryItems.length > 0 ? supervisor.summaryItems.map((item) => (
+                            <p key={item.label}>
+                                <strong className="text-foreground">{item.label}:</strong> {item.value}
+                            </p>
+                        )) : (
+                            <p>Waiting for enough chat context to build the live summary.</p>
+                        )}
                         <p><strong className="text-foreground">Quantity:</strong> {liveDealSheet?.product?.quantity ? liveDealSheet.product.quantity.toLocaleString() : "-"} {liveDealSheet?.product?.unit || ""}</p>
                         <p><strong className="text-foreground">Total:</strong> {typeof liveDealSheet?.total_price === "number" ? `฿${liveDealSheet.total_price.toLocaleString()}` : "-"}</p>
-                        <p><strong className="text-foreground">Delivery:</strong> {liveDealSheet?.delivery_date || liveDealSheet?.delivery_weeks || "-"}</p>
+                    </CardContent>
+                </Card>
+
+                <Card>
+                    <CardHeader className="py-3">
+                        <CardTitle className="text-sm">Pending Documents / Approvals</CardTitle>
+                    </CardHeader>
+                    <CardContent className="py-3 text-sm text-muted-foreground space-y-2">
+                        {supervisor.pendingItems.length > 0 ? supervisor.pendingItems.map((item) => (
+                            <p key={item}>• {item}</p>
+                        )) : (
+                            <p>Core deal information looks captured.</p>
+                        )}
+                    </CardContent>
+                </Card>
+
+                <Card className={supervisor.blockers.length > 0 ? "border-warning/30 bg-warning/5" : ""}>
+                    <CardHeader className="py-3">
+                        <CardTitle className="text-sm">Risks / Blockers</CardTitle>
+                    </CardHeader>
+                    <CardContent className="py-3 text-sm text-muted-foreground space-y-2">
+                        {supervisor.blockers.length > 0 ? supervisor.blockers.map((item) => (
+                            <p key={item}>• {item}</p>
+                        )) : (
+                            <p>No active blockers detected right now.</p>
+                        )}
                     </CardContent>
                 </Card>
 
@@ -451,6 +525,7 @@ const DealRoom = () => {
                 onClose={() => setShowLegalWorkspace(false)}
                 factoryName={factory.name}
                 initialTab={legalWorkspaceTab}
+                initialExtractContext={liveExtractContext}
                 chatHistory={messages.map((m) => ({
                     sender: m.sender,
                     message: m.message,

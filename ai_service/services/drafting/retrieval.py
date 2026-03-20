@@ -101,6 +101,9 @@ class DraftingSnippet:
     clause_topic: str
     contract_types: tuple[str, ...]
     industry: str
+    language: str = "th"
+    jurisdiction: str = "thailand"
+    risk_side: str = "balanced"
     source: str = ""
     score: float = 0.0
 
@@ -129,7 +132,11 @@ class DraftingRetrievalContext:
                     "doc_role": item.doc_role,
                     "reuse_mode": item.reuse_mode,
                     "clause_topic": item.clause_topic,
+                    "contract_types": ", ".join(item.contract_types),
                     "industry": item.industry,
+                    "language": item.language,
+                    "jurisdiction": item.jurisdiction,
+                    "risk_side": item.risk_side,
                     "source": item.source,
                     "score": f"{item.score:.2f}",
                 }
@@ -184,6 +191,9 @@ def _build_focus_topics(template_type: str, deal_sheet: DealSheet, product: Prod
     product_text = " ".join(filter(None, [
         product.name if product else "",
         product.specs if product else "",
+        product.packaging if product else "",
+        product.target_market if product else "",
+        deal_sheet.delivery_address or "",
         deal_sheet.additional_notes or "",
     ])).lower()
     industry = _infer_industry(product_text)
@@ -200,6 +210,15 @@ def _build_focus_topics(template_type: str, deal_sheet: DealSheet, product: Prod
     if deal_sheet.total_price is not None:
         topics.add("price_payment")
 
+    if deal_sheet.payment_milestones:
+        topics.add("price_payment")
+
+    if deal_sheet.quality_terms:
+        topics.add("quality_qc")
+
+    if deal_sheet.regulatory_terms:
+        topics.add("regulatory_fda")
+
     return topics
 
 
@@ -210,12 +229,16 @@ def _build_query(
     product: ProductInfo | None,
 ) -> tuple[str, set[str], set[str], str]:
     chosen_product = product or deal_sheet.product
+    chosen_parties = parties or [party for party in [deal_sheet.client, deal_sheet.vendor] if party]
     product_bits = [
         chosen_product.name if chosen_product else "",
         chosen_product.specs if chosen_product else "",
+        chosen_product.packaging if chosen_product else "",
+        chosen_product.target_market if chosen_product else "",
         deal_sheet.additional_notes or "",
         deal_sheet.delivery_weeks or "",
         deal_sheet.delivery_date or "",
+        deal_sheet.delivery_address or "",
     ]
 
     commercial_bits: list[str] = []
@@ -227,12 +250,58 @@ def _build_query(
                 deal_sheet.commercial_terms.ip_details or "",
                 str(deal_sheet.commercial_terms.penalty_type),
                 deal_sheet.commercial_terms.penalty_details or "",
+                deal_sheet.commercial_terms.payment_terms_summary or "",
+                deal_sheet.commercial_terms.artwork_ownership or "",
+                deal_sheet.commercial_terms.tooling_ownership or "",
+                deal_sheet.commercial_terms.termination_trigger or "",
+                str(deal_sheet.commercial_terms.lead_time_days or ""),
+                "tooling return" if deal_sheet.commercial_terms.tooling_return_required else "",
+            ]
+        )
+
+    payment_bits = [
+        " ".join(
+            filter(
+                None,
+                [
+                    milestone.label,
+                    milestone.due_event or "",
+                    milestone.notes or "",
+                    str(milestone.amount_percentage or ""),
+                    str(milestone.amount_fixed or ""),
+                ],
+            )
+        )
+        for milestone in deal_sheet.payment_milestones
+    ]
+
+    quality_bits: list[str] = []
+    if deal_sheet.quality_terms:
+        quality_bits.extend(
+            [
+                *deal_sheet.quality_terms.standards,
+                deal_sheet.quality_terms.qc_basis or "",
+                deal_sheet.quality_terms.defect_remedy or "",
+                str(deal_sheet.quality_terms.acceptance_window_days or ""),
+                str(deal_sheet.quality_terms.warranty_period_days or ""),
+            ]
+        )
+
+    regulatory_bits: list[str] = []
+    if deal_sheet.regulatory_terms:
+        regulatory_bits.extend(
+            [
+                deal_sheet.regulatory_terms.registration_owner or "",
+                deal_sheet.regulatory_terms.document_support_by or "",
+                deal_sheet.regulatory_terms.label_compliance_owner or "",
+                deal_sheet.regulatory_terms.target_market or "",
+                deal_sheet.regulatory_terms.notes or "",
             ]
         )
 
     party_bits = [
         " ".join(filter(None, [party.role, party.name, party.company or ""]))
-        for party in parties
+        for party in chosen_parties
     ]
 
     query = " ".join(
@@ -241,6 +310,9 @@ def _build_query(
             *party_bits,
             *product_bits,
             *commercial_bits,
+            *payment_bits,
+            *quality_bits,
+            *regulatory_bits,
             "OEM ไทย สัญญา กฎหมาย คุณภาพ ส่งมอบ ชำระเงิน ทรัพย์สินทางปัญญา การรักษาความลับ เลิกสัญญา พยาน เอกสารแนบท้าย",
         ] if bit
     )
@@ -276,6 +348,20 @@ def _score_record(
     elif record_industry == "all" or industry == "all":
         score += 1.0
 
+    language = str(record.get("language") or "th").lower()
+    if language in {"th", "thai", "both"}:
+        score += 0.6
+
+    jurisdiction = str(record.get("jurisdiction") or "thailand").lower()
+    if jurisdiction in {"thailand", "thai", "all"}:
+        score += 0.8
+
+    risk_side = str(record.get("risk_side") or "balanced").lower()
+    if risk_side == "balanced":
+        score += 0.6
+    elif risk_side in query_tokens:
+        score += 0.4
+
     clause_topic = str(record.get("clause_topic") or "").lower()
     if clause_topic in focus_topics:
         score += 3.0
@@ -309,6 +395,9 @@ def _to_snippet(record: dict[str, Any], score: float) -> DraftingSnippet:
         clause_topic=str(record.get("clause_topic") or ""),
         contract_types=tuple(str(item) for item in record.get("contract_types", [])),
         industry=str(record.get("industry") or "all"),
+        language=str(record.get("language") or "th"),
+        jurisdiction=str(record.get("jurisdiction") or "thailand"),
+        risk_side=str(record.get("risk_side") or "balanced"),
         source=str(record.get("source") or ""),
         score=score,
     )

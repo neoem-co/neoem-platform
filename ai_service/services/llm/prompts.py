@@ -218,6 +218,12 @@ CONTEXT_EXTRACTION_SYSTEM = """คุณเป็น AI ที่เชี่ย
 
 จากบทสนทนาระหว่างลูกค้า (buyer) กับโรงงาน OEM (seller/vendor) ให้สกัดข้อมูลออกมาเป็น structured JSON
 
+หลักการสำคัญ:
+- ดึงเฉพาะข้อมูลที่มีหลักฐานจากบทสนทนา อย่าคาดเดา
+- ถ้าข้อมูลยังไม่ชัดเจน ให้ใส่ null, [] หรือสตริงว่างตามชนิดข้อมูล
+- พยายามแยกข้อมูลเชิงโครงสร้างให้มากที่สุด เช่น payment milestones, QC basis, regulatory ownership, delivery address
+- auto_filled_fields ต้องระบุชื่อฟิลด์แบบ dot path ของข้อมูลที่พบจริง เช่น client.company, product.packaging, payment_milestones, regulatory_terms.registration_owner
+
 ตอบเป็น JSON เท่านั้น"""
 
 CONTEXT_EXTRACTION_USER = """บทสนทนาจาก Deal Room:
@@ -246,18 +252,50 @@ CONTEXT_EXTRACTION_USER = """บทสนทนาจาก Deal Room:
     "name": "ชื่อสินค้า",
     "specs": "รายละเอียด specs หรือ null",
     "quantity": จำนวน หรือ null,
-    "unit": "หน่วย เช่น pieces, kg"
+    "unit": "หน่วย เช่น pieces, kg",
+    "packaging": "รูปแบบบรรจุภัณฑ์ หรือ null",
+    "target_market": "ตลาดปลายทาง เช่น Thailand หรือ null"
   }},
   "total_price": จำนวนเงิน หรือ null,
   "currency": "THB",
   "delivery_date": "วันที่ หรือ null",
   "delivery_weeks": "X-Y weeks หรือ null",
+  "delivery_address": "ที่อยู่จัดส่ง หรือ null",
+  "payment_milestones": [
+    {{
+      "label": "ชื่อ milestone เช่น deposit",
+      "amount_percentage": จำนวนเปอร์เซ็นต์ หรือ null,
+      "amount_fixed": จำนวนเงินคงที่ หรือ null,
+      "due_event": "เงื่อนไขที่ครบกำหนดชำระ เช่น after sample approval",
+      "notes": "หมายเหตุเพิ่มเติม หรือ null"
+    }}
+  ],
+  "quality_terms": {{
+    "standards": ["มาตรฐาน เช่น ISO 9001, GMP"],
+    "qc_basis": "หลักตรวจรับ เช่น approved golden sample / microbiological limits",
+    "acceptance_window_days": จำนวนวันตรวจรับ หรือ null,
+    "defect_remedy": "วิธีเยียวยาของเสีย เช่น replace or rework defective lots",
+    "warranty_period_days": จำนวนวันรับประกัน หรือ null
+  }},
+  "regulatory_terms": {{
+    "registration_owner": "ผู้รับผิดชอบ อย./registration เช่น buyer | seller | shared | custom หรือ null",
+    "document_support_by": "ฝ่ายที่ช่วยจัดเตรียม technical documents หรือ null",
+    "label_compliance_owner": "ฝ่ายที่รับผิดชอบ artwork/label compliance หรือ null",
+    "target_market": "ตลาดเป้าหมาย เช่น Thailand หรือ null",
+    "notes": "หมายเหตุเพิ่มเติม หรือ null"
+  }},
   "commercial_terms": {{
     "commercial_type": "standard | exclusive | non_exclusive",
     "ip_ownership": "buyer | factory | shared | custom",
     "ip_details": "รายละเอียด IP หรือ null",
     "penalty_type": "none | fixed_daily | percentage_daily | email_notice | custom",
-    "penalty_details": "รายละเอียดบทลงโทษ หรือ null"
+    "penalty_details": "รายละเอียดบทลงโทษ หรือ null",
+    "payment_terms_summary": "สรุปเงื่อนไขการชำระเงิน หรือ null",
+    "artwork_ownership": "เจ้าของ artwork หรือ null",
+    "tooling_ownership": "เจ้าของแม่พิมพ์/tooling หรือ null",
+    "tooling_return_required": true,
+    "lead_time_days": จำนวนวัน lead time หรือ null,
+    "termination_trigger": "เหตุเลิกสัญญาที่พบจากบทสนทนา หรือ null"
   }},
   "additional_notes": "หมายเหตุเพิ่มเติม หรือ null",
   "confidence": 0-100,

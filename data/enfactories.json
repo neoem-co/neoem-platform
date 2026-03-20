@@ -1482,62 +1482,86 @@
             {
                 "id": "ilc-1",
                 "sender": "user",
-                "message": "Hi I am looking for an OEM partner for a premium mousse sunscreen SPF50 PA++++ for the Thai market. Initial launch target is 1,000 pieces.",
+                "message": "Hello, this is Pim from AuraGlow Brand Co., Ltd. We are based at 88/9 Sukhumvit 55, Khlong Tan Nuea, Watthana, Bangkok 10110 and our tax ID is 0105568012345. We are looking for an OEM partner for a premium mousse sunscreen SPF50 PA++++ for the Thai market with an initial launch target of 1,000 pieces.",
                 "timestamp": "2026-01-04T10:30:00Z"
             },
             {
                 "id": "ilc-2",
                 "sender": "factory",
-                "message": "Hello and thank you for reaching out. For sunscreen mousse we can support MOQ 1,000 units for standard packaging, with pilot samples ready in about 14 days after brief confirmation.",
+                "message": "Hello Pim, this is Natt from ILC Public Company Limited, 62 Moo 8, Bang Kruai-Sai Noi Road, Bang Len, Bang Yai, Nonthaburi 11140. Our manufacturing tax ID for contracting purposes is 0107537000456. For sunscreen mousse we can support MOQ 1,000 units for standard packaging, with pilot samples ready in about 14 days after brief confirmation.",
                 "timestamp": "2026-01-04T10:32:00Z"
             },
             {
                 "id": "ilc-3",
                 "sender": "user",
-                "message": "We want a light whipped texture, non-sticky finish, water resistant, and no white cast. Formula ownership must stay with our brand.",
+                "message": "The product should be a 50 ml whipped mousse sunscreen in an airless pump bottle with a matte pastel peach secondary box. We want a light whipped texture, non-sticky finish, water resistant, and no white cast. Formula ownership, trademarks, and packaging artwork must stay with our brand.",
                 "timestamp": "2026-01-04T10:35:00Z"
             },
             {
                 "id": "ilc-4",
                 "sender": "factory",
-                "message": "Understood. We can develop to that brief. If development is funded by your brand, formula and product IP can be assigned to you, while our background manufacturing know-how remains ours.",
+                "message": "Understood. We can develop to that brief under our ISO 9001 and ISO 14001 system, and we can produce in line with cosmetic GMP working procedures. If development is funded by your brand, the finished formula and product IP can be assigned to AuraGlow, while our background manufacturing know-how remains ours.",
                 "timestamp": "2026-01-04T10:38:00Z"
             },
             {
                 "id": "ilc-5",
                 "sender": "user",
-                "message": "Please quote on 30% deposit, 40% after sample approval, and 30% before final shipment. We also need clear QC acceptance criteria and replacement for defective lots.",
+                "message": "Please quote on 30% deposit, 40% after sample approval, and 30% before final shipment. Delivery should go to AuraGlow Brand Co., Ltd., 88/9 Sukhumvit 55, Khlong Tan Nuea, Watthana, Bangkok 10110. We also need clear QC acceptance criteria and replacement for defective lots.",
                 "timestamp": "2026-01-04T10:41:00Z"
             },
             {
                 "id": "ilc-6",
                 "sender": "factory",
-                "message": "That payment structure is workable. For QC we can align to approved golden sample, microbiological limits, packaging appearance, net content tolerance, and SPF claim support documents where applicable.",
+                "message": "That payment structure is workable. For QC we can align to the approved golden sample, microbiological limits, packaging appearance, net content tolerance of +/- 2%, and SPF claim support documents where applicable. If bulk goods fail the agreed specification, we can rework or replace the affected lot at our cost.",
                 "timestamp": "2026-01-04T10:44:00Z"
             },
             {
                 "id": "ilc-7",
                 "sender": "user",
-                "message": "Who will handle FDA notification and artwork compliance review? We want the agreement to state that our brand owns trademarks and packaging artwork.",
+                "message": "Who will handle Thai FDA notification and artwork compliance review? We also want the contract to say AuraGlow owns all trademarks, packaging artwork, and any custom molds or tooling paid for by our brand, and that those items must be returned or transferred back to us if the deal ends.",
                 "timestamp": "2026-01-04T10:48:00Z"
             },
             {
                 "id": "ilc-8",
                 "sender": "factory",
-                "message": "We can support dossier preparation and technical documents, but the brand should remain owner of trademarks and final artwork. FDA notification responsibility can be assigned to your brand with our document support.",
+                "message": "We can support dossier preparation, technical documents, and artwork compliance comments, but AuraGlow should remain owner of trademarks and final artwork. FDA notification responsibility can be assigned to your brand, with ILC providing the manufacturing documents and technical support needed for the filing.",
                 "timestamp": "2026-01-04T10:51:00Z"
             },
             {
                 "id": "ilc-9",
                 "sender": "user",
-                "message": "Lead time after bulk PO should be 45-60 days. If delivery is late without force majeure, we want a daily delay penalty and the right to terminate after material delay.",
+                "message": "Lead time after bulk PO should be 45 to 60 days after artwork approval and sample sign-off. If delivery is late without force majeure, we want a daily delay penalty, and if the delay goes beyond 30 days we want the right to terminate and recover prepaid amounts for undelivered goods.",
                 "timestamp": "2026-01-04T10:55:00Z"
             },
             {
                 "id": "ilc-10",
                 "sender": "factory",
-                "message": "Noted. Our normal bulk lead time is around 50 days after artwork and sample approval. We can discuss a reasonable late-delivery penalty and a termination trigger tied to prolonged delay.",
+                "message": "Noted. Our normal bulk lead time is around 50 days after artwork and sample approval, so the proposed 45 to 60 day window is workable. We can discuss a reasonable late-delivery penalty, for example 0.1% of the delayed lot value per day capped at 10%, together with a termination trigger tied to prolonged delay.",
                 "timestamp": "2026-01-04T10:58:00Z"
+            },
+            {
+                "id": "ilc-11",
+                "sender": "user",
+                "message": "Great. Please also record that the launch is for Thailand first, with possible export to Singapore later, and that finished goods must match the signed golden sample before shipment. We also want 15 business days to inspect and reject any non-conforming lot after receipt.",
+                "timestamp": "2026-01-04T11:01:00Z"
+            },
+            {
+                "id": "ilc-12",
+                "sender": "factory",
+                "message": "Understood. We can state Thailand as the initial market, with export compliance for later markets to be handled by separate approval if needed. We can also include a 15 business day inspection window after delivery, tied to the signed golden sample and agreed QC documents.",
+                "timestamp": "2026-01-04T11:04:00Z"
+            },
+            {
+                "id": "ilc-13",
+                "sender": "user",
+                "message": "For budgeting, assume the first PO total is THB 120,000 excluding VAT. Please make sure the agreement captures the payment milestone wording clearly and says confidential formula and costing information cannot be reused for other brands.",
+                "timestamp": "2026-01-04T11:07:00Z"
+            },
+            {
+                "id": "ilc-14",
+                "sender": "factory",
+                "message": "Confirmed. We will treat the first PO as THB 120,000 excluding VAT, keep the 30/40/30 milestone structure, and include confidentiality language preventing reuse of your confidential formula brief and brand-specific costing information for other customers.",
+                "timestamp": "2026-01-04T11:10:00Z"
             }
         ]
     },

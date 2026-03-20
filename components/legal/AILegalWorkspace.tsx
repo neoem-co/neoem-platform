@@ -3,11 +3,11 @@
 import { useEffect, useState } from "react";
 import {
     FileText, Search, FolderClock, X, Upload, Loader2,
-    AlertTriangle, CheckCircle2, XCircle, Download, Eye,
+    AlertTriangle, CheckCircle2, Download, Eye,
     BadgeDollarSign, Sparkles, History, PenTool,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -29,10 +29,11 @@ import {
     finalizeContract,
     generateDraft,
     getContractHistory,
-    getTemplates,
     type ChatMessagePayload,
     type ContractArticle,
     type ContractHistoryItem,
+    type DealSheet,
+    type ExtractContextResponse,
     type FactoryInfoPayload,
     type GenerateDraftResponse,
     type RiskCheckResponse,
@@ -47,6 +48,7 @@ interface AILegalWorkspaceProps {
     initialTab?: "draft" | "risk" | "history" | "esign";
     chatHistory?: ChatMessagePayload[];
     factoryInfo?: FactoryInfoPayload;
+    initialExtractContext?: ExtractContextResponse | null;
     onDraftComplete?: () => void;
     onRiskAnalysisComplete?: (result: {
         overallRisk: RiskCheckResponse["overall_risk"];
@@ -61,9 +63,17 @@ interface AILegalWorkspaceProps {
 interface ContractData {
     template: string;
     buyerName: string;
+    buyerCompany: string;
+    buyerAddress: string;
+    buyerTaxId: string;
     sellerName: string;
+    sellerCompany: string;
+    sellerAddress: string;
+    sellerTaxId: string;
     productType: string;
     productSpec: string;
+    packaging: string;
+    targetMarket: string;
     quantity: string;
     totalPrice: string;
     deliveryDate: string;
@@ -71,6 +81,8 @@ interface ContractData {
     penaltyClause: string;
     paymentTerms: string;
     qualityStandards: string;
+    qcBasis: string;
+    regulatoryResponsibility: string;
     warrantyPeriod: string;
     ipOwnership: string;
     additionalClauses: string;
@@ -242,6 +254,7 @@ export function AILegalWorkspace({
     initialTab = "draft",
     chatHistory = [],
     factoryInfo,
+    initialExtractContext = null,
     onDraftComplete,
     onRiskAnalysisComplete,
 }: AILegalWorkspaceProps) {
@@ -293,7 +306,15 @@ export function AILegalWorkspace({
 
                 {/* Main Content */}
                 <div className="flex-1 overflow-y-auto">
-                    {activeTab === "draft" && <DraftPanel factoryName={factoryName} chatHistory={chatHistory} factoryInfo={factoryInfo} onDraftComplete={onDraftComplete} />}
+                    {activeTab === "draft" && (
+                        <DraftPanel
+                            factoryName={factoryName}
+                            chatHistory={chatHistory}
+                            factoryInfo={factoryInfo}
+                            initialExtractContext={initialExtractContext}
+                            onDraftComplete={onDraftComplete}
+                        />
+                    )}
                     {activeTab === "risk" && <RiskPanelV2 chatHistory={chatHistory} factoryInfo={factoryInfo} onRiskAnalysisComplete={onRiskAnalysisComplete} />}
                     {activeTab === "esign" && <ESignaturePanel factoryName={factoryName} />}
                     {activeTab === "history" && <HistoryPanel />}
@@ -321,15 +342,124 @@ const API_TO_TEMPLATE: Record<string, string> = {
     nda: "hire-of-work",
 };
 
+function normalizeIpOwnershipForUi(value?: string | null) {
+    if (value === "factory") return "seller";
+    if (value === "shared") return "joint";
+    return value || "buyer";
+}
+
+function summarizePaymentTerms(dealSheet?: DealSheet | null) {
+    if (dealSheet?.payment_milestones && dealSheet.payment_milestones.length > 0) {
+        return dealSheet.payment_milestones
+            .map((milestone) => {
+                const amount = milestone.amount_percentage
+                    ? `${milestone.amount_percentage}%`
+                    : milestone.amount_fixed
+                        ? `฿${milestone.amount_fixed.toLocaleString()}`
+                        : milestone.label || "milestone";
+                return `${amount} ${milestone.due_event || milestone.label || ""}`.trim();
+            })
+            .join(" / ");
+    }
+    return dealSheet?.commercial_terms?.payment_terms_summary || "";
+}
+
+function summarizeQualityStandards(dealSheet?: DealSheet | null) {
+    const parts = [
+        ...(dealSheet?.quality_terms?.standards || []),
+        dealSheet?.quality_terms?.defect_remedy || "",
+    ].filter(Boolean);
+    return parts.join(", ");
+}
+
+function summarizeAdditionalClauses(dealSheet?: DealSheet | null) {
+    const parts = [
+        dealSheet?.additional_notes || "",
+        dealSheet?.commercial_terms?.termination_trigger
+            ? `Termination: ${dealSheet.commercial_terms.termination_trigger}`
+            : "",
+        dealSheet?.commercial_terms?.tooling_return_required
+            ? "Custom tooling / artwork must be returned or transferred back on termination."
+            : "",
+    ].filter(Boolean);
+    return parts.join("\n");
+}
+
+function mergeDealSheetWithForm(formData: ContractData, factoryName: string, extractedDealSheet?: DealSheet | null): DealSheet {
+    const baseVendor = extractedDealSheet?.vendor;
+    const baseClient = extractedDealSheet?.client;
+    const baseProduct = extractedDealSheet?.product;
+    const baseCommercialTerms = extractedDealSheet?.commercial_terms;
+    const baseQualityTerms = extractedDealSheet?.quality_terms;
+    const baseRegulatoryTerms = extractedDealSheet?.regulatory_terms;
+
+    return {
+        ...extractedDealSheet,
+        vendor: {
+            ...(baseVendor || {}),
+            name: formData.sellerName || baseVendor?.name || factoryName,
+            role: baseVendor?.role || "seller",
+            company: formData.sellerCompany || baseVendor?.company || undefined,
+            address: formData.sellerAddress || baseVendor?.address || undefined,
+            tax_id: formData.sellerTaxId || baseVendor?.tax_id || undefined,
+        },
+        client: {
+            ...(baseClient || {}),
+            name: formData.buyerName || baseClient?.name || "Your Company",
+            role: baseClient?.role || "buyer",
+            company: formData.buyerCompany || baseClient?.company || undefined,
+            address: formData.buyerAddress || baseClient?.address || undefined,
+            tax_id: formData.buyerTaxId || baseClient?.tax_id || undefined,
+        },
+        product: {
+            ...(baseProduct || {}),
+            name: formData.productType || baseProduct?.name || "",
+            specs: formData.productSpec || baseProduct?.specs || undefined,
+            quantity: Number(formData.quantity) || baseProduct?.quantity || undefined,
+            unit: baseProduct?.unit || "pieces",
+            packaging: formData.packaging || baseProduct?.packaging || undefined,
+            target_market: formData.targetMarket || baseProduct?.target_market || baseRegulatoryTerms?.target_market || undefined,
+        },
+        total_price: Number(formData.totalPrice) || extractedDealSheet?.total_price || undefined,
+        delivery_date: formData.deliveryDate || extractedDealSheet?.delivery_date || undefined,
+        delivery_address: formData.deliveryAddress || extractedDealSheet?.delivery_address || undefined,
+        quality_terms: {
+            ...(baseQualityTerms || {}),
+            standards: formData.qualityStandards
+                ? formData.qualityStandards.split(",").map((item) => item.trim()).filter(Boolean)
+                : baseQualityTerms?.standards || [],
+            qc_basis: formData.qcBasis || baseQualityTerms?.qc_basis || undefined,
+            warranty_period_days: Number(formData.warrantyPeriod) || baseQualityTerms?.warranty_period_days || undefined,
+        },
+        regulatory_terms: {
+            ...(baseRegulatoryTerms || {}),
+            registration_owner: formData.regulatoryResponsibility || baseRegulatoryTerms?.registration_owner || undefined,
+            target_market: formData.targetMarket || baseRegulatoryTerms?.target_market || undefined,
+        },
+        commercial_terms: {
+            ...(baseCommercialTerms || {}),
+            ip_ownership: formData.ipOwnership || baseCommercialTerms?.ip_ownership || "buyer",
+            penalty_type: formData.penaltyClause === "none" ? "none" : "percentage_daily",
+            penalty_details: formData.penaltyClause === "none"
+                ? undefined
+                : `${formData.penaltyClause}% per day`,
+            payment_terms_summary: formData.paymentTerms || baseCommercialTerms?.payment_terms_summary || undefined,
+        },
+        additional_notes: formData.additionalClauses || extractedDealSheet?.additional_notes || undefined,
+    };
+}
+
 function DraftPanel({
     factoryName,
     chatHistory,
     factoryInfo,
+    initialExtractContext,
     onDraftComplete,
 }: {
     factoryName: string;
     chatHistory: ChatMessagePayload[];
     factoryInfo?: FactoryInfoPayload;
+    initialExtractContext?: ExtractContextResponse | null;
     onDraftComplete?: () => void;
 }) {
     const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
@@ -340,14 +470,23 @@ function DraftPanel({
     const [draftResult, setDraftResult] = useState<GenerateDraftResponse | null>(null);
     const [downloadUrls, setDownloadUrls] = useState<{ pdf_url: string | null; docx_url: string | null } | null>(null);
     const [recommendedTemplate, setRecommendedTemplate] = useState<string | null>(null);
+    const [extractedContext, setExtractedContext] = useState<ExtractContextResponse | null>(initialExtractContext || null);
     const generateStage = useProgressStage(loading, DRAFT_GENERATE_STAGES);
     const finalizeStage = useProgressStage(finalizing, DRAFT_FINALIZE_STAGES);
     const [formData, setFormData] = useState<ContractData>({
         template: "",
         buyerName: "Your Company",
+        buyerCompany: "",
+        buyerAddress: "",
+        buyerTaxId: "",
         sellerName: factoryName,
+        sellerCompany: "",
+        sellerAddress: "",
+        sellerTaxId: "",
         productType: "Sunscreen SPF50 Mousse",
         productSpec: "",
+        packaging: "",
+        targetMarket: "",
         quantity: "1000",
         totalPrice: "120000",
         deliveryDate: "",
@@ -355,6 +494,8 @@ function DraftPanel({
         penaltyClause: "0.1",
         paymentTerms: "30-40-30",
         qualityStandards: "",
+        qcBasis: "",
+        regulatoryResponsibility: "",
         warrantyPeriod: "30",
         ipOwnership: "buyer",
         additionalClauses: "",
@@ -362,29 +503,52 @@ function DraftPanel({
 
     useEffect(() => {
         let active = true;
+        const applyContext = (ctx: ExtractContextResponse) => {
+            const suggested = API_TO_TEMPLATE[ctx.suggested_template] || "hire-of-work";
+            setExtractedContext(ctx);
+            setRecommendedTemplate(
+                templates.find((tpl) => tpl.id === suggested)?.label || "สัญญาจ้างทำของ / Hire of Work"
+            );
+            setFormData((prev) => ({
+                ...prev,
+                template: prev.template || suggested,
+                buyerName: ctx.deal_sheet.client?.name || prev.buyerName,
+                buyerCompany: ctx.deal_sheet.client?.company || prev.buyerCompany,
+                buyerAddress: ctx.deal_sheet.client?.address || prev.buyerAddress,
+                buyerTaxId: ctx.deal_sheet.client?.tax_id || prev.buyerTaxId,
+                sellerName: ctx.deal_sheet.vendor?.name || prev.sellerName,
+                sellerCompany: ctx.deal_sheet.vendor?.company || prev.sellerCompany,
+                sellerAddress: ctx.deal_sheet.vendor?.address || prev.sellerAddress,
+                sellerTaxId: ctx.deal_sheet.vendor?.tax_id || prev.sellerTaxId,
+                productType: ctx.deal_sheet.product?.name || prev.productType,
+                productSpec: ctx.deal_sheet.product?.specs || prev.productSpec,
+                packaging: ctx.deal_sheet.product?.packaging || prev.packaging,
+                targetMarket: ctx.deal_sheet.product?.target_market || ctx.deal_sheet.regulatory_terms?.target_market || prev.targetMarket,
+                quantity: ctx.deal_sheet.product?.quantity?.toString() || prev.quantity,
+                totalPrice: ctx.deal_sheet.total_price?.toString() || prev.totalPrice,
+                deliveryDate: ctx.deal_sheet.delivery_date || prev.deliveryDate,
+                deliveryAddress: ctx.deal_sheet.delivery_address || prev.deliveryAddress,
+                paymentTerms: summarizePaymentTerms(ctx.deal_sheet) || prev.paymentTerms,
+                qualityStandards: summarizeQualityStandards(ctx.deal_sheet) || prev.qualityStandards,
+                qcBasis: ctx.deal_sheet.quality_terms?.qc_basis || prev.qcBasis,
+                regulatoryResponsibility: ctx.deal_sheet.regulatory_terms?.registration_owner || prev.regulatoryResponsibility,
+                warrantyPeriod: ctx.deal_sheet.quality_terms?.warranty_period_days?.toString() || prev.warrantyPeriod,
+                ipOwnership: normalizeIpOwnershipForUi(ctx.deal_sheet.commercial_terms?.ip_ownership) || prev.ipOwnership,
+                additionalClauses: summarizeAdditionalClauses(ctx.deal_sheet) || prev.additionalClauses,
+            }));
+        };
+
         const seedFromChat = async () => {
+            if (initialExtractContext) {
+                applyContext(initialExtractContext);
+                return;
+            }
             if (chatHistory.length === 0) return;
             setRecommendationLoading(true);
             try {
                 const ctx = await extractContext(chatHistory, factoryName, factoryInfo?.factory_id);
                 if (!active) return;
-                const suggested = API_TO_TEMPLATE[ctx.suggested_template] || "hire-of-work";
-                setRecommendedTemplate(
-                    templates.find((tpl) => tpl.id === suggested)?.label || "สัญญาจ้างทำของ / Hire of Work"
-                );
-                setFormData((prev) => ({
-                    ...prev,
-                    template: prev.template || suggested,
-                    buyerName: ctx.deal_sheet.client?.name || prev.buyerName,
-                    sellerName: ctx.deal_sheet.vendor?.name || prev.sellerName,
-                    productType: ctx.deal_sheet.product?.name || prev.productType,
-                    productSpec: ctx.deal_sheet.product?.specs || prev.productSpec,
-                    quantity: ctx.deal_sheet.product?.quantity?.toString() || prev.quantity,
-                    totalPrice: ctx.deal_sheet.total_price?.toString() || prev.totalPrice,
-                    deliveryDate: ctx.deal_sheet.delivery_date || prev.deliveryDate,
-                    ipOwnership: ctx.deal_sheet.commercial_terms?.ip_ownership || prev.ipOwnership,
-                    additionalClauses: ctx.deal_sheet.additional_notes || prev.additionalClauses,
-                }));
+                applyContext(ctx);
             } catch {
                 // Keep manual entry if extraction fails.
             } finally {
@@ -397,51 +561,39 @@ function DraftPanel({
         return () => {
             active = false;
         };
-    }, [chatHistory, factoryInfo?.factory_id, factoryName]);
+    }, [chatHistory, factoryInfo?.factory_id, factoryName, initialExtractContext]);
 
     const handleGenerate = async () => {
         setLoading(true);
         setError(null);
         try {
             const templateType = TEMPLATE_TO_API[formData.template] || "hire_of_work";
+            const mergedDealSheet = mergeDealSheetWithForm(formData, factoryName, extractedContext?.deal_sheet);
             const response = await generateDraft({
                 template_type: templateType,
-                deal_sheet: {
-                    vendor: { name: formData.sellerName || factoryName, role: "seller" },
-                    client: { name: formData.buyerName || "Your Company", role: "buyer" },
-                    product: {
-                        name: formData.productType,
-                        specs: formData.productSpec || undefined,
-                        quantity: Number(formData.quantity) || undefined,
-                        unit: "pieces",
-                    },
-                    total_price: Number(formData.totalPrice) || undefined,
-                    delivery_date: formData.deliveryDate || undefined,
-                    commercial_terms: {
-                        ip_ownership: formData.ipOwnership,
-                        penalty_type: formData.penaltyClause === "none" ? "none" : "percentage_daily",
-                        penalty_details: formData.penaltyClause === "none" ? undefined : `${formData.penaltyClause}% per day`,
-                    },
-                    additional_notes: formData.additionalClauses || undefined,
-                },
+                deal_sheet: mergedDealSheet,
                 parties: [
-                    { name: formData.buyerName || "Your Company", role: "buyer" },
-                    { name: formData.sellerName || factoryName, role: "seller" },
+                    {
+                        name: mergedDealSheet.client?.name || "Your Company",
+                        role: "buyer",
+                        company: mergedDealSheet.client?.company,
+                        address: mergedDealSheet.client?.address,
+                        tax_id: mergedDealSheet.client?.tax_id,
+                    },
+                    {
+                        name: mergedDealSheet.vendor?.name || factoryName,
+                        role: "seller",
+                        company: mergedDealSheet.vendor?.company,
+                        address: mergedDealSheet.vendor?.address,
+                        tax_id: mergedDealSheet.vendor?.tax_id,
+                    },
                 ],
-                product: {
-                    name: formData.productType,
-                    specs: formData.productSpec || undefined,
-                    quantity: Number(formData.quantity) || undefined,
-                    unit: "pieces",
-                },
-                total_price: Number(formData.totalPrice) || undefined,
-                delivery_date: formData.deliveryDate || undefined,
-                commercial_terms: {
-                    ip_ownership: formData.ipOwnership,
-                    penalty_type: formData.penaltyClause === "none" ? "none" : "percentage_daily",
-                    penalty_details: formData.penaltyClause === "none" ? undefined : `${formData.penaltyClause}% per day`,
-                },
+                product: mergedDealSheet.product || undefined,
+                total_price: mergedDealSheet.total_price || undefined,
+                delivery_date: mergedDealSheet.delivery_date || undefined,
+                commercial_terms: mergedDealSheet.commercial_terms || undefined,
                 language: "both",
+                skip_polish: true,
             });
             setDraftResult(response);
             setStep(3);
@@ -457,16 +609,31 @@ function DraftPanel({
         setFinalizing(true);
         setError(null);
         try {
+            const mergedDealSheet = mergeDealSheetWithForm(formData, factoryName, extractedContext?.deal_sheet);
             const result = await finalizeContract({
                 contract_title: draftResult.contract_title,
                 articles: draftResult.articles as ContractArticle[],
                 preamble_th: draftResult.preamble_th,
                 effective_date: draftResult.effective_date || undefined,
                 parties: [
-                    { name: formData.buyerName || "Your Company", role: "buyer" },
-                    { name: formData.sellerName || factoryName, role: "seller" },
+                    {
+                        name: mergedDealSheet.client?.name || "Your Company",
+                        role: "buyer",
+                        company: mergedDealSheet.client?.company,
+                        address: mergedDealSheet.client?.address,
+                        tax_id: mergedDealSheet.client?.tax_id,
+                    },
+                    {
+                        name: mergedDealSheet.vendor?.name || factoryName,
+                        role: "seller",
+                        company: mergedDealSheet.vendor?.company,
+                        address: mergedDealSheet.vendor?.address,
+                        tax_id: mergedDealSheet.vendor?.tax_id,
+                    },
                 ],
+                deal_sheet: mergedDealSheet,
                 output_format: "both",
+                polish_before_export: true,
             });
             setDownloadUrls({
                 pdf_url: result.pdf_url,
@@ -568,6 +735,36 @@ function DraftPanel({
                                 <Input value={formData.sellerName} onChange={(e) => setFormData({ ...formData, sellerName: e.target.value })} className={autoFillClass} />
                             </div>
                         </div>
+                        <div className="grid sm:grid-cols-2 gap-3">
+                            <div className="space-y-1.5">
+                                <Label>Buyer Company</Label>
+                                <Input value={formData.buyerCompany} onChange={(e) => setFormData({ ...formData, buyerCompany: e.target.value })} className={autoFillClass} />
+                            </div>
+                            <div className="space-y-1.5">
+                                <Label>Seller Company</Label>
+                                <Input value={formData.sellerCompany} onChange={(e) => setFormData({ ...formData, sellerCompany: e.target.value })} className={autoFillClass} />
+                            </div>
+                        </div>
+                        <div className="grid sm:grid-cols-2 gap-3">
+                            <div className="space-y-1.5">
+                                <Label>Buyer Tax ID</Label>
+                                <Input value={formData.buyerTaxId} onChange={(e) => setFormData({ ...formData, buyerTaxId: e.target.value })} className={autoFillClass} />
+                            </div>
+                            <div className="space-y-1.5">
+                                <Label>Seller Tax ID</Label>
+                                <Input value={formData.sellerTaxId} onChange={(e) => setFormData({ ...formData, sellerTaxId: e.target.value })} className={autoFillClass} />
+                            </div>
+                        </div>
+                        <div className="grid sm:grid-cols-2 gap-3">
+                            <div className="space-y-1.5">
+                                <Label>Buyer Address</Label>
+                                <Textarea value={formData.buyerAddress} onChange={(e) => setFormData({ ...formData, buyerAddress: e.target.value })} rows={2} className={autoFillClass} />
+                            </div>
+                            <div className="space-y-1.5">
+                                <Label>Seller Address</Label>
+                                <Textarea value={formData.sellerAddress} onChange={(e) => setFormData({ ...formData, sellerAddress: e.target.value })} rows={2} className={autoFillClass} />
+                            </div>
+                        </div>
                     </fieldset>
                     <fieldset className="space-y-3">
                         <legend className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Product</legend>
@@ -578,6 +775,16 @@ function DraftPanel({
                         <div className="space-y-1.5">
                             <Label>Product Specification</Label>
                             <Textarea value={formData.productSpec} onChange={(e) => setFormData({ ...formData, productSpec: e.target.value })} placeholder="Detailed specs, ingredients, packaging..." rows={2} />
+                        </div>
+                        <div className="grid sm:grid-cols-2 gap-3">
+                            <div className="space-y-1.5">
+                                <Label>Packaging</Label>
+                                <Input value={formData.packaging} onChange={(e) => setFormData({ ...formData, packaging: e.target.value })} className={autoFillClass} />
+                            </div>
+                            <div className="space-y-1.5">
+                                <Label>Target Market</Label>
+                                <Input value={formData.targetMarket} onChange={(e) => setFormData({ ...formData, targetMarket: e.target.value })} className={autoFillClass} />
+                            </div>
                         </div>
                     </fieldset>
                     <fieldset className="space-y-3">
@@ -606,14 +813,7 @@ function DraftPanel({
                             </div>
                             <div className="space-y-1.5">
                                 <Label>Payment Terms</Label>
-                                <Select value={formData.paymentTerms} onValueChange={(v) => setFormData({ ...formData, paymentTerms: v })}>
-                                    <SelectTrigger><SelectValue /></SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="30-40-30">30-40-30 Milestone</SelectItem>
-                                        <SelectItem value="50-50">50-50 Split</SelectItem>
-                                        <SelectItem value="100-upfront">100% Upfront</SelectItem>
-                                    </SelectContent>
-                                </Select>
+                                <Input value={formData.paymentTerms} onChange={(e) => setFormData({ ...formData, paymentTerms: e.target.value })} className={autoFillClass} />
                             </div>
                         </div>
                     </fieldset>
@@ -635,7 +835,7 @@ function DraftPanel({
                         </div>
                     </fieldset>
                     <fieldset className="space-y-3">
-                        <legend className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Intellectual Property</legend>
+                        <legend className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Compliance & IP</legend>
                         <div className="space-y-1.5">
                             <Label>IP Ownership</Label>
                             <Select value={formData.ipOwnership} onValueChange={(v) => setFormData({ ...formData, ipOwnership: v })}>
@@ -650,6 +850,14 @@ function DraftPanel({
                         <div className="space-y-1.5">
                             <Label>Quality Standards</Label>
                             <Textarea value={formData.qualityStandards} onChange={(e) => setFormData({ ...formData, qualityStandards: e.target.value })} placeholder="e.g., ISO 9001, GMP, ISO 22716..." rows={2} />
+                        </div>
+                        <div className="space-y-1.5">
+                            <Label>QC / Acceptance Basis</Label>
+                            <Textarea value={formData.qcBasis} onChange={(e) => setFormData({ ...formData, qcBasis: e.target.value })} placeholder="Golden sample, microbiological limits, inspection window..." rows={2} className={autoFillClass} />
+                        </div>
+                        <div className="space-y-1.5">
+                            <Label>Regulatory Responsibility</Label>
+                            <Input value={formData.regulatoryResponsibility} onChange={(e) => setFormData({ ...formData, regulatoryResponsibility: e.target.value })} placeholder="e.g. buyer handles FDA filing, factory supports documents" className={autoFillClass} />
                         </div>
                         <div className="space-y-1.5">
                             <Label>Additional Clauses</Label>
@@ -678,17 +886,38 @@ function DraftPanel({
                             <p className="text-muted-foreground">
                                 This Agreement is entered into between <strong className="text-foreground">{formData.buyerName}</strong> (&quot;Buyer&quot;) and <strong className="text-primary">{formData.sellerName}</strong> (&quot;Manufacturer&quot;).
                             </p>
+                            {(formData.buyerCompany || formData.sellerCompany) && (
+                                <p className="text-muted-foreground">
+                                    <strong className="text-foreground">Companies:</strong> {formData.buyerCompany || "Buyer company TBD"} / {formData.sellerCompany || "Seller company TBD"}
+                                </p>
+                            )}
                             <p className="text-muted-foreground">
                                 <strong className="text-foreground">Product:</strong> {formData.productType} — Qty: {formData.quantity} pcs — Total: ฿{parseInt(formData.totalPrice).toLocaleString()}
                             </p>
+                            {(formData.packaging || formData.targetMarket) && (
+                                <p className="text-muted-foreground">
+                                    <strong className="text-foreground">Packaging / Market:</strong> {formData.packaging || "TBD"} / {formData.targetMarket || "TBD"}
+                                </p>
+                            )}
                             <p className="text-muted-foreground">
                                 <strong className="text-foreground">Payment:</strong> {formData.paymentTerms} milestone | <strong className="text-foreground">Delivery:</strong> {formData.deliveryDate || "TBD"}
                             </p>
+                            {formData.deliveryAddress && (
+                                <p className="text-muted-foreground">
+                                    <strong className="text-foreground">Ship To:</strong> {formData.deliveryAddress}
+                                </p>
+                            )}
                             <p className="text-muted-foreground">
                                 <strong className="text-foreground">IP Ownership:</strong> {formData.ipOwnership === "buyer" ? "Buyer (Brand Owner)" : formData.ipOwnership === "seller" ? "Manufacturer" : "Joint"}
                             </p>
                             {formData.qualityStandards && (
                                 <p className="text-muted-foreground"><strong className="text-foreground">Quality:</strong> {formData.qualityStandards}</p>
+                            )}
+                            {formData.qcBasis && (
+                                <p className="text-muted-foreground"><strong className="text-foreground">QC Basis:</strong> {formData.qcBasis}</p>
+                            )}
+                            {formData.regulatoryResponsibility && (
+                                <p className="text-muted-foreground"><strong className="text-foreground">Regulatory:</strong> {formData.regulatoryResponsibility}</p>
                             )}
                             <p className="text-xs text-muted-foreground italic mt-4">
                                 This is a preview. Full legal language will be included in the downloadable document.

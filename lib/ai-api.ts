@@ -17,6 +17,73 @@ function normalizeAiUrl(url: string | null): string | null {
   return url;
 }
 
+interface ExtractContextOptions {
+  forceRefresh?: boolean;
+}
+
+type ExtractContextCacheEntry = {
+  createdAt: number;
+  promise: Promise<ExtractContextResponse>;
+};
+
+const EXTRACT_CONTEXT_CACHE = new Map<string, ExtractContextCacheEntry>();
+const EXTRACT_CONTEXT_CACHE_MAX = 32;
+
+function normalizeChatHistory(chatHistory: ChatMessagePayload[]) {
+  return chatHistory
+    .filter((message) => {
+      const text = (message.message || "").trim();
+      if (!text) return false;
+      if ((message.sender || "").toLowerCase() === "system") return false;
+      if (text.toLowerCase().startsWith("uploaded:")) return false;
+      return true;
+    })
+    .map((message) => ({
+      sender: (message.sender || "").trim().toLowerCase(),
+      message: (message.message || "").trim(),
+      timestamp: message.timestamp || "",
+    }));
+}
+
+function hashString(value: string) {
+  let hash = 2166136261;
+  for (let index = 0; index < value.length; index += 1) {
+    hash ^= value.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
+  }
+  return (hash >>> 0).toString(16).padStart(8, "0");
+}
+
+function buildExtractContextCacheKey(
+  chatHistory: ChatMessagePayload[],
+  factoryName?: string,
+  factoryId?: string,
+) {
+  const normalized = normalizeChatHistory(chatHistory);
+  const chatHash = hashString(JSON.stringify(normalized));
+  return [
+    factoryId || "unknown-factory-id",
+    factoryName || "unknown-factory-name",
+    chatHash,
+  ].join(":");
+}
+
+function rememberExtractContext(
+  key: string,
+  promise: Promise<ExtractContextResponse>,
+) {
+  EXTRACT_CONTEXT_CACHE.set(key, { createdAt: Date.now(), promise });
+  if (EXTRACT_CONTEXT_CACHE.size <= EXTRACT_CONTEXT_CACHE_MAX) return;
+
+  const oldest = [...EXTRACT_CONTEXT_CACHE.entries()].sort(
+    (left, right) => left[1].createdAt - right[1].createdAt,
+  )[0];
+
+  if (oldest) {
+    EXTRACT_CONTEXT_CACHE.delete(oldest[0]);
+  }
+}
+
 // ─── Risk Check ──────────────────────────────────────────────────────────────
 
 export interface RiskItemResult {
@@ -171,17 +238,52 @@ export async function explainRisk(
 export interface DealSheet {
   vendor?: { name: string; role: string; company?: string; address?: string; tax_id?: string } | null;
   client?: { name: string; role: string; company?: string; address?: string; tax_id?: string } | null;
-  product?: { name: string; specs?: string; quantity?: number; unit?: string } | null;
+  product?: {
+    name: string;
+    specs?: string;
+    quantity?: number;
+    unit?: string;
+    packaging?: string | null;
+    target_market?: string | null;
+  } | null;
   total_price?: number | null;
   currency?: string;
   delivery_date?: string | null;
   delivery_weeks?: string | null;
+  delivery_address?: string | null;
+  payment_milestones?: {
+    label?: string;
+    amount_percentage?: number | null;
+    amount_fixed?: number | null;
+    due_event?: string | null;
+    notes?: string | null;
+  }[] | null;
+  quality_terms?: {
+    standards?: string[];
+    qc_basis?: string | null;
+    acceptance_window_days?: number | null;
+    defect_remedy?: string | null;
+    warranty_period_days?: number | null;
+  } | null;
+  regulatory_terms?: {
+    registration_owner?: string | null;
+    document_support_by?: string | null;
+    label_compliance_owner?: string | null;
+    target_market?: string | null;
+    notes?: string | null;
+  } | null;
   commercial_terms?: {
     commercial_type?: string;
     ip_ownership?: string;
     ip_details?: string;
     penalty_type?: string;
     penalty_details?: string;
+    payment_terms_summary?: string | null;
+    artwork_ownership?: string | null;
+    tooling_ownership?: string | null;
+    tooling_return_required?: boolean | null;
+    lead_time_days?: number | null;
+    termination_trigger?: string | null;
   } | null;
   additional_notes?: string | null;
   confidence?: number;
@@ -209,6 +311,8 @@ export interface GenerateDraftResponse {
   effective_date: string | null;
   preamble_th: string;
   preamble_en: string;
+  retrieval_debug?: Record<string, Array<Record<string, string>>>;
+  polish_applied?: boolean;
 }
 
 export interface FinalizeResponse {
@@ -254,19 +358,40 @@ export async function extractContext(
   chatHistory: ChatMessagePayload[],
   factoryName?: string,
   factoryId?: string,
+  options: ExtractContextOptions = {},
 ): Promise<ExtractContextResponse> {
-  const res = await fetch(`${AI_BASE}/contract-draft/extract-context`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      chat_history: chatHistory,
-      factory_name: factoryName,
-      factory_id: factoryId,
-    }),
-  });
+  const cacheKey = buildExtractContextCacheKey(chatHistory, factoryName, factoryId);
+  if (!options.forceRefresh) {
+    const cached = EXTRACT_CONTEXT_CACHE.get(cacheKey);
+    if (cached) {
+      return cached.promise;
+    }
+  }
 
-  if (!res.ok) throw new Error(`Context extraction failed (${res.status})`);
-  return res.json();
+  const promise = (async () => {
+    const res = await fetch(`${AI_BASE}/contract-draft/extract-context`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        chat_history: normalizeChatHistory(chatHistory),
+        factory_name: factoryName,
+        factory_id: factoryId,
+      }),
+      signal: AbortSignal.timeout(AI_TIMEOUT),
+    });
+
+    if (!res.ok) throw new Error(`Context extraction failed (${res.status})`);
+    return res.json();
+  })();
+
+  rememberExtractContext(cacheKey, promise);
+
+  try {
+    return await promise;
+  } catch (error) {
+    EXTRACT_CONTEXT_CACHE.delete(cacheKey);
+    throw error;
+  }
 }
 
 /**
@@ -275,16 +400,30 @@ export async function extractContext(
 export async function generateDraft(payload: {
   template_type: string;
   deal_sheet: DealSheet;
-  parties?: { name: string; role: string; company?: string }[];
-  product?: { name: string; specs?: string; quantity?: number; unit?: string };
+  parties?: { name: string; role: string; company?: string; address?: string; tax_id?: string }[];
+  product?: {
+    name: string;
+    specs?: string;
+    quantity?: number;
+    unit?: string;
+    packaging?: string | null;
+    target_market?: string | null;
+  };
   total_price?: number;
   delivery_date?: string;
   commercial_terms?: {
     ip_ownership?: string;
     penalty_type?: string;
     penalty_details?: string;
+    payment_terms_summary?: string | null;
+    artwork_ownership?: string | null;
+    tooling_ownership?: string | null;
+    tooling_return_required?: boolean | null;
+    lead_time_days?: number | null;
+    termination_trigger?: string | null;
   };
   language?: string;
+  skip_polish?: boolean;
 }): Promise<GenerateDraftResponse> {
   const res = await fetch(`${AI_BASE}/contract-draft/generate`, {
     method: "POST",
@@ -305,9 +444,10 @@ export async function finalizeContract(payload: {
   articles: ContractArticle[];
   preamble_th?: string;
   effective_date?: string;
-  parties?: { name: string; role: string; company?: string }[];
+  parties?: { name: string; role: string; company?: string; address?: string; tax_id?: string }[];
   deal_sheet?: DealSheet;
   output_format?: string;
+  polish_before_export?: boolean;
 }): Promise<FinalizeResponse> {
   const res = await fetch(`${AI_BASE}/contract-draft/finalize`, {
     method: "POST",
