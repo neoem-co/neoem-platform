@@ -564,7 +564,6 @@ const DealRoom = () => {
                 factoryName={factory.name}
                 initialTab={legalWorkspaceTab}
                 initialExtractContext={liveExtractContext}
-                requireExtractContext={legalWorkspaceTab === "draft"}
                 chatHistory={messages.map((m) => ({
                     sender: m.sender,
                     message: m.message,

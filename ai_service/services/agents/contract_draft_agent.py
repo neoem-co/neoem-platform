@@ -658,9 +658,39 @@ def _parse_json_response(text: str) -> dict:
 def _sanitize_chat_messages(
     chat_history: list[ChatMessage],
     *,
-    max_messages: int = 18,
-    max_chars: int = 4000,
+    max_messages: int = 10,
+    max_chars: int = 2200,
 ) -> list[ChatMessage]:
+    priority_terms = (
+        "buyer", "seller", "vendor", "factory", "manufacturer", "company", "address", "tax", "vat",
+        "product", "formula", "ingredient", "packaging", "spec", "size", "label",
+        "price", "cost", "quote", "budget", "total", "deposit", "payment", "milestone", "%",
+        "moq", "qty", "quantity", "pieces", "pcs", "kg", "batch",
+        "delivery", "lead time", "shipment", "ship", "weeks", "days", "deadline",
+        "qc", "quality", "inspection", "standard", "gmp", "iso", "sample", "approve",
+        "fda", "registration", "regulatory", "อย.",
+        "ip", "intellectual property", "artwork", "tooling", "penalty", "terminate",
+        "ผู้ซื้อ", "ผู้ขาย", "โรงงาน", "บริษัท", "ที่อยู่", "ภาษี", "สินค้า", "สูตร", "บรรจุภัณฑ์",
+        "ราคา", "มัดจำ", "ชำระ", "งวด", "จำนวน", "ขั้นต่ำ", "ส่งมอบ", "คุณภาพ", "มาตรฐาน",
+        "อย", "ทรัพย์สินทางปัญญา", "ค่าปรับ", "ยกเลิก",
+    )
+
+    def _score_message(message: ChatMessage) -> int:
+        text = (message.message or "").strip().lower()
+        if not text:
+            return -1
+        score = 0
+        for term in priority_terms:
+            if term in text:
+                score += 3
+        if any(char.isdigit() for char in text):
+            score += 2
+        if len(text) > 40:
+            score += 1
+        if (message.sender or "").lower() == "factory":
+            score += 1
+        return score
+
     cleaned: list[ChatMessage] = []
     for message in chat_history:
         text = (message.message or "").strip()
@@ -672,7 +702,24 @@ def _sanitize_chat_messages(
             continue
         cleaned.append(message)
 
-    cleaned = cleaned[-max_messages:]
+    scored = [
+        (index, message, _score_message(message))
+        for index, message in enumerate(cleaned)
+    ]
+    prioritized = [
+        message
+        for _, message, _ in sorted(
+            [item for item in scored if item[2] >= 0],
+            key=lambda item: (item[2], item[0]),
+            reverse=True,
+        )[:max_messages]
+    ]
+    prioritized_set = {id(message) for message in prioritized}
+    cleaned = [
+        message
+        for message in cleaned
+        if id(message) in prioritized_set
+    ]
     bounded: list[ChatMessage] = []
     total_chars = 0
     for message in reversed(cleaned):

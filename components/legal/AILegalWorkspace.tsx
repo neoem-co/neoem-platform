@@ -50,7 +50,6 @@ interface AILegalWorkspaceProps {
     chatHistory?: ChatMessagePayload[];
     factoryInfo?: FactoryInfoPayload;
     initialExtractContext?: ExtractContextResponse | null;
-    requireExtractContext?: boolean;
     onDraftComplete?: () => void;
     onRiskAnalysisComplete?: (result: {
         overallRisk: RiskCheckResponse["overall_risk"];
@@ -276,7 +275,6 @@ export function AILegalWorkspace({
     chatHistory = [],
     factoryInfo,
     initialExtractContext = null,
-    requireExtractContext = false,
     onDraftComplete,
     onRiskAnalysisComplete,
 }: AILegalWorkspaceProps) {
@@ -334,7 +332,6 @@ export function AILegalWorkspace({
                             chatHistory={chatHistory}
                             factoryInfo={factoryInfo}
                             initialExtractContext={initialExtractContext}
-                            requireExtractContext={requireExtractContext}
                             onDraftComplete={onDraftComplete}
                         />
                     )}
@@ -520,14 +517,12 @@ function DraftPanel({
     chatHistory,
     factoryInfo,
     initialExtractContext,
-    requireExtractContext,
     onDraftComplete,
 }: {
     factoryName: string;
     chatHistory: ChatMessagePayload[];
     factoryInfo?: FactoryInfoPayload;
     initialExtractContext?: ExtractContextResponse | null;
-    requireExtractContext?: boolean;
     onDraftComplete?: () => void;
 }) {
     const locale = useLocale();
@@ -592,10 +587,8 @@ function DraftPanel({
                 const ctx = await extractContext(chatHistory, factoryName, factoryInfo?.factory_id);
                 if (!active) return;
                 applyContext(ctx);
-            } catch (err) {
-                if (active) {
-                    setError(err instanceof Error ? err.message : "Failed to extract DealSheet from chat");
-                }
+            } catch {
+                // Keep the template selector visible while extraction retries in the background.
             } finally {
                 if (active) {
                     setRecommendationLoading(false);
@@ -705,39 +698,6 @@ function DraftPanel({
 
     const autoFillClass = "border-primary/30 bg-primary/5";
     const displayedTemplateId = recommendedTemplateId || formData.template || "hire-of-work";
-
-    if (requireExtractContext && !extractedContext) {
-        return (
-            <div className="max-w-3xl mx-auto p-6 space-y-6">
-                <div className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-primary/5 border border-primary/20">
-                    <Loader2 className="h-4 w-4 text-primary flex-shrink-0 animate-spin" />
-                    <p className="text-sm text-foreground">
-                        {isThai
-                            ? `จากบทสนทนาของคุณ เราแนะนำ: ${getTemplateDisplayLabel(displayedTemplateId, true)}`
-                            : `Based on your chat, we recommend: ${getTemplateDisplayLabel(displayedTemplateId, false)}`}
-                    </p>
-                </div>
-                <Card className="border-primary/20 bg-primary/5">
-                    <CardContent className="p-6">
-                        <div className="flex items-start gap-3">
-                            <Loader2 className="h-5 w-5 mt-0.5 animate-spin text-primary flex-shrink-0" />
-                            <div>
-                                <p className="font-medium text-foreground">
-                                    {isThai ? "กำลังดึง DealSheet จากบทสนทนา" : "Extracting the DealSheet from chat"}
-                                </p>
-                                <p className="mt-1 text-sm text-muted-foreground">
-                                    {isThai
-                                        ? "เรากำลังสรุปข้อมูลคู่สัญญา รายละเอียดสินค้า ราคา การชำระเงิน และเงื่อนไขสำคัญ เพื่อเติมข้อมูลลงในร่างสัญญาให้อัตโนมัติ"
-                                        : "We are extracting parties, product details, pricing, payment milestones, and key commercial terms to auto-fill the contract draft."}
-                                </p>
-                                {error && <p className="mt-3 text-sm text-destructive">{error}</p>}
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
-            </div>
-        );
-    }
 
     return (
         <div className="max-w-3xl mx-auto p-6 space-y-6">

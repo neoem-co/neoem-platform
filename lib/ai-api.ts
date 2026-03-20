@@ -28,9 +28,36 @@ type ExtractContextCacheEntry = {
 
 const EXTRACT_CONTEXT_CACHE = new Map<string, ExtractContextCacheEntry>();
 const EXTRACT_CONTEXT_CACHE_MAX = 32;
+const EXTRACT_CONTEXT_MAX_MESSAGES = 10;
+const EXTRACT_CONTEXT_MAX_CHARS = 2200;
+
+const EXTRACT_CONTEXT_PRIORITY_PATTERNS = [
+  /buyer|seller|vendor|factory|manufacturer|company|address|tax|vat/i,
+  /product|formula|ingredient|packaging|spec|size|shade|sku|label/i,
+  /price|cost|quote|budget|total|deposit|payment|milestone|percent|%/i,
+  /moq|qty|quantity|pieces|pcs|kg|unit|batch/i,
+  /delivery|lead time|shipment|ship|weeks|days|deadline/i,
+  /qc|quality|inspection|standard|gmp|iso|sample|approve/i,
+  /fda|registration|regulatory|อย\.|compliance/i,
+  /ip|intellectual property|formula ownership|artwork|tooling|penalty|terminate/i,
+];
+
+function scoreExtractContextMessage(message: ChatMessagePayload) {
+  const text = (message.message || "").trim();
+  if (!text) return -1;
+
+  let score = 0;
+  for (const pattern of EXTRACT_CONTEXT_PRIORITY_PATTERNS) {
+    if (pattern.test(text)) score += 3;
+  }
+  if (/\d/.test(text)) score += 2;
+  if (text.length > 40) score += 1;
+  if ((message.sender || "").toLowerCase() === "factory") score += 1;
+  return score;
+}
 
 function normalizeChatHistory(chatHistory: ChatMessagePayload[]) {
-  return chatHistory
+  const normalized = chatHistory
     .filter((message) => {
       const text = (message.message || "").trim();
       if (!text) return false;
@@ -43,6 +70,37 @@ function normalizeChatHistory(chatHistory: ChatMessagePayload[]) {
       message: (message.message || "").trim(),
       timestamp: message.timestamp || "",
     }));
+
+  const scored = normalized
+    .map((message, index) => ({
+      message,
+      index,
+      score: scoreExtractContextMessage(message),
+    }))
+    .filter((item) => item.score >= 0);
+
+  const prioritized = scored
+    .sort((left, right) => {
+      if (right.score !== left.score) return right.score - left.score;
+      return right.index - left.index;
+    })
+    .slice(0, EXTRACT_CONTEXT_MAX_MESSAGES)
+    .sort((left, right) => left.index - right.index)
+    .map((item) => item.message);
+
+  const bounded: typeof prioritized = [];
+  let totalChars = 0;
+  for (let index = prioritized.length - 1; index >= 0; index -= 1) {
+    const message = prioritized[index];
+    const nextChars = totalChars + message.message.length;
+    if (bounded.length > 0 && nextChars > EXTRACT_CONTEXT_MAX_CHARS) {
+      continue;
+    }
+    bounded.push(message);
+    totalChars = nextChars;
+  }
+
+  return bounded.reverse();
 }
 
 function hashString(value: string) {
