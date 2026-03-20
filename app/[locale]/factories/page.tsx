@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, Suspense, useEffect } from "react";
+import { useState, useMemo, Suspense } from "react";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { Filter, SlidersHorizontal, X, Search, Sparkles, Star } from "lucide-react";
 import { Navbar } from "@/components/layout/Navbar";
@@ -39,7 +39,6 @@ const FactoriesContent = () => {
     const [moqRange, setMoqRange] = useState([0, 5000]);
     const [minRating, setMinRating] = useState(0);
     const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
-    const [recommendedIds, setRecommendedIds] = useState<string[]>([]);
     const activeSelectedCategories = selectedCategories ?? initialCategorySelection;
 
     const categoryOptions = useMemo(() => {
@@ -69,29 +68,6 @@ const FactoriesContent = () => {
         () => Array.from(new Set(factories.flatMap((factory) => factory.certifications || []))).sort(),
         [factories]
     );
-
-    // Fetch semantic search recommendations
-    useEffect(() => {
-        const fetchRecommendations = async () => {
-            if (!query) {
-                setRecommendedIds([]);
-                return;
-            }
-
-            try {
-                const res = await fetch(`/api/ai/search/semantic?q=${encodeURIComponent(query)}`);
-                if (res.ok) {
-                    const data = await res.json() as { recommended?: Array<{ id: string }> };
-                    setRecommendedIds((data.recommended || []).map((item) => item.id));
-                }
-            } catch (error) {
-                console.error("Failed to fetch semantic search results:", error);
-                setRecommendedIds([]);
-            }
-        };
-
-        fetchRecommendations();
-    }, [query]);
 
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
@@ -135,13 +111,13 @@ const FactoriesContent = () => {
     }, [activeSelectedCategories, factories, locale, minRating, query, selectedLocations, selectedCertifications, moqRange]);
 
     const recommendedFactories = useMemo(
-        () => filteredFactories.filter((factory) => recommendedIds.includes(factory.id)).slice(0, 3),
-        [filteredFactories, recommendedIds]
+        () => filteredFactories.slice(0, 3),
+        [filteredFactories]
     );
 
     const standardFactories = useMemo(
-        () => filteredFactories.filter((factory) => !recommendedIds.includes(factory.id)),
-        [filteredFactories, recommendedIds]
+        () => filteredFactories.slice(3),
+        [filteredFactories]
     );
 
     const toggleFilter = (
