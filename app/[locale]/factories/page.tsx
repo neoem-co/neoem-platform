@@ -404,19 +404,11 @@ const FactoriesContent = () => {
                                         </div>
                                     </div>
                                     <div className="grid gap-4 md:grid-cols-1">
-                                        {recommendedFactories.map((factory, index) => (
+                                        {recommendedFactories.map((factory) => (
                                             <div
                                                 key={factory.id}
                                                 className="relative rounded-2xl border-2 border-[#FF7A00]/70 bg-gradient-to-r from-[#FF7A00]/8 via-card to-card p-2 shadow-[0_0_0_1px_rgba(255,122,0,0.08)]"
                                             >
-                                                <div className="absolute -top-3 left-4 inline-flex items-center gap-2 rounded-full border border-[#FF7A00]/20 bg-[#FFFAF5] px-3 py-1 text-[11px] font-semibold text-[#C25500] shadow-sm">
-                                                    <div className="flex h-5 w-5 items-center justify-center rounded-full bg-[#FF7A00] text-white">
-                                                        <Sparkles className="h-3 w-3" />
-                                                    </div>
-                                                    <span>
-                                                        {isThai ? `Match จากโปรไฟล์ของคุณ #${index + 1}` : `AI Match From Your Profile #${index + 1}`}
-                                                    </span>
-                                                </div>
                                                 <FactoryCard
                                                     factory={factory}
                                                     variant="horizontal"
