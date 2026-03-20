@@ -31,6 +31,7 @@ import {
     finalizeContract,
     generateDraft,
     getContractHistory,
+    getLatestStoredRiskResult,
     type ChatMessagePayload,
     type ContractArticle,
     type ContractHistoryItem,
@@ -1130,7 +1131,7 @@ function DraftPanel({
                                 type="button"
                                 aria-label="Open latest generated contract demo"
                                 title="Open latest generated contract demo"
-                                className="absolute left-[calc(100%+0.5rem)] top-0 h-10 w-16 rounded-md cursor-pointer bg-transparent opacity-0"
+                                className="absolute right-[-4.5rem] top-0 h-10 w-16 rounded-md cursor-pointer bg-transparent opacity-0"
                                 onClick={() => void handleOpenLatestDraftDemo()}
                             />
                         </div>
@@ -1213,22 +1214,22 @@ function DraftPanel({
                         <p className="font-semibold text-foreground text-lg">{displayedDownloadName}</p>
                         <p className="text-sm text-muted-foreground">Saved to History & Legal Hub</p>
                     </div>
-                    <div className="flex gap-3 max-w-md mx-auto items-stretch">
-                        {downloadUrls?.pdf_url ? (
-                            <Button
-                                type="button"
-                                className="w-full flex-1"
-                                size="lg"
-                                onClick={() => downloadFile(downloadUrls.pdf_url!, `${displayedDownloadName || "contract"}.pdf`)}
-                            >
-                                <Download className="h-5 w-5 mr-2" /> PDF
-                            </Button>
-                        ) : (
-                            <Button className="flex-1" size="lg" disabled>
-                                <Download className="h-5 w-5 mr-2" /> PDF
-                            </Button>
-                        )}
-                        <div className="relative flex-1">
+                    <div className="relative max-w-md mx-auto">
+                        <div className="grid grid-cols-2 gap-3 items-stretch">
+                            {downloadUrls?.pdf_url ? (
+                                <Button
+                                    type="button"
+                                    className="w-full"
+                                    size="lg"
+                                    onClick={() => downloadFile(downloadUrls.pdf_url!, `${displayedDownloadName || "contract"}.pdf`)}
+                                >
+                                    <Download className="h-5 w-5 mr-2" /> PDF
+                                </Button>
+                            ) : (
+                                <Button className="w-full" size="lg" disabled>
+                                    <Download className="h-5 w-5 mr-2" /> PDF
+                                </Button>
+                            )}
                             {downloadUrls?.docx_url ? (
                                 <Button
                                     type="button"
@@ -1244,14 +1245,14 @@ function DraftPanel({
                                     <Download className="h-5 w-5 mr-2" /> Word
                                 </Button>
                             )}
-                            <button
-                                type="button"
-                                aria-label="Open latest PDF in browser viewer"
-                                title="Open latest PDF in browser viewer"
-                                className="absolute left-[calc(100%+0.5rem)] top-0 h-11 w-16 rounded-md cursor-pointer bg-transparent opacity-0"
-                                onClick={() => void handleOpenLatestPdfViewer()}
-                            />
                         </div>
+                        <button
+                            type="button"
+                            aria-label="Open latest PDF in browser viewer"
+                            title="Open latest PDF in browser viewer"
+                            className="absolute right-[-4.5rem] top-0 h-11 w-16 rounded-md cursor-pointer bg-transparent opacity-0"
+                            onClick={() => void handleOpenLatestPdfViewer()}
+                        />
                     </div>
                     <Button variant="ghost" onClick={() => setStep(1)} className="mt-2">
                         Draft Another Contract
@@ -1515,7 +1516,7 @@ function RiskPanel({
                             type="button"
                             aria-label="Open latest risk demo result"
                             title="Open latest risk demo result"
-                            className="absolute left-[calc(100%+0.5rem)] top-0 h-11 w-16 rounded-md cursor-pointer bg-transparent opacity-0"
+                            className="absolute right-[-4.5rem] top-0 h-11 w-16 rounded-md cursor-pointer bg-transparent opacity-0"
                             onClick={() => void handleOpenLatestRiskDemo()}
                         />
                     </div>
@@ -1890,12 +1891,12 @@ function RiskPanelV2({
     const handleOpenLatestRiskDemo = async () => {
         setAnalysisError(null);
         try {
-            const latest = await getLatestContractFromHistory({ requirePdf: true });
+            const latest = await getLatestStoredRiskResult();
             setFile(null);
-            setRemotePreviewUrl(latest.pdf_url);
-            applyAnalysisResponse(DEMO_RISK_RESPONSE);
+            setRemotePreviewUrl(latest.source_file_url);
+            applyAnalysisResponse(latest.result);
         } catch (err) {
-            setAnalysisError(err instanceof Error ? err.message : "Failed to load latest contract PDF");
+            setAnalysisError(err instanceof Error ? err.message : "Failed to load latest stored risk result");
         }
     };
 
@@ -2257,7 +2258,7 @@ function RiskPanelV2({
                             type="button"
                             aria-label="Open latest risk demo result"
                             title="Open latest risk demo result"
-                            className="absolute left-[calc(100%+0.5rem)] top-0 h-11 w-16 rounded-md cursor-pointer bg-transparent opacity-0"
+                            className="absolute right-[-4.5rem] top-0 h-11 w-16 rounded-md cursor-pointer bg-transparent opacity-0"
                             onClick={() => void handleOpenLatestRiskDemo()}
                         />
                     </div>

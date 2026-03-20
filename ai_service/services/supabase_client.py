@@ -165,6 +165,30 @@ def upload_contract_file(file_path: str, file_bytes: bytes | bytearray, bucket: 
     return public_url
 
 
+def download_storage_file(file_path: str, bucket: str = "contracts") -> bytes:
+    """Download a file from Supabase Storage and return its bytes."""
+    ensure_storage_config()
+    supabase = get_supabase()
+    try:
+        data = supabase.storage.from_(bucket).download(file_path)
+    except Exception as e:
+        message = str(e)
+        if "Invalid API key" in message:
+            raise RuntimeError(
+                "Supabase Storage authentication failed: invalid SUPABASE_KEY. "
+                "Use the Supabase service-role key, not the anon key."
+            ) from e
+        raise RuntimeError(
+            f"Supabase download failed for {bucket}/{file_path}: {message}"
+        ) from e
+
+    if isinstance(data, bytes):
+        return data
+    if hasattr(data, "read"):
+        return data.read()
+    raise RuntimeError(f"Unexpected Supabase download response for {bucket}/{file_path}: {type(data)!r}")
+
+
 def list_contract_history(bucket: str = "contracts") -> list[dict[str, Any]]:
     """List grouped contract artifacts from Supabase Storage."""
     ensure_storage_config()

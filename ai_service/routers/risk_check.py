@@ -7,24 +7,169 @@ from __future__ import annotations
 import json
 import logging
 import time
+import mimetypes
+import re
+import uuid
+from datetime import datetime, timezone
+from pathlib import Path
 
 from fastapi import APIRouter, File, Form, UploadFile, HTTPException
+from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 from typing import Optional
 
+from config import settings
 from models.risk_check import (
     ChatMessage,
     OEMFactoryInfo,
     RiskCheckRequest,
     RiskCheckResponse,
+    StoredRiskCheckResult,
 )
 from services.ocr.iapp_ocr import OCRService
 from services.agents.risk_check_agent import run_risk_check_pipeline
 from services.llm.typhoon_client import typhoon_invoke
 from services.llm.prompts import RISK_EXPLAIN_SYSTEM, RISK_EXPLAIN_USER
+from services.document.storage_paths import get_risk_results_dir
+from services.supabase_client import (
+    _normalize_public_url,
+    download_storage_file,
+    get_supabase,
+    is_production_runtime,
+    upload_contract_file,
+)
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/ai/risk-check", tags=["Risk Check"])
+
+
+def _guess_content_type(filename: str, fallback: str = "application/octet-stream") -> str:
+    guessed = mimetypes.guess_type(filename)[0]
+    return guessed or fallback
+
+
+def _sanitize_filename(filename: str) -> str:
+    safe = re.sub(r"[^A-Za-z0-9._-]+", "_", filename).strip("._")
+    return safe or "document.pdf"
+
+
+def _save_local_file(file_path: Path, file_bytes: bytes) -> None:
+    file_path.parent.mkdir(parents=True, exist_ok=True)
+    file_path.write_bytes(file_bytes)
+
+
+def _build_local_source_file_url(analysis_id: str) -> str:
+    return f"/api/ai/risk-check/results/{analysis_id}/download/source"
+
+
+def _persist_risk_result(
+    *,
+    file_bytes: bytes,
+    filename: str,
+    content_type: str,
+    result: RiskCheckResponse,
+) -> StoredRiskCheckResult:
+    analysis_id = f"RSK-{uuid.uuid4().hex[:8].upper()}"
+    created_at = datetime.now(timezone.utc).isoformat()
+    safe_filename = _sanitize_filename(filename)
+    extension = Path(safe_filename).suffix or (".pdf" if content_type == "application/pdf" else "")
+
+    source_object_path = f"risk-results/{analysis_id}{extension}"
+    metadata_object_path = f"risk-results/{analysis_id}_result.json"
+
+    use_remote_storage = is_production_runtime() or bool(settings.supabase_url and settings.supabase_key)
+
+    if use_remote_storage:
+        source_file_url = upload_contract_file(
+            source_object_path,
+            file_bytes,
+            bucket=settings.supabase_storage_bucket,
+        )
+    else:
+        local_source_path = get_risk_results_dir() / f"{analysis_id}{extension}"
+        _save_local_file(local_source_path, file_bytes)
+        source_file_url = _build_local_source_file_url(analysis_id)
+
+    stored = StoredRiskCheckResult(
+        analysis_id=analysis_id,
+        created_at=created_at,
+        source_filename=safe_filename,
+        source_content_type=content_type or _guess_content_type(safe_filename, "application/pdf"),
+        source_file_url=source_file_url,
+        result=result,
+    )
+
+    metadata_bytes = json.dumps(
+        stored.model_dump(mode="json"),
+        ensure_ascii=False,
+        indent=2,
+    ).encode("utf-8")
+
+    if use_remote_storage:
+        upload_contract_file(
+            metadata_object_path,
+            metadata_bytes,
+            bucket=settings.supabase_storage_bucket,
+        )
+    else:
+        local_metadata_path = get_risk_results_dir() / f"{analysis_id}_result.json"
+        _save_local_file(local_metadata_path, metadata_bytes)
+
+    return stored
+
+
+def _load_latest_local_risk_result(*, require_pdf: bool = True) -> StoredRiskCheckResult:
+    risk_results_dir = get_risk_results_dir()
+    if not risk_results_dir.exists():
+        raise FileNotFoundError("No stored risk results found")
+
+    result_files = sorted(
+        risk_results_dir.glob("*_result.json"),
+        key=lambda path: path.stat().st_mtime,
+        reverse=True,
+    )
+
+    for path in result_files:
+        stored = StoredRiskCheckResult.model_validate_json(path.read_text(encoding="utf-8"))
+        if require_pdf and stored.source_content_type != "application/pdf":
+            continue
+        return stored
+
+    raise FileNotFoundError("No stored PDF risk results found")
+
+
+def _load_latest_supabase_risk_result(*, require_pdf: bool = True) -> StoredRiskCheckResult:
+    supabase = get_supabase()
+    results = supabase.storage.from_(settings.supabase_storage_bucket).list(
+        "risk-results",
+        {"limit": 200, "sortBy": {"column": "created_at", "order": "desc"}},
+    )
+
+    for item in results or []:
+        name = item.get("name", "")
+        if not name.endswith("_result.json"):
+            continue
+        object_path = f"risk-results/{name}"
+        metadata_bytes = download_storage_file(object_path, bucket=settings.supabase_storage_bucket)
+        stored = StoredRiskCheckResult.model_validate_json(metadata_bytes.decode("utf-8"))
+        if require_pdf and stored.source_content_type != "application/pdf":
+            continue
+        if not stored.source_file_url:
+            base_id = name.replace("_result.json", "")
+            source_candidates = supabase.storage.from_(settings.supabase_storage_bucket).list(
+                "risk-results",
+                {"search": base_id},
+            )
+            for candidate in source_candidates or []:
+                candidate_name = candidate.get("name", "")
+                if candidate_name.startswith(base_id) and not candidate_name.endswith("_result.json"):
+                    stored.source_file_url = _normalize_public_url(
+                        supabase.storage.from_(settings.supabase_storage_bucket).get_public_url(f"risk-results/{candidate_name}")
+                    )
+                    break
+        return stored
+
+    raise FileNotFoundError("No stored PDF risk results found")
 
 
 @router.post("/analyze", response_model=RiskCheckResponse)
@@ -108,7 +253,48 @@ async def analyze_contract(
         logger.error("Risk analysis pipeline failed: %s", str(e))
         raise HTTPException(500, f"Risk analysis failed: {str(e)}")
 
+    try:
+        _persist_risk_result(
+            file_bytes=file_bytes,
+            filename=file.filename or "document.pdf",
+            content_type=file.content_type or _guess_content_type(file.filename or "document.pdf", "application/pdf"),
+            result=result,
+        )
+    except Exception as e:
+        logger.warning("Risk analysis result persistence failed: %s", str(e))
+
     return result
+
+
+@router.get("/latest-result", response_model=StoredRiskCheckResult)
+async def get_latest_risk_result():
+    """Return the latest stored real risk-analysis result with its source PDF URL."""
+    try:
+        if is_production_runtime() or (settings.supabase_url and settings.supabase_key):
+            return _load_latest_supabase_risk_result(require_pdf=True)
+        return _load_latest_local_risk_result(require_pdf=True)
+    except FileNotFoundError as e:
+        raise HTTPException(404, str(e))
+    except Exception as e:
+        logger.error("Latest risk result retrieval failed: %s", str(e))
+        raise HTTPException(500, f"Latest risk result retrieval failed: {str(e)}")
+
+
+@router.get("/results/{analysis_id}/download/source")
+async def download_stored_risk_source(analysis_id: str):
+    """Download the locally stored source document for a saved risk result."""
+    risk_results_dir = get_risk_results_dir()
+    matches = sorted(risk_results_dir.glob(f"{analysis_id}.*"))
+    source_file = next((path for path in matches if not path.name.endswith("_result.json")), None)
+    if not source_file or not source_file.exists():
+        raise HTTPException(404, "Stored risk source file not found")
+
+    media_type = _guess_content_type(source_file.name, "application/octet-stream")
+    return FileResponse(
+        str(source_file),
+        media_type=media_type,
+        filename=source_file.name,
+    )
 
 
 @router.post("/ocr-only")

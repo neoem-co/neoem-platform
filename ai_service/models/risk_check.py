@@ -190,3 +190,13 @@ class RiskCheckResponse(BaseModel):
     contract_type: ContractType = ContractType.UNKNOWN
     structured_contract: Optional[StructuredContract] = None
     processing_time_seconds: float = 0.0
+
+
+class StoredRiskCheckResult(BaseModel):
+    """Stored risk analysis artifact metadata plus the full result payload."""
+    analysis_id: str
+    created_at: str
+    source_filename: str
+    source_content_type: str = "application/pdf"
+    source_file_url: str
+    result: RiskCheckResponse

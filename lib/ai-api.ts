@@ -215,6 +215,15 @@ export interface RiskCheckResponse {
   processing_time_seconds: number;
 }
 
+export interface StoredRiskCheckResult {
+  analysis_id: string;
+  created_at: string;
+  source_filename: string;
+  source_content_type: string;
+  source_file_url: string;
+  result: RiskCheckResponse;
+}
+
 export interface ChatMessagePayload {
   sender: string;
   message: string;
@@ -257,6 +266,21 @@ export async function analyzeContractRisk(
     throw new Error(`Risk analysis failed (${res.status}): ${err}`);
   }
   return res.json();
+}
+
+export async function getLatestStoredRiskResult(): Promise<StoredRiskCheckResult> {
+  const res = await fetch(`${AI_BASE}/risk-check/latest-result`, {
+    signal: AbortSignal.timeout(AI_TIMEOUT),
+  });
+
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`Latest risk result failed (${res.status}): ${err}`);
+  }
+
+  const data = (await res.json()) as StoredRiskCheckResult;
+  data.source_file_url = normalizeAiUrl(data.source_file_url) || data.source_file_url;
+  return data;
 }
 
 /**
