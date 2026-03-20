@@ -166,6 +166,15 @@ function getTemplateDisplayLabel(templateId: string | null | undefined, isThai: 
         : `${template.labelEn} / ${template.labelTh}`;
 }
 
+function formatCurrentContractDate() {
+    return new Intl.DateTimeFormat("th-TH", {
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+        timeZone: "Asia/Bangkok",
+    }).format(new Date());
+}
+
 // ── Risk types ──
 interface RiskItem {
     id: string;
@@ -711,6 +720,7 @@ function DraftPanel({
 
     const autoFillClass = "border-primary/30 bg-primary/5";
     const displayedTemplateId = recommendedTemplateId || formData.template || "hire-of-work";
+    const contractPreviewDate = formatCurrentContractDate();
 
     return (
         <div className="max-w-3xl mx-auto p-6 space-y-6">
@@ -945,6 +955,9 @@ function DraftPanel({
                             <div className="text-center border-b pb-4">
                                 <p className="text-xs text-muted-foreground uppercase tracking-widest">
                                     {getTemplateDisplayLabel(formData.template, isThai)}
+                                </p>
+                                <p className="mt-3 text-sm text-foreground">
+                                    สัญญาฉบับนี้ทำขึ้น เมื่อวันที่ {contractPreviewDate}
                                 </p>
                             </div>
                             <p className="text-muted-foreground">

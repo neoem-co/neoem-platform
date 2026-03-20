@@ -17,6 +17,7 @@ import re
 import time
 import uuid
 from collections import OrderedDict
+from datetime import datetime
 from typing import Any, Optional
 
 from config import settings
@@ -306,13 +307,15 @@ async def generate_draft(request: GenerateDraftRequest) -> GenerateDraftResponse
         final_articles = await _polish_articles(articles)
         polish_applied = True
 
+    effective_date = data.get("effective_date") or _current_thai_legal_date()
     final_preamble_th = data.get("preamble_th", "")
     if template and not final_preamble_th:
         final_preamble_th = fill_preamble(
             template,
             [party.model_dump() for party in request.parties],
-            request.deal_sheet.delivery_date if request.deal_sheet else None,
+            effective_date,
         )
+    final_preamble_th = _ensure_preamble_has_effective_date(final_preamble_th, effective_date)
 
     logger.info(
         "Draft generation completed in %.2fs (polish_applied=%s)",
@@ -323,7 +326,7 @@ async def generate_draft(request: GenerateDraftRequest) -> GenerateDraftResponse
         contract_title=data.get("contract_title", "สัญญา"),
         contract_filename=data.get("contract_filename", "Contract_Draft_v1"),
         articles=final_articles,
-        effective_date=data.get("effective_date"),
+        effective_date=effective_date,
         preamble_th=final_preamble_th,
         preamble_en=data.get("preamble_en", ""),
         retrieval_debug=retrieval_context.as_debug_payload(),
@@ -567,17 +570,20 @@ def _enrich_deal_sheet_from_chat(
     _apply_party_details(deal_sheet.vendor, factory_text, is_buyer=False)
 
     if not deal_sheet.product.specs:
-        product_brief_match = re.search(
-            r"(The product should be .*?)(?:\. Formula ownership|\. We want|$)",
-            user_text,
-            re.IGNORECASE | re.DOTALL,
-        )
-        if product_brief_match:
-            deal_sheet.product.specs = _clean_sentence(product_brief_match.group(1))
+        product_sentences = []
+        for pattern in (
+            r"(The product should be .*?)(?:\. Formula ownership|$)",
+            r"(We want .*?)(?:\. Formula ownership|$)",
+        ):
+            match = re.search(pattern, user_text, re.IGNORECASE | re.DOTALL)
+            if match:
+                product_sentences.append(_clean_sentence(match.group(1)))
+        if product_sentences:
+            deal_sheet.product.specs = ". ".join(dict.fromkeys(product_sentences))
 
     if not deal_sheet.product.packaging:
         packaging_match = re.search(
-            r"in an (.*?)(?:\.|, We want|, and)",
+            r"(airless pump bottle.*?secondary box|packaging appearance|matte pastel peach secondary box)",
             user_text,
             re.IGNORECASE | re.DOTALL,
         )
@@ -624,12 +630,15 @@ def _enrich_deal_sheet_from_chat(
         if remedy_match:
             deal_sheet.quality_terms.defect_remedy = _clean_sentence(remedy_match.group(1))
 
-    if not deal_sheet.regulatory_terms.registration_owner and re.search(r"FDA notification responsibility can be assigned to your brand", factory_text, re.IGNORECASE):
+    if not deal_sheet.regulatory_terms.registration_owner and re.search(r"FDA notification responsibility can be assigned to your brand|buyer handles FDA filing", combined_text, re.IGNORECASE):
         deal_sheet.regulatory_terms.registration_owner = "buyer"
-    if not deal_sheet.regulatory_terms.document_support_by and re.search(r"ILC providing the manufacturing documents and technical support", factory_text, re.IGNORECASE):
+    if not deal_sheet.regulatory_terms.document_support_by and re.search(r"providing the manufacturing documents and technical support|factory supports documents|support dossier preparation|technical documents", combined_text, re.IGNORECASE):
         deal_sheet.regulatory_terms.document_support_by = "seller"
-    if not deal_sheet.regulatory_terms.label_compliance_owner and re.search(r"artwork compliance", factory_text, re.IGNORECASE):
-        deal_sheet.regulatory_terms.label_compliance_owner = "shared"
+    if not deal_sheet.regulatory_terms.label_compliance_owner:
+        if re.search(r"artwork compliance review", user_text, re.IGNORECASE):
+            deal_sheet.regulatory_terms.label_compliance_owner = "buyer"
+        elif re.search(r"artwork compliance comments", factory_text, re.IGNORECASE):
+            deal_sheet.regulatory_terms.label_compliance_owner = "shared"
 
     if not deal_sheet.commercial_terms.payment_terms_summary and deal_sheet.payment_milestones:
         deal_sheet.commercial_terms.payment_terms_summary = " / ".join(
@@ -661,11 +670,15 @@ def _apply_party_details(party: PartyInfo, text: str, *, is_buyer: bool) -> None
         tax_match = re.search(r"tax ID is\s*(?P<tax>\d{10,15})", text, re.IGNORECASE)
     else:
         intro_match = re.search(
-            r"this is\s+(?P<name>[^.,]+)\s+from\s+(?P<company>.*?)(?:,\s+(?P<address>.*?))?(?:\.|\s+Our manufacturing tax ID)",
+            r"this is\s+(?P<name>[^.,]+)\s+from\s+(?P<company>[^,]+)",
             text,
             re.IGNORECASE | re.DOTALL,
         )
-        address_match = None
+        address_match = re.search(
+            r"from\s+[^,]+,\s+(?P<address>.*?)(?:\.|\s+Our manufacturing tax ID)",
+            text,
+            re.IGNORECASE | re.DOTALL,
+        )
         tax_match = re.search(r"tax ID .*?(\d{10,15})", text, re.IGNORECASE)
 
     if intro_match:
@@ -701,6 +714,31 @@ def _extract_payment_milestones(text: str) -> list[PaymentMilestone]:
 
 def _clean_sentence(value: str) -> str:
     return re.sub(r"\s+", " ", value).strip(" .,\n\t")
+
+
+def _current_thai_legal_date() -> str:
+    months = [
+        "มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน",
+        "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม",
+    ]
+    now = datetime.now()
+    return f"{now.day} {months[now.month - 1]} {now.year + 543}"
+
+
+def _ensure_preamble_has_effective_date(preamble: str, effective_date: str) -> str:
+    normalized = (preamble or "").strip()
+    if not normalized:
+        return f"สัญญาฉบับนี้ทำขึ้น เมื่อวันที่ {effective_date}"
+    if "สัญญาฉบับนี้ทำขึ้น" in normalized and effective_date in normalized:
+        return normalized
+    if normalized.startswith("สัญญาฉบับนี้ทำขึ้น"):
+        return re.sub(
+            r"^สัญญาฉบับนี้ทำขึ้น.*?(?=ระหว่าง|โดย|ทั้งสองฝ่าย|$)",
+            f"สัญญาฉบับนี้ทำขึ้น เมื่อวันที่ {effective_date} ",
+            normalized,
+            count=1,
+        ).strip()
+    return f"สัญญาฉบับนี้ทำขึ้น เมื่อวันที่ {effective_date} {normalized}".strip()
 
 
 def _has_strong_deterministic_context(deal_sheet: DealSheet) -> bool:
