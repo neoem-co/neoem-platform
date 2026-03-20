@@ -1,5 +1,3 @@
-"use client";
-
 import enFactoriesData from "@/data/enfactories.json";
 import thFactoriesData from "@/data/thfactories.json";
 
