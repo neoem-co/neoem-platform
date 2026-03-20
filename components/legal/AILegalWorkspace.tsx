@@ -147,9 +147,8 @@ function RiskGauge({
     const radius = 92;
     const strokeWidth = 28;
     const needleAngle = 180 - (clampedPercent / 100) * 180;
-    const needleLength = 74;
-    const needleBase = polarToCartesian(cx, cy, 8, needleAngle);
-    const needleTip = polarToCartesian(cx, cy, needleLength, needleAngle);
+    const needleInner = polarToCartesian(cx, cy, 62, needleAngle);
+    const needleOuter = polarToCartesian(cx, cy, 90, needleAngle);
 
     return (
         <div className="relative mx-auto w-60 h-36">
@@ -177,15 +176,15 @@ function RiskGauge({
                 />
 
                 <line
-                    x1={needleBase.x}
-                    y1={needleBase.y}
-                    x2={needleTip.x}
-                    y2={needleTip.y}
+                    x1={needleInner.x}
+                    y1={needleInner.y}
+                    x2={needleOuter.x}
+                    y2={needleOuter.y}
                     stroke="rgb(17 24 39)"
                     strokeWidth="5"
                     strokeLinecap="round"
                 />
-                <circle cx={needleTip.x} cy={needleTip.y} r="5.5" fill="rgb(17 24 39)" />
+                <circle cx={needleInner.x} cy={needleInner.y} r="5.5" fill="rgb(17 24 39)" />
             </svg>
 
             <div className="absolute inset-x-0 bottom-5 text-center">
