@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/select";
 import { ESignaturePanel } from "@/components/legal/ESignaturePanel";
 import type { RiskHighlight } from "@/components/legal/RiskPdfViewer";
+import { DEMO_RISK_RESPONSE } from "@/lib/demo-risk-result";
 import {
     analyzeContractRisk,
     downloadFile,
