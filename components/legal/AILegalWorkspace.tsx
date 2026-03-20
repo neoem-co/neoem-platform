@@ -117,6 +117,86 @@ function useProgressStage(active: boolean, stages: ProgressStage[], intervalMs =
     return stages[Math.min(index, stages.length - 1)];
 }
 
+function polarToCartesian(cx: number, cy: number, radius: number, angleDeg: number) {
+    const angleRad = (angleDeg * Math.PI) / 180;
+    return {
+        x: cx + radius * Math.cos(angleRad),
+        y: cy - radius * Math.sin(angleRad),
+    };
+}
+
+function describeArc(cx: number, cy: number, radius: number, startAngle: number, endAngle: number) {
+    const start = polarToCartesian(cx, cy, radius, startAngle);
+    const end = polarToCartesian(cx, cy, radius, endAngle);
+    const largeArcFlag = Math.abs(endAngle - startAngle) > 180 ? 1 : 0;
+    return `M ${start.x} ${start.y} A ${radius} ${radius} 0 ${largeArcFlag} 1 ${end.x} ${end.y}`;
+}
+
+function RiskGauge({
+    percent,
+    toneClass,
+}: {
+    percent: number;
+    toneClass: string;
+}) {
+    const clampedPercent = Math.max(0, Math.min(100, percent));
+    const svgWidth = 240;
+    const svgHeight = 150;
+    const cx = 120;
+    const cy = 118;
+    const radius = 92;
+    const strokeWidth = 28;
+    const needleAngle = 180 - (clampedPercent / 100) * 180;
+    const needleLength = 74;
+    const needleBase = polarToCartesian(cx, cy, 8, needleAngle);
+    const needleTip = polarToCartesian(cx, cy, needleLength, needleAngle);
+
+    return (
+        <div className="relative mx-auto w-60 h-36">
+            <svg viewBox={`0 0 ${svgWidth} ${svgHeight}`} className="h-full w-full overflow-visible">
+                <path
+                    d={describeArc(cx, cy, radius, 180, 122)}
+                    fill="none"
+                    stroke="rgb(34 197 94)"
+                    strokeWidth={strokeWidth}
+                    strokeLinecap="butt"
+                />
+                <path
+                    d={describeArc(cx, cy, radius, 118, 62)}
+                    fill="none"
+                    stroke="rgb(245 158 11)"
+                    strokeWidth={strokeWidth}
+                    strokeLinecap="butt"
+                />
+                <path
+                    d={describeArc(cx, cy, radius, 58, 0)}
+                    fill="none"
+                    stroke="rgb(239 68 68)"
+                    strokeWidth={strokeWidth}
+                    strokeLinecap="butt"
+                />
+
+                <line
+                    x1={needleBase.x}
+                    y1={needleBase.y}
+                    x2={needleTip.x}
+                    y2={needleTip.y}
+                    stroke="rgb(17 24 39)"
+                    strokeWidth="5"
+                    strokeLinecap="round"
+                />
+                <circle cx={needleTip.x} cy={needleTip.y} r="5.5" fill="rgb(17 24 39)" />
+            </svg>
+
+            <div className="absolute inset-x-0 bottom-5 text-center">
+                <p className={`text-[3.25rem] leading-none font-bold ${toneClass || "text-foreground"}`}>
+                    {clampedPercent}%
+                </p>
+            </div>
+        </div>
+    );
+}
+
 const DRAFT_GENERATE_STAGES: ProgressStage[] = [
     { title: "กำลังวิเคราะห์บริบทดีล", hint: "ดึงประเด็นสำคัญจากแชทและข้อมูลข้อตกลง" },
     { title: "กำลังร่างข้อสัญญา", hint: "สร้างข้อสัญญาตามเทมเพลตให้ครบถ้วนเป็นระบบ" },
@@ -1285,7 +1365,6 @@ function RiskPanel({
         safe: "text-success",
     };
     const overallRiskPercent = overallRiskPercentMap[overallRisk] ?? 60;
-    const gaugeAngle = Math.round((overallRiskPercent / 100) * 180) - 90;
 
     if (!results) {
         return (
@@ -1400,29 +1479,10 @@ function RiskPanel({
                             </span>
                         </div>
 
-                        <div className="relative mx-auto w-56 h-32 overflow-hidden">
-                            <div
-                                className="absolute inset-0 rounded-t-full border border-border"
-                                style={{
-                                    background: "conic-gradient(from 180deg, rgb(34 197 94) 0deg, rgb(245 158 11) 90deg, rgb(239 68 68) 180deg)",
-                                }}
-                            />
-                            <div className="absolute left-3 right-3 top-3 bottom-0 rounded-t-full bg-card" />
-
-                            <div
-                                className="absolute left-1/2 bottom-10 h-14 w-1.5 origin-bottom rounded-full bg-foreground/85 shadow-sm"
-                                style={{ transform: `translateX(-50%) rotate(${gaugeAngle}deg)` }}
-                            >
-                                <span className="absolute left-1/2 top-0 h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-foreground" />
-                            </div>
-                            <div className="absolute left-1/2 bottom-9 h-3.5 w-3.5 -translate-x-1/2 rounded-full border border-card/80 bg-foreground" />
-
-                            <div className="absolute left-1/2 bottom-1 -translate-x-1/2 text-center">
-                                <p className={`text-2xl font-bold ${overallRiskToneClass[overallRisk] || "text-foreground"}`}>
-                                    {overallRiskPercent}%
-                                </p>
-                            </div>
-                        </div>
+                        <RiskGauge
+                            percent={overallRiskPercent}
+                            toneClass={overallRiskToneClass[overallRisk] || "text-foreground"}
+                        />
 
                         <p className="text-xs text-muted-foreground text-center">
                             {overallRiskHintMap[overallRisk] || "กำลังประเมินความเสี่ยงโดยรวมของสัญญา"}
@@ -1790,7 +1850,6 @@ function RiskPanelV2({
         safe: "text-success",
     };
     const overallRiskPercent = overallRiskPercentMap[overallRisk] ?? 60;
-    const gaugeAngle = Math.round((overallRiskPercent / 100) * 180) - 90;
 
     const renderFindingCard = (risk: RiskItem, index: number, section: "risk" | "acceptable") => (
         <Card
@@ -1912,27 +1971,10 @@ function RiskPanelV2({
                     </span>
                 </div>
 
-                <div className="relative mx-auto w-56 h-32 overflow-hidden">
-                    <div
-                        className="absolute inset-0 rounded-t-full border border-border"
-                        style={{
-                            background: "conic-gradient(from 180deg, rgb(34 197 94) 0deg, rgb(245 158 11) 90deg, rgb(239 68 68) 180deg)",
-                        }}
-                    />
-                    <div className="absolute left-3 right-3 top-3 bottom-0 rounded-t-full bg-card" />
-                    <div
-                        className="absolute left-1/2 bottom-10 h-14 w-1.5 origin-bottom rounded-full bg-foreground/85 shadow-sm"
-                        style={{ transform: `translateX(-50%) rotate(${gaugeAngle}deg)` }}
-                    >
-                        <span className="absolute left-1/2 top-0 h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-foreground" />
-                    </div>
-                    <div className="absolute left-1/2 bottom-9 h-3.5 w-3.5 -translate-x-1/2 rounded-full border border-card/80 bg-foreground" />
-                    <div className="absolute left-1/2 bottom-1 -translate-x-1/2 text-center">
-                        <p className={`text-2xl font-bold ${overallRiskToneClass[overallRisk] || "text-foreground"}`}>
-                            {overallRiskPercent}%
-                        </p>
-                    </div>
-                </div>
+                <RiskGauge
+                    percent={overallRiskPercent}
+                    toneClass={overallRiskToneClass[overallRisk] || "text-foreground"}
+                />
 
                 <p className="text-xs text-muted-foreground text-center">
                     {overallRiskHintMap[overallRisk] || "กำลังประเมินความเสี่ยงโดยรวมของสัญญา"}
