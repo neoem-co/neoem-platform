@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useLocale } from "next-intl";
 import {
     FileText, Search, FolderClock, X, Upload, Loader2,
     AlertTriangle, CheckCircle2, Download, Eye,
@@ -140,11 +141,30 @@ const EXPLAIN_RISK_STAGES: ProgressStage[] = [
     { title: "กำลังสร้างคำอธิบายภาษาไทย", hint: "จัดรูปคำอธิบายให้ชัดเจนและเข้าใจง่าย" },
 ];
 
-const templates = [
-    { id: "sales", label: "สัญญาซื้อขาย / Sales Contract", icon: "📝" },
-    { id: "hire-of-work", label: "สัญญาจ้างทำของ / Hire of Work", icon: "🔧" },
-    { id: "distribution", label: "สัญญาตัวแทนจำหน่าย / Distribution", icon: "📦" },
-];
+const TEMPLATE_META = [
+    { id: "sales", labelTh: "สัญญาซื้อขาย", labelEn: "Sales Contract", icon: "📝" },
+    { id: "hire-of-work", labelTh: "สัญญาจ้างทำของ", labelEn: "Hire of Work", icon: "🔧" },
+    { id: "distribution", labelTh: "สัญญาตัวแทนจำหน่าย", labelEn: "Distribution", icon: "📦" },
+] as const;
+
+function getTemplateOptions(isThai: boolean) {
+    return TEMPLATE_META.map((template) => ({
+        ...template,
+        label: isThai
+            ? `${template.labelTh} / ${template.labelEn}`
+            : `${template.labelEn} / ${template.labelTh}`,
+    }));
+}
+
+function getTemplateDisplayLabel(templateId: string | null | undefined, isThai: boolean) {
+    const template = TEMPLATE_META.find((item) => item.id === templateId);
+    if (!template) {
+        return isThai ? "สัญญาจ้างทำของ / Hire of Work" : "Hire of Work / สัญญาจ้างทำของ";
+    }
+    return isThai
+        ? `${template.labelTh} / ${template.labelEn}`
+        : `${template.labelEn} / ${template.labelTh}`;
+}
 
 // ── Risk types ──
 interface RiskItem {
@@ -462,6 +482,9 @@ function DraftPanel({
     initialExtractContext?: ExtractContextResponse | null;
     onDraftComplete?: () => void;
 }) {
+    const locale = useLocale();
+    const isThai = locale.startsWith("th");
+    const templates = getTemplateOptions(isThai);
     const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
     const [loading, setLoading] = useState(false);
     const [finalizing, setFinalizing] = useState(false);
@@ -469,7 +492,7 @@ function DraftPanel({
     const [error, setError] = useState<string | null>(null);
     const [draftResult, setDraftResult] = useState<GenerateDraftResponse | null>(null);
     const [downloadUrls, setDownloadUrls] = useState<{ pdf_url: string | null; docx_url: string | null } | null>(null);
-    const [recommendedTemplate, setRecommendedTemplate] = useState<string | null>(null);
+    const [recommendedTemplateId, setRecommendedTemplateId] = useState<string | null>(null);
     const [extractedContext, setExtractedContext] = useState<ExtractContextResponse | null>(initialExtractContext || null);
     const generateStage = useProgressStage(loading, DRAFT_GENERATE_STAGES);
     const finalizeStage = useProgressStage(finalizing, DRAFT_FINALIZE_STAGES);
@@ -506,9 +529,7 @@ function DraftPanel({
         const applyContext = (ctx: ExtractContextResponse) => {
             const suggested = API_TO_TEMPLATE[ctx.suggested_template] || "hire-of-work";
             setExtractedContext(ctx);
-            setRecommendedTemplate(
-                templates.find((tpl) => tpl.id === suggested)?.label || "สัญญาจ้างทำของ / Hire of Work"
-            );
+            setRecommendedTemplateId(suggested);
             setFormData((prev) => ({
                 ...prev,
                 template: prev.template || suggested,
@@ -562,6 +583,36 @@ function DraftPanel({
             active = false;
         };
     }, [chatHistory, factoryInfo?.factory_id, factoryName, initialExtractContext]);
+
+    const handleTemplateSelect = (templateId: string) => {
+        setFormData((prev) => ({
+            ...prev,
+            template: templateId,
+            buyerName: extractedContext?.deal_sheet.client?.name || prev.buyerName,
+            buyerCompany: extractedContext?.deal_sheet.client?.company || prev.buyerCompany,
+            buyerAddress: extractedContext?.deal_sheet.client?.address || prev.buyerAddress,
+            buyerTaxId: extractedContext?.deal_sheet.client?.tax_id || prev.buyerTaxId,
+            sellerName: extractedContext?.deal_sheet.vendor?.name || prev.sellerName,
+            sellerCompany: extractedContext?.deal_sheet.vendor?.company || prev.sellerCompany,
+            sellerAddress: extractedContext?.deal_sheet.vendor?.address || prev.sellerAddress,
+            sellerTaxId: extractedContext?.deal_sheet.vendor?.tax_id || prev.sellerTaxId,
+            productType: extractedContext?.deal_sheet.product?.name || prev.productType,
+            productSpec: extractedContext?.deal_sheet.product?.specs || prev.productSpec,
+            packaging: extractedContext?.deal_sheet.product?.packaging || prev.packaging,
+            targetMarket: extractedContext?.deal_sheet.product?.target_market || extractedContext?.deal_sheet.regulatory_terms?.target_market || prev.targetMarket,
+            quantity: extractedContext?.deal_sheet.product?.quantity?.toString() || prev.quantity,
+            totalPrice: extractedContext?.deal_sheet.total_price?.toString() || prev.totalPrice,
+            deliveryDate: extractedContext?.deal_sheet.delivery_date || prev.deliveryDate,
+            deliveryAddress: extractedContext?.deal_sheet.delivery_address || prev.deliveryAddress,
+            paymentTerms: extractedContext ? summarizePaymentTerms(extractedContext.deal_sheet) || prev.paymentTerms : prev.paymentTerms,
+            qualityStandards: extractedContext ? summarizeQualityStandards(extractedContext.deal_sheet) || prev.qualityStandards : prev.qualityStandards,
+            qcBasis: extractedContext?.deal_sheet.quality_terms?.qc_basis || prev.qcBasis,
+            regulatoryResponsibility: extractedContext?.deal_sheet.regulatory_terms?.registration_owner || prev.regulatoryResponsibility,
+            warrantyPeriod: extractedContext?.deal_sheet.quality_terms?.warranty_period_days?.toString() || prev.warrantyPeriod,
+            ipOwnership: extractedContext ? normalizeIpOwnershipForUi(extractedContext.deal_sheet.commercial_terms?.ip_ownership) || prev.ipOwnership : prev.ipOwnership,
+            additionalClauses: extractedContext ? summarizeAdditionalClauses(extractedContext.deal_sheet) || prev.additionalClauses : prev.additionalClauses,
+        }));
+    };
 
     const handleGenerate = async () => {
         setLoading(true);
@@ -662,8 +713,10 @@ function DraftPanel({
                 <p className="text-sm text-foreground">
                     {recommendationLoading
                         ? "กำลังวิเคราะห์บทสนทนาเพื่อแนะนำประเภทสัญญาที่เหมาะสม..."
-                        : recommendedTemplate
-                            ? <>จากบทสนทนาของคุณ เราแนะนำ: <span className="font-semibold text-primary">{recommendedTemplate}</span></>
+                        : recommendedTemplateId
+                            ? isThai
+                                ? <>จากบทสนทนาของคุณ เราแนะนำ: <span className="font-semibold text-primary">{getTemplateDisplayLabel(recommendedTemplateId, true)}</span></>
+                                : <>Based on your chat, we recommend: <span className="font-semibold text-primary">{getTemplateDisplayLabel(recommendedTemplateId, false)}</span></>
                             : "เลือกประเภทสัญญาเพื่อเริ่มสร้างร่างสัญญาที่เป็นระบบ"}
                 </p>
             </div>
@@ -703,7 +756,7 @@ function DraftPanel({
                         {templates.map((tpl) => (
                             <button
                                 key={tpl.id}
-                                onClick={() => setFormData({ ...formData, template: tpl.id })}
+                                onClick={() => handleTemplateSelect(tpl.id)}
                                 className={`p-4 border rounded-lg text-left transition-colors flex items-center gap-3 ${formData.template === tpl.id
                                     ? "border-primary bg-primary/5 ring-2 ring-primary/20"
                                     : "border-border hover:border-primary/50"
@@ -880,7 +933,7 @@ function DraftPanel({
                         <CardContent className="p-6 space-y-4 text-sm">
                             <div className="text-center border-b pb-4">
                                 <p className="text-xs text-muted-foreground uppercase tracking-widest">
-                                    {templates.find((t) => t.id === formData.template)?.label || "Manufacturing Agreement"}
+                                    {getTemplateDisplayLabel(formData.template, isThai)}
                                 </p>
                             </div>
                             <p className="text-muted-foreground">
@@ -920,7 +973,9 @@ function DraftPanel({
                                 <p className="text-muted-foreground"><strong className="text-foreground">Regulatory:</strong> {formData.regulatoryResponsibility}</p>
                             )}
                             <p className="text-xs text-muted-foreground italic mt-4">
-                                This is a preview. Full legal language will be included in the downloadable document.
+                                {isThai
+                                    ? "นี่คือพรีวิวเบื้องต้น โดยระบบได้ดึงข้อมูลจาก DealSheet มาเติมให้ในฟอร์มแล้ว และจะใส่ถ้อยคำกฎหมายฉบับเต็มในไฟล์ดาวน์โหลด"
+                                    : "This is a preview. DealSheet data has been auto-filled into the form, and the full legal language will be included in the downloadable document."}
                             </p>
                             <p className="text-xs text-muted-foreground">
                                 Generated articles: {draftResult?.articles.length ?? 0}

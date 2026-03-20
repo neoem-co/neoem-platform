@@ -113,6 +113,7 @@ const DealRoom = () => {
         depositPaid,
         completedActions,
         hasContractInChat,
+        isThai,
     });
 
     useEffect(() => {
@@ -303,21 +304,21 @@ const DealRoom = () => {
                 <Card>
                     <CardHeader className="py-3">
                         <CardTitle className="text-sm flex items-center gap-2">
-                            <Sparkles className="h-4 w-4 text-primary" /> AI Deal Supervisor
+                            <Sparkles className="h-4 w-4 text-primary" /> {isThai ? "AI Middleman" : "AI Middleman"}
                         </CardTitle>
                     </CardHeader>
                     <CardContent className="py-3 text-sm text-muted-foreground">
-                        <p className="text-[11px] uppercase tracking-wider text-muted-foreground/80">Current Deal State</p>
+                        <p className="text-[11px] uppercase tracking-wider text-muted-foreground/80">{isThai ? "สถานะดีลปัจจุบัน" : "Current Deal State"}</p>
                         <p className="mt-1 font-medium text-foreground">{supervisor.currentState}</p>
-                        <p className="mt-3 text-[11px] uppercase tracking-wider text-muted-foreground/80">Next Best Action</p>
+                        <p className="mt-3 text-[11px] uppercase tracking-wider text-muted-foreground/80">{isThai ? "ขั้นตอนถัดไปที่แนะนำ" : "Next Best Action"}</p>
                         <p className="mt-1 font-medium text-foreground">{supervisor.nextAction}</p>
-                        {summaryRefreshing && <p className="mt-2 text-xs text-primary">Updating summary...</p>}
+                        {summaryRefreshing && <p className="mt-2 text-xs text-primary">{isThai ? "กำลังอัปเดตสรุป..." : "Updating summary..."}</p>}
                     </CardContent>
                 </Card>
 
                 <Card>
                     <CardHeader className="py-3">
-                        <CardTitle className="text-sm">Deal Summary</CardTitle>
+                        <CardTitle className="text-sm">{isThai ? "สรุปดีล" : "Deal Summary"}</CardTitle>
                     </CardHeader>
                     <CardContent className="py-3 text-sm text-muted-foreground space-y-2">
                         {supervisor.summaryItems.length > 0 ? supervisor.summaryItems.map((item) => (
@@ -325,56 +326,58 @@ const DealRoom = () => {
                                 <strong className="text-foreground">{item.label}:</strong> {item.value}
                             </p>
                         )) : (
-                            <p>Waiting for enough chat context to build the live summary.</p>
+                            <p>{isThai ? "กำลังรอบริบทจากบทสนทนาเพิ่มเติมเพื่อสร้างสรุปดีล" : "Waiting for enough chat context to build the live summary."}</p>
                         )}
-                        <p><strong className="text-foreground">Quantity:</strong> {liveDealSheet?.product?.quantity ? liveDealSheet.product.quantity.toLocaleString() : "-"} {liveDealSheet?.product?.unit || ""}</p>
-                        <p><strong className="text-foreground">Total:</strong> {typeof liveDealSheet?.total_price === "number" ? `฿${liveDealSheet.total_price.toLocaleString()}` : "-"}</p>
+                        <p><strong className="text-foreground">{isThai ? "จำนวน:" : "Quantity:"}</strong> {liveDealSheet?.product?.quantity ? liveDealSheet.product.quantity.toLocaleString() : "-"} {liveDealSheet?.product?.unit || ""}</p>
+                        <p><strong className="text-foreground">{isThai ? "มูลค่ารวม:" : "Total:"}</strong> {typeof liveDealSheet?.total_price === "number" ? `฿${liveDealSheet.total_price.toLocaleString()}` : "-"}</p>
                     </CardContent>
                 </Card>
 
                 <Card>
                     <CardHeader className="py-3">
-                        <CardTitle className="text-sm">Pending Documents / Approvals</CardTitle>
+                        <CardTitle className="text-sm">{isThai ? "เอกสาร / การอนุมัติที่ค้างอยู่" : "Pending Documents / Approvals"}</CardTitle>
                     </CardHeader>
                     <CardContent className="py-3 text-sm text-muted-foreground space-y-2">
                         {supervisor.pendingItems.length > 0 ? supervisor.pendingItems.map((item) => (
                             <p key={item}>• {item}</p>
                         )) : (
-                            <p>Core deal information looks captured.</p>
+                            <p>{isThai ? "ข้อมูลหลักของดีลถูกจับได้ค่อนข้างครบแล้ว" : "Core deal information looks captured."}</p>
                         )}
                     </CardContent>
                 </Card>
 
                 <Card className={supervisor.blockers.length > 0 ? "border-warning/30 bg-warning/5" : ""}>
                     <CardHeader className="py-3">
-                        <CardTitle className="text-sm">Risks / Blockers</CardTitle>
+                        <CardTitle className="text-sm">{isThai ? "ความเสี่ยง / สิ่งที่ติดค้าง" : "Risks / Blockers"}</CardTitle>
                     </CardHeader>
                     <CardContent className="py-3 text-sm text-muted-foreground space-y-2">
                         {supervisor.blockers.length > 0 ? supervisor.blockers.map((item) => (
                             <p key={item}>• {item}</p>
                         )) : (
-                            <p>No active blockers detected right now.</p>
+                            <p>{isThai ? "ยังไม่พบประเด็นที่บล็อกดีลในตอนนี้" : "No active blockers detected right now."}</p>
                         )}
                     </CardContent>
                 </Card>
 
                 <div className="space-y-2">
-                    <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Quick Actions</p>
+                    <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">{isThai ? "คำสั่งด่วน" : "Quick Actions"}</p>
                     <Button className="w-full justify-start text-xs h-8" onClick={() => openLegalWorkspace("draft")}>
-                        <FileCheck className="h-3.5 w-3.5 mr-2" /> Draft Contract
+                        <FileCheck className="h-3.5 w-3.5 mr-2" /> {isThai ? "ร่างสัญญา" : "Draft Contract"}
                     </Button>
                     <Button variant="outline" className="w-full justify-start text-xs h-8" onClick={() => openLegalWorkspace("risk")}>
-                        <AlertTriangle className="h-3.5 w-3.5 mr-2 text-warning" /> Check Risks
+                        <AlertTriangle className="h-3.5 w-3.5 mr-2 text-warning" /> {isThai ? "ตรวจความเสี่ยง" : "Check Risks"}
                     </Button>
                     <Button variant="ghost" className="w-full justify-start text-xs h-8 text-muted-foreground" onClick={() => openLegalWorkspace("history")}>
-                        <FileText className="h-3.5 w-3.5 mr-2" /> Legal Hub
+                        <FileText className="h-3.5 w-3.5 mr-2" /> {isThai ? "ศูนย์เอกสารกฎหมาย" : "Legal Hub"}
                     </Button>
                 </div>
 
                 <Card className="bg-secondary/30 border-dashed">
                     <CardContent className="py-3 space-y-3">
                         <p className="text-xs text-muted-foreground">
-                            💡 <strong>Tip:</strong> Both you and the factory see the same milestone status in real-time — full transparency.
+                            {isThai
+                                ? "💡 ทั้งคุณและโรงงานจะเห็นสถานะ milestone เดียวกันแบบเรียลไทม์ เพื่อให้ทุกขั้นตอนโปร่งใส"
+                                : "💡 Both you and the factory see the same milestone status in real-time for full transparency."}
                         </p>
                         <Button
                             type="button"
@@ -383,7 +386,7 @@ const DealRoom = () => {
                             className="w-full justify-center text-xs"
                             onClick={resetDealProgress}
                         >
-                            Reset Demo to Step 3
+                            {isThai ? "รีเซ็ตเดโมกลับไปขั้นที่ 3" : "Reset Demo to Step 3"}
                         </Button>
                     </CardContent>
                 </Card>
@@ -424,9 +427,9 @@ const DealRoom = () => {
                         </div>
                     </div>
                     <Sheet open={mobileAiOpen} onOpenChange={setMobileAiOpen}>
-                        <SheetTrigger asChild><Button variant="outline" size="sm"><Bot className="h-4 w-4 mr-1" /> Timeline</Button></SheetTrigger>
+                        <SheetTrigger asChild><Button variant="outline" size="sm"><Bot className="h-4 w-4 mr-1" /> {isThai ? "ไทม์ไลน์" : "Timeline"}</Button></SheetTrigger>
                         <SheetContent side="bottom" className="h-[85vh] flex flex-col">
-                            <SheetHeader><SheetTitle className="flex items-center gap-2"><Bot className="h-5 w-5 text-primary" /> AI Middleman Hub</SheetTitle></SheetHeader>
+                            <SheetHeader><SheetTitle className="flex items-center gap-2"><Bot className="h-5 w-5 text-primary" /> {isThai ? "ฮับ AI Middleman" : "AI Middleman Hub"}</SheetTitle></SheetHeader>
                             {sidePanelContent}
                         </SheetContent>
                     </Sheet>
@@ -458,7 +461,7 @@ const DealRoom = () => {
                             </div>
                         </div>
                         <Button variant="ghost" size="sm" onClick={() => setAiPanelOpen(!aiPanelOpen)} className="flex items-center gap-2">
-                            {aiPanelOpen ? <><PanelRightClose className="h-4 w-4" /> Hide Panel</> : <><PanelRight className="h-4 w-4" /><Bot className="h-4 w-4" /> Timeline</>}
+                            {aiPanelOpen ? <><PanelRightClose className="h-4 w-4" /> {isThai ? "ซ่อนพาเนล" : "Hide Panel"}</> : <><PanelRight className="h-4 w-4" /><Bot className="h-4 w-4" /> {isThai ? "ไทม์ไลน์" : "Timeline"}</>}
                         </Button>
                     </div>
 
@@ -512,7 +515,7 @@ const DealRoom = () => {
                         <div className="p-4 border-b">
                             <div className="flex items-center gap-2">
                                 <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center"><Bot className="h-5 w-5 text-primary" /></div>
-                                <h3 className="font-semibold text-foreground text-sm">AI Middleman Hub</h3>
+                                <h3 className="font-semibold text-foreground text-sm">{isThai ? "ฮับ AI Middleman" : "AI Middleman Hub"}</h3>
                             </div>
                         </div>
                         {sidePanelContent}
