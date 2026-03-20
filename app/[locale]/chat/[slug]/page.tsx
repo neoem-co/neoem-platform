@@ -212,6 +212,24 @@ const DealRoom = () => {
         };
     }, [factory, ensureExtractContext]);
 
+    useEffect(() => {
+        if (typeof window === "undefined") return;
+        const debugPayload = {
+            suggested_template: liveExtractContext?.suggested_template || null,
+            client_company: liveExtractContext?.deal_sheet?.client?.company || null,
+            client_address: liveExtractContext?.deal_sheet?.client?.address || null,
+            vendor_company: liveExtractContext?.deal_sheet?.vendor?.company || null,
+            vendor_address: liveExtractContext?.deal_sheet?.vendor?.address || null,
+            product_specs: liveExtractContext?.deal_sheet?.product?.specs || null,
+            product_packaging: liveExtractContext?.deal_sheet?.product?.packaging || null,
+            regulatory_registration_owner: liveExtractContext?.deal_sheet?.regulatory_terms?.registration_owner || null,
+            regulatory_document_support_by: liveExtractContext?.deal_sheet?.regulatory_terms?.document_support_by || null,
+            delivery_address: liveExtractContext?.deal_sheet?.delivery_address || null,
+        };
+        (window as typeof window & { __neoem_extract_context?: unknown }).__neoem_extract_context = liveExtractContext;
+        console.debug("[neoem][extract-context]", debugPayload);
+    }, [liveExtractContext]);
+
     const markActionCompleted = (action: string) => {
         setCompletedActions((prev) => (prev.includes(action) ? prev : [...prev, action]));
     };

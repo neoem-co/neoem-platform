@@ -639,6 +639,28 @@ function DraftPanel({
         setFormData((prev) => applyDealSheetToForm(prev, extractedContext, selectedTemplate, factoryName));
     }, [extractedContext, factoryName, recommendedTemplateId]);
 
+    useEffect(() => {
+        if (typeof window === "undefined") return;
+        const debugPayload = {
+            buyerCompany: formData.buyerCompany || null,
+            buyerAddress: formData.buyerAddress || null,
+            sellerCompany: formData.sellerCompany || null,
+            sellerAddress: formData.sellerAddress || null,
+            productSpec: formData.productSpec || null,
+            packaging: formData.packaging || null,
+            regulatoryResponsibility: formData.regulatoryResponsibility || null,
+        };
+        (window as typeof window & {
+            __neoem_draft_form?: unknown;
+            __neoem_draft_extract_context?: unknown;
+        }).__neoem_draft_form = formData;
+        (window as typeof window & {
+            __neoem_draft_form?: unknown;
+            __neoem_draft_extract_context?: unknown;
+        }).__neoem_draft_extract_context = extractedContext;
+        console.debug("[neoem][draft-form]", debugPayload);
+    }, [extractedContext, formData]);
+
     const handleTemplateSelect = (templateId: string) => {
         setFormData((prev) => applyDealSheetToForm(prev, extractedContext, templateId, factoryName));
     };
