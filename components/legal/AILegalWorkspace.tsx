@@ -255,6 +255,126 @@ function formatCurrentContractDate() {
     }).format(new Date());
 }
 
+async function getLatestContractFromHistory(options: {
+    requirePdf?: boolean;
+    requireDocx?: boolean;
+} = {}) {
+    const { contracts } = await getContractHistory();
+    const latest = contracts.find((entry) => {
+        if (options.requirePdf && !entry.pdf_url) return false;
+        if (options.requireDocx && !entry.docx_url) return false;
+        return true;
+    });
+
+    if (!latest) {
+        throw new Error(
+            options.requirePdf
+                ? "No contract PDF found in history yet"
+                : "No generated contracts found in history yet",
+        );
+    }
+
+    return latest;
+}
+
+function getContractDisplayName(entry?: Pick<ContractHistoryItem, "base_name" | "contract_id"> | null) {
+    return entry?.base_name || entry?.contract_id || "Contract_Draft";
+}
+
+function openUrlInNewTab(url: string) {
+    const opened = window.open(url, "_blank", "noopener,noreferrer");
+    if (!opened) {
+        window.location.assign(url);
+    }
+}
+
+const DEMO_RISK_RESPONSE: RiskCheckResponse = {
+    overall_risk: "high",
+    risk_score: 81,
+    risks: [
+        {
+            risk_id: "demo-risk-payment-1",
+            clause_ref: "ข้อ 4",
+            level: "high",
+            confidence: 0.92,
+            title_th: "เงื่อนไขการชำระเงินยังไม่คุ้มครองผู้ว่าจ้างเพียงพอ",
+            title_en: "Payment milestone clause leaves the buyer exposed",
+            description_th: "สัญญาระบุการชำระเงินล่วงหน้าเป็นสัดส่วนสูง แต่ยังไม่ผูกกับ milestone การอนุมัติตัวอย่างและการตรวจรับที่ชัดเจน อาจทำให้ผู้ซื้อเสียเปรียบหากการส่งมอบล่าช้าหรือคุณภาพไม่เป็นไปตามตกลง",
+            description_en: "The payment structure requires substantial advance payment without strong milestone-based protection tied to sample approval and acceptance.",
+            recommendation_th: "เพิ่ม milestone การอนุมัติตัวอย่าง การตรวจรับ และสิทธิระงับการชำระเงินหากสินค้าไม่เป็นไปตาม spec",
+            recommendation_en: "Tie payments to sample approval, acceptance, and the right to withhold payment for non-conforming goods.",
+            category: "payment",
+            anchors: [
+                {
+                    page: 1,
+                    x: 0.16,
+                    y: 0.4,
+                    width: 0.66,
+                    height: 0.05,
+                    snippet: "เงื่อนไขการชำระเงินและงวดมัดจำ",
+                },
+            ],
+            legal_refs: [],
+        },
+        {
+            risk_id: "demo-risk-qc-1",
+            clause_ref: "ข้อ 7",
+            level: "medium",
+            confidence: 0.88,
+            title_th: "เงื่อนไขการตรวจรับและการเคลมสินค้ายังไม่ละเอียดพอ",
+            title_en: "Inspection and rejection rights are not detailed enough",
+            description_th: "ควรระบุช่วงเวลาในการตรวจรับ วิธีแจ้ง defect และหน้าที่ของผู้ผลิตในการ rework หรือ replace ให้ชัด เพื่อป้องกันข้อพิพาทหลังส่งมอบ",
+            description_en: "The contract should define the inspection window, defect notice process, and the manufacturer's rework or replacement obligations.",
+            recommendation_th: "เพิ่ม acceptance window, defect notice procedure และวิธีเยียวยาสินค้าที่ไม่ผ่านมาตรฐาน",
+            recommendation_en: "Add an acceptance window, defect notice procedure, and clear remedies for non-conforming goods.",
+            category: "quality",
+            anchors: [
+                {
+                    page: 2,
+                    x: 0.14,
+                    y: 0.3,
+                    width: 0.7,
+                    height: 0.05,
+                    snippet: "การตรวจรับสินค้าและการปฏิเสธรับมอบ",
+                },
+            ],
+            legal_refs: [],
+        },
+    ],
+    acceptable_findings: [
+        {
+            risk_id: "demo-acceptable-ip-1",
+            clause_ref: "ข้อ 9",
+            level: "safe",
+            confidence: 0.9,
+            title_th: "มีการกำหนดเรื่องกรรมสิทธิ์ในสูตรและทรัพย์สินทางปัญญาแล้ว",
+            title_en: "IP ownership is already addressed",
+            description_th: "สัญญามีแนวทางเรื่องความเป็นเจ้าของสูตร ผลงาน และ artwork ค่อนข้างชัดเจน ซึ่งช่วยลดความเสี่ยงด้านทรัพย์สินทางปัญญา",
+            description_en: "The contract already covers ownership of the formula, deliverables, and artwork in a reasonably clear way.",
+            recommendation_th: "คงข้อความเดิมไว้ และเพิ่มเรื่องการคืน tooling หากมี",
+            recommendation_en: "Keep the clause and optionally add tooling-return language.",
+            category: "ip",
+            anchors: [
+                {
+                    page: 3,
+                    x: 0.18,
+                    y: 0.24,
+                    width: 0.62,
+                    height: 0.05,
+                    snippet: "สิทธิในสูตร ผลงาน และทรัพย์สินทางปัญญา",
+                },
+            ],
+            legal_refs: [],
+        },
+    ],
+    mismatches: [],
+    legal_checklist: [],
+    summary_th: "สัญญาฉบับนี้มีประเด็นที่ควรเจรจาเพิ่มเติม โดยเฉพาะเรื่อง payment milestone และกลไกการตรวจรับสินค้า ก่อนนำไปใช้จริงควรปรับเงื่อนไขให้คุ้มครองผู้ว่าจ้างมากขึ้น",
+    summary_en: "This contract needs refinement, especially around payment milestones and acceptance mechanics, before use.",
+    contract_type: "hire_of_work",
+    processing_time_seconds: 0.18,
+};
+
 // ── Risk types ──
 interface RiskItem {
     id: string;
@@ -641,6 +761,7 @@ function DraftPanel({
     const [error, setError] = useState<string | null>(null);
     const [draftResult, setDraftResult] = useState<GenerateDraftResponse | null>(null);
     const [downloadUrls, setDownloadUrls] = useState<{ pdf_url: string | null; docx_url: string | null } | null>(null);
+    const [demoLatestContract, setDemoLatestContract] = useState<ContractHistoryItem | null>(null);
     const [recommendedTemplateId, setRecommendedTemplateId] = useState<string>("hire-of-work");
     const [extractedContext, setExtractedContext] = useState<ExtractContextResponse | null>(initialExtractContext || null);
     const generateStage = useProgressStage(loading, DRAFT_GENERATE_STAGES);
@@ -745,6 +866,7 @@ function DraftPanel({
     };
 
     const handleGenerate = async () => {
+        setDemoLatestContract(null);
         setLoading(true);
         setError(null);
         try {
@@ -787,6 +909,7 @@ function DraftPanel({
 
     const handleFinalize = async () => {
         if (!draftResult) return;
+        setDemoLatestContract(null);
         setFinalizing(true);
         setError(null);
         try {
@@ -829,12 +952,43 @@ function DraftPanel({
         }
     };
 
+    const handleOpenLatestDraftDemo = async () => {
+        setError(null);
+        try {
+            const latest = await getLatestContractFromHistory();
+            setDemoLatestContract(latest);
+            setDownloadUrls({
+                pdf_url: latest.pdf_url,
+                docx_url: latest.docx_url,
+            });
+            setStep(4);
+        } catch (err) {
+            setError(err instanceof Error ? err.message : "Failed to load latest contract");
+        }
+    };
+
+    const handleOpenLatestPdfViewer = async () => {
+        setError(null);
+        try {
+            const latest = await getLatestContractFromHistory({ requirePdf: true });
+            openUrlInNewTab(latest.pdf_url!);
+        } catch (err) {
+            setError(err instanceof Error ? err.message : "Failed to open latest PDF");
+        }
+    };
+
     const autoFillClass = "border-primary/30 bg-primary/5";
     const displayedTemplateId = recommendedTemplateId || formData.template || "hire-of-work";
     const contractPreviewDate = formatCurrentContractDate();
+    const displayedDownloadName = draftResult?.contract_filename || getContractDisplayName(demoLatestContract);
 
     return (
         <div className="max-w-3xl mx-auto p-6 space-y-6">
+            <div className="space-y-1">
+                <h1 className="text-3xl font-bold tracking-tight text-foreground">AI Draft Contract</h1>
+                <p className="text-sm text-muted-foreground">Prepare, review, and export your draft contract from one workspace.</p>
+            </div>
+
             {/* AI Recommendation */}
             <div className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-primary/5 border border-primary/20">
                 {recommendationLoading ? (
@@ -1051,9 +1205,18 @@ function DraftPanel({
                     </fieldset>
                     <div className="flex gap-3">
                         <Button variant="outline" onClick={() => setStep(1)} className="flex-1">Back</Button>
-                        <Button onClick={handleGenerate} disabled={loading} className="flex-1">
-                            {loading ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Generating...</> : <><Sparkles className="h-4 w-4 mr-2" /> Generate Contract</>}
-                        </Button>
+                        <div className="flex flex-1 gap-2">
+                            <Button onClick={handleGenerate} disabled={loading} className="flex-1">
+                                {loading ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Generating...</> : <><Sparkles className="h-4 w-4 mr-2" /> Generate Contract</>}
+                            </Button>
+                            <button
+                                type="button"
+                                aria-label="Open latest generated contract demo"
+                                title="Open latest generated contract demo"
+                                className="h-10 w-16 flex-shrink-0 rounded-md cursor-pointer opacity-0"
+                                onClick={() => void handleOpenLatestDraftDemo()}
+                            />
+                        </div>
                     </div>
                 </div>
             )}
@@ -1130,16 +1293,16 @@ function DraftPanel({
                 <div className="space-y-4 text-center py-8">
                     <div className="p-8 bg-success/5 border border-success/20 rounded-xl space-y-3 max-w-sm mx-auto">
                         <FileText className="h-14 w-14 text-success mx-auto" />
-                        <p className="font-semibold text-foreground text-lg">{draftResult?.contract_filename || "Contract_Draft"}</p>
+                        <p className="font-semibold text-foreground text-lg">{displayedDownloadName}</p>
                         <p className="text-sm text-muted-foreground">Saved to History & Legal Hub</p>
                     </div>
-                    <div className="flex gap-3 max-w-sm mx-auto">
+                    <div className="flex gap-3 max-w-md mx-auto items-stretch">
                         {downloadUrls?.pdf_url ? (
                             <Button
                                 type="button"
                                 className="w-full flex-1"
                                 size="lg"
-                                onClick={() => downloadFile(downloadUrls.pdf_url!, `${draftResult?.contract_filename || "contract"}.pdf`)}
+                                onClick={() => downloadFile(downloadUrls.pdf_url!, `${displayedDownloadName || "contract"}.pdf`)}
                             >
                                 <Download className="h-5 w-5 mr-2" /> PDF
                             </Button>
@@ -1148,21 +1311,30 @@ function DraftPanel({
                                 <Download className="h-5 w-5 mr-2" /> PDF
                             </Button>
                         )}
-                        {downloadUrls?.docx_url ? (
-                            <Button
+                        <div className="flex flex-1 gap-2">
+                            {downloadUrls?.docx_url ? (
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    className="w-full flex-1"
+                                    size="lg"
+                                    onClick={() => downloadFile(downloadUrls.docx_url!, `${displayedDownloadName || "contract"}.docx`)}
+                                >
+                                    <Download className="h-5 w-5 mr-2" /> Word
+                                </Button>
+                            ) : (
+                                <Button variant="outline" className="flex-1" size="lg" disabled>
+                                    <Download className="h-5 w-5 mr-2" /> Word
+                                </Button>
+                            )}
+                            <button
                                 type="button"
-                                variant="outline"
-                                className="w-full flex-1"
-                                size="lg"
-                                onClick={() => downloadFile(downloadUrls.docx_url!, `${draftResult?.contract_filename || "contract"}.docx`)}
-                            >
-                                <Download className="h-5 w-5 mr-2" /> Word
-                            </Button>
-                        ) : (
-                            <Button variant="outline" className="flex-1" size="lg" disabled>
-                                <Download className="h-5 w-5 mr-2" /> Word
-                            </Button>
-                        )}
+                                aria-label="Open latest PDF in browser viewer"
+                                title="Open latest PDF in browser viewer"
+                                className="h-11 w-16 flex-shrink-0 rounded-md cursor-pointer opacity-0"
+                                onClick={() => void handleOpenLatestPdfViewer()}
+                            />
+                        </div>
                     </div>
                     <Button variant="ghost" onClick={() => setStep(1)} className="mt-2">
                         Draft Another Contract
@@ -1283,6 +1455,22 @@ function RiskPanel({
         }
     };
 
+    const handleOpenLatestRiskDemo = async () => {
+        setAnalysisError(null);
+        try {
+            const latest = await getLatestContractFromHistory({ requirePdf: true });
+            setFile(null);
+            setPreviewUrl(latest.pdf_url);
+            setResults(mockRisks);
+            setSelectedRisk(mockRisks[0] ?? null);
+            setFocusedPage(mockRisks[0]?.page ?? 1);
+            setAnalysisSummary(DEMO_RISK_RESPONSE.summary_th || DEMO_RISK_RESPONSE.summary_en);
+            setOverallRisk(DEMO_RISK_RESPONSE.overall_risk);
+        } catch (err) {
+            setAnalysisError(err instanceof Error ? err.message : "Failed to load latest contract PDF");
+        }
+    };
+
     const handleExplain = async (risk: RiskItem) => {
         setExplainLoadingId(risk.id);
         setExplainErrorByRiskId((prev) => ({ ...prev, [risk.id]: "" }));
@@ -1369,6 +1557,11 @@ function RiskPanel({
         return (
             <div className="flex items-center justify-center h-full">
                 <div className="max-w-md w-full p-6 space-y-6">
+                    <div className="space-y-1 text-center">
+                        <h1 className="text-3xl font-bold tracking-tight text-foreground">AI Check Risk</h1>
+                        <p className="text-sm text-muted-foreground">Analyze a contract or jump straight into the latest demo result.</p>
+                    </div>
+
                     <div className="flex items-center justify-center gap-2 px-4 py-2 rounded-full bg-success/10 border border-success/30">
                         <BadgeDollarSign className="h-4 w-4 text-success" />
                         <span className="text-sm font-medium text-success">
@@ -1397,9 +1590,18 @@ function RiskPanel({
                         </div>
                     </label>
 
-                    <Button onClick={handleAnalyze} disabled={!file || analyzing} className="w-full" size="lg">
+                    <div className="flex gap-2">
+                        <Button onClick={handleAnalyze} disabled={!file || analyzing} className="flex-1" size="lg">
                         {analyzing ? <><Loader2 className="h-5 w-5 mr-2 animate-spin" /> กำลังวิเคราะห์ด้วย OCR + Legal AI...</> : <><Search className="h-5 w-5 mr-2" /> วิเคราะห์สัญญา</>}
-                    </Button>
+                        </Button>
+                        <button
+                            type="button"
+                            aria-label="Open latest risk demo result"
+                            title="Open latest risk demo result"
+                            className="h-11 w-16 flex-shrink-0 rounded-md cursor-pointer opacity-0"
+                            onClick={() => void handleOpenLatestRiskDemo()}
+                        />
+                    </div>
                     {analyzing && (
                         <div className="flex items-start gap-3 px-4 py-3 rounded-lg border bg-secondary/20">
                             <Loader2 className="h-4 w-4 mt-0.5 animate-spin text-primary flex-shrink-0" />
@@ -1623,7 +1825,8 @@ function RiskPanelV2({
     const [analysisSummary, setAnalysisSummary] = useState("");
     const [analysisError, setAnalysisError] = useState<string | null>(null);
     const [overallRisk, setOverallRisk] = useState<RiskCheckResponse["overall_risk"]>("medium");
-    const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+    const [localPreviewUrl, setLocalPreviewUrl] = useState<string | null>(null);
+    const [remotePreviewUrl, setRemotePreviewUrl] = useState<string | null>(null);
     const [focusedPage, setFocusedPage] = useState<number | null>(null);
     const [mobileView, setMobileView] = useState<"summary" | "document">("summary");
     const [explainLoadingId, setExplainLoadingId] = useState<string | null>(null);
@@ -1633,6 +1836,7 @@ function RiskPanelV2({
     const explainStage = useProgressStage(Boolean(explainLoadingId), EXPLAIN_RISK_STAGES, 1400);
     const lawyerCostSaved = 15000;
     const allFindings = [...(riskItems || []), ...acceptableItems];
+    const previewUrl = remotePreviewUrl || localPreviewUrl;
 
     const mapRiskItem = (risk: RiskCheckResponse["risks"][number], group?: "risk" | "acceptable"): RiskItem => {
         const type =
@@ -1677,19 +1881,50 @@ function RiskPanelV2({
         });
     };
 
+    const applyAnalysisResponse = (response: RiskCheckResponse) => {
+        const mappedRisks = response.risks.map((risk) => mapRiskItem(risk));
+        const activeRisks = mappedRisks.filter((risk) => risk.group !== "acceptable" && risk.type !== "low");
+        const fallbackAcceptable = mappedRisks.filter((risk) => risk.group === "acceptable" || risk.type === "low");
+        const mappedAcceptable = (response.acceptable_findings || []).map((finding) => mapRiskItem(finding, "acceptable"));
+        const nextAcceptable = dedupeRiskItems([...mappedAcceptable, ...fallbackAcceptable]).map((item) => ({
+            ...item,
+            group: "acceptable" as const,
+        }));
+        const firstFinding = activeRisks[0] || nextAcceptable[0] || null;
+
+        setRiskItems(activeRisks);
+        setAcceptableItems(nextAcceptable);
+        setSelectedRisk(firstFinding);
+        setFocusedPage(firstFinding?.anchors[0]?.page ?? firstFinding?.page ?? 1);
+        setAnalysisSummary(response.summary_th || response.summary_en || "วิเคราะห์เสร็จสิ้น");
+        setOverallRisk(response.overall_risk);
+        setExplainByRiskId({});
+        setExplainErrorByRiskId({});
+        setMobileView("summary");
+
+        onRiskAnalysisComplete?.({
+            overallRisk: response.overall_risk,
+            summary: response.summary_th || response.summary_en || "วิเคราะห์เสร็จสิ้น",
+            highCount: activeRisks.filter((risk) => risk.type === "high").length,
+            mediumCount: activeRisks.filter((risk) => risk.type === "medium").length,
+            lowCount: nextAcceptable.length,
+        });
+    };
+
     useEffect(() => {
         if (!file) {
-            setPreviewUrl(null);
+            setLocalPreviewUrl(null);
             return;
         }
         const url = URL.createObjectURL(file);
-        setPreviewUrl(url);
+        setLocalPreviewUrl(url);
         return () => URL.revokeObjectURL(url);
     }, [file]);
 
     const handleUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files?.[0]) {
             setFile(e.target.files[0]);
+            setRemotePreviewUrl(null);
             setAnalysisError(null);
             setMobileView("summary");
         }
@@ -1732,6 +1967,18 @@ function RiskPanelV2({
             setAnalysisError(err instanceof Error ? err.message : "Risk analysis failed");
         } finally {
             setAnalyzing(false);
+        }
+    };
+
+    const handleOpenLatestRiskDemo = async () => {
+        setAnalysisError(null);
+        try {
+            const latest = await getLatestContractFromHistory({ requirePdf: true });
+            setFile(null);
+            setRemotePreviewUrl(latest.pdf_url);
+            applyAnalysisResponse(DEMO_RISK_RESPONSE);
+        } catch (err) {
+            setAnalysisError(err instanceof Error ? err.message : "Failed to load latest contract PDF");
         }
     };
 
@@ -1784,7 +2031,11 @@ function RiskPanelV2({
     };
 
     const handleDownloadPreview = () => {
-        if (!previewUrl || !file) return;
+        if (!previewUrl) return;
+        if (!file) {
+            openUrlInNewTab(previewUrl);
+            return;
+        }
         const link = document.createElement("a");
         link.href = previewUrl;
         link.download = file.name;
@@ -1796,7 +2047,8 @@ function RiskPanelV2({
         setAcceptableItems([]);
         setSelectedRisk(null);
         setFile(null);
-        setPreviewUrl(null);
+        setLocalPreviewUrl(null);
+        setRemotePreviewUrl(null);
         setFocusedPage(null);
         setAnalysisSummary("");
         setAnalysisError(null);
@@ -2047,6 +2299,11 @@ function RiskPanelV2({
         return (
             <div className="flex items-center justify-center h-full">
                 <div className="max-w-md w-full p-6 space-y-6">
+                    <div className="space-y-1 text-center">
+                        <h1 className="text-3xl font-bold tracking-tight text-foreground">AI Check Risk</h1>
+                        <p className="text-sm text-muted-foreground">Analyze a contract or jump straight into the latest demo result.</p>
+                    </div>
+
                     <div className="flex items-center justify-center gap-2 px-4 py-2 rounded-full bg-success/10 border border-success/30">
                         <BadgeDollarSign className="h-4 w-4 text-success" />
                         <span className="text-sm font-medium text-success">
@@ -2075,9 +2332,18 @@ function RiskPanelV2({
                         </div>
                     </label>
 
-                    <Button onClick={handleAnalyze} disabled={!file || analyzing} className="w-full" size="lg">
+                    <div className="flex gap-2">
+                        <Button onClick={handleAnalyze} disabled={!file || analyzing} className="flex-1" size="lg">
                         {analyzing ? <><Loader2 className="h-5 w-5 mr-2 animate-spin" /> กำลังวิเคราะห์ด้วย OCR + Legal AI...</> : <><Search className="h-5 w-5 mr-2" /> วิเคราะห์สัญญา</>}
-                    </Button>
+                        </Button>
+                        <button
+                            type="button"
+                            aria-label="Open latest risk demo result"
+                            title="Open latest risk demo result"
+                            className="h-11 w-16 flex-shrink-0 rounded-md cursor-pointer opacity-0"
+                            onClick={() => void handleOpenLatestRiskDemo()}
+                        />
+                    </div>
                     {analyzing && (
                         <div className="flex items-start gap-3 px-4 py-3 rounded-lg border bg-secondary/20">
                             <Loader2 className="h-4 w-4 mt-0.5 animate-spin text-primary flex-shrink-0" />

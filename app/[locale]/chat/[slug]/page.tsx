@@ -369,6 +369,7 @@ const DealRoom = () => {
                     </Card>
                 )}
 
+                {false && (
                 <Card>
                     <CardHeader className="py-3">
                         <CardTitle className="text-sm flex items-center gap-2">
@@ -389,6 +390,12 @@ const DealRoom = () => {
                         )}
                     </CardContent>
                 </Card>
+                )}
+
+                <div className="flex items-center gap-2 px-1">
+                    <Sparkles className="h-4 w-4 text-primary" />
+                    <p className="text-sm font-semibold text-foreground">{isThai ? "AI Middleman" : "AI Middleman"}</p>
+                </div>
 
                 <Card>
                     <CardHeader className="py-3">
@@ -407,6 +414,7 @@ const DealRoom = () => {
                     </CardContent>
                 </Card>
 
+                {false && (
                 <Card>
                     <CardHeader className="py-3">
                         <CardTitle className="text-sm">{isThai ? "เอกสาร / การอนุมัติที่ค้างอยู่" : "Pending Documents / Approvals"}</CardTitle>
@@ -419,6 +427,7 @@ const DealRoom = () => {
                         )}
                     </CardContent>
                 </Card>
+                )}
 
                 <Card className={supervisor.blockers.length > 0 ? "border-warning/30 bg-warning/5" : ""}>
                     <CardHeader className="py-3">
