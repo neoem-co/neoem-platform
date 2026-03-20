@@ -405,16 +405,12 @@ const FactoriesContent = () => {
                                     </div>
                                     <div className="grid gap-4 md:grid-cols-1">
                                         {recommendedFactories.map((factory) => (
-                                            <div
+                                            <FactoryCard
                                                 key={factory.id}
-                                                className="relative rounded-2xl border-2 border-[#FF7A00]/70 bg-gradient-to-r from-[#FF7A00]/8 via-card to-card p-2 shadow-[0_0_0_1px_rgba(255,122,0,0.08)]"
-                                            >
-                                                <FactoryCard
-                                                    factory={factory}
-                                                    variant="horizontal"
-                                                    isRecommended={true}
-                                                />
-                                            </div>
+                                                factory={factory}
+                                                variant="horizontal"
+                                                isRecommended={true}
+                                            />
                                         ))}
                                     </div>
                                 </section>
