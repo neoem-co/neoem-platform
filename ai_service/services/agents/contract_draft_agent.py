@@ -90,6 +90,22 @@ async def extract_context(request: ExtractContextRequest) -> ExtractContextRespo
         return cached
 
     logger.info("Step 1: Extracting context from %d chat messages", len(clean_chat_history))
+    deterministic_deal_sheet = _enrich_deal_sheet_from_chat(
+        clean_chat_history,
+        DealSheet(confidence=72),
+        request.factory_name,
+    )
+    deterministic_template = _suggest_template_from_deal_sheet(deterministic_deal_sheet)
+    if _has_strong_deterministic_context(deterministic_deal_sheet):
+        response = ExtractContextResponse(
+            deal_sheet=deterministic_deal_sheet,
+            suggested_template=deterministic_template,
+            auto_filled_fields=_derive_auto_filled_fields(deterministic_deal_sheet),
+        )
+        _remember_extract_context(cache_key, response)
+        logger.info("Step 1: Returning deterministic context extraction for %s", request.factory_id or "unknown")
+        return response
+
     chat_text = "\n".join(
         f"[{message.sender}] {message.message}"
         for message in clean_chat_history
@@ -98,23 +114,35 @@ async def extract_context(request: ExtractContextRequest) -> ExtractContextRespo
     if not chat_text:
         chat_text = "(ไม่มีข้อความในแชท)"
 
-    response_text = await gemini_invoke(
-        system_prompt=CONTEXT_EXTRACTION_SYSTEM,
-        user_prompt=CONTEXT_EXTRACTION_USER.replace("{chat_history}", chat_text)
-        .replace("{factory_name}", request.factory_name or "ไม่ทราบ")
-        .replace("{factory_id}", request.factory_id or "N/A"),
-        temperature=0.1,
-    )
+    try:
+        response_text = await gemini_invoke(
+            system_prompt=CONTEXT_EXTRACTION_SYSTEM,
+            user_prompt=CONTEXT_EXTRACTION_USER.replace("{chat_history}", chat_text)
+            .replace("{factory_name}", request.factory_name or "ไม่ทราบ")
+            .replace("{factory_id}", request.factory_id or "N/A"),
+            temperature=0.1,
+        )
+    except Exception as error:
+        logger.warning("Context extraction model call failed, using deterministic extraction: %s", str(error))
+        response = ExtractContextResponse(
+            deal_sheet=deterministic_deal_sheet,
+            suggested_template=deterministic_template,
+            auto_filled_fields=_derive_auto_filled_fields(deterministic_deal_sheet),
+        )
+        _remember_extract_context(cache_key, response)
+        return response
 
     try:
         data = _parse_json_response(response_text)
     except Exception:
-        logger.warning("Failed to parse context extraction JSON, returning empty deal sheet")
-        return ExtractContextResponse(
-            deal_sheet=DealSheet(confidence=0),
-            suggested_template=TemplateType.SALES_CONTRACT,
-            auto_filled_fields=[],
+        logger.warning("Failed to parse context extraction JSON, using deterministic extraction")
+        response = ExtractContextResponse(
+            deal_sheet=deterministic_deal_sheet,
+            suggested_template=deterministic_template,
+            auto_filled_fields=_derive_auto_filled_fields(deterministic_deal_sheet),
         )
+        _remember_extract_context(cache_key, response)
+        return response
 
     deal_sheet = _build_deal_sheet(data)
     deal_sheet = _enrich_deal_sheet_from_chat(clean_chat_history, deal_sheet, request.factory_name)
@@ -673,6 +701,73 @@ def _extract_payment_milestones(text: str) -> list[PaymentMilestone]:
 
 def _clean_sentence(value: str) -> str:
     return re.sub(r"\s+", " ", value).strip(" .,\n\t")
+
+
+def _has_strong_deterministic_context(deal_sheet: DealSheet) -> bool:
+    score = 0
+    if deal_sheet.client:
+        if deal_sheet.client.name:
+            score += 2
+        if deal_sheet.client.company:
+            score += 2
+        if deal_sheet.client.address:
+            score += 2
+        if deal_sheet.client.tax_id:
+            score += 2
+    if deal_sheet.vendor:
+        if deal_sheet.vendor.name:
+            score += 2
+        if deal_sheet.vendor.company:
+            score += 2
+        if deal_sheet.vendor.address:
+            score += 2
+        if deal_sheet.vendor.tax_id:
+            score += 2
+    if deal_sheet.product:
+        if deal_sheet.product.name:
+            score += 2
+        if deal_sheet.product.specs:
+            score += 2
+        if deal_sheet.product.packaging:
+            score += 2
+        if deal_sheet.product.target_market:
+            score += 1
+        if deal_sheet.product.quantity is not None:
+            score += 1
+    if deal_sheet.total_price is not None:
+        score += 2
+    if deal_sheet.delivery_address:
+        score += 2
+    if deal_sheet.payment_milestones:
+        score += 2
+    if deal_sheet.quality_terms and deal_sheet.quality_terms.qc_basis:
+        score += 1
+    if deal_sheet.regulatory_terms and deal_sheet.regulatory_terms.registration_owner:
+        score += 1
+    return score >= 14
+
+
+def _suggest_template_from_deal_sheet(deal_sheet: DealSheet) -> TemplateType:
+    product_name = (deal_sheet.product.name if deal_sheet.product else "") or ""
+    product_specs = (deal_sheet.product.specs if deal_sheet.product else "") or ""
+    combined = " ".join(
+        filter(
+            None,
+            [
+                product_name.lower(),
+                product_specs.lower(),
+                deal_sheet.delivery_address.lower() if deal_sheet.delivery_address else "",
+                deal_sheet.commercial_terms.payment_terms_summary.lower()
+                if deal_sheet.commercial_terms and deal_sheet.commercial_terms.payment_terms_summary
+                else "",
+            ],
+        )
+    )
+    if any(keyword in combined for keyword in ("oem", "manufact", "formula", "sample", "qc", "golden sample")):
+        return TemplateType.HIRE_OF_WORK
+    if deal_sheet.product and deal_sheet.product.name:
+        return TemplateType.HIRE_OF_WORK
+    return TemplateType.SALES_CONTRACT
 
 
 def _model_from_payload(model_cls, payload):

@@ -57,6 +57,20 @@ interface DealRoomState {
     completedActions: string[];
 }
 
+function hasCoreDealSheetAutofill(context: ExtractContextResponse | null) {
+    const dealSheet = context?.deal_sheet;
+    if (!dealSheet) return false;
+    return Boolean(
+        dealSheet.client?.company ||
+        dealSheet.client?.address ||
+        dealSheet.vendor?.company ||
+        dealSheet.vendor?.address ||
+        dealSheet.product?.specs ||
+        dealSheet.product?.packaging ||
+        dealSheet.delivery_address,
+    );
+}
+
 function loadDealRoomState(slug: string): DealRoomState {
     if (typeof window === "undefined") {
         return { tosAccepted: false, depositPaid: false, riskAlert: null, completedActions: [] };
@@ -253,9 +267,15 @@ const DealRoom = () => {
 
     const openLegalWorkspace = (tab: "draft" | "risk" | "history" | "esign") => {
         if (tab === "draft") {
-            if (!liveExtractContext) {
+            if (!hasCoreDealSheetAutofill(liveExtractContext)) {
                 setDraftPreparing(true);
                 void ensureExtractContext()
+                    .then((context) => {
+                        if (!hasCoreDealSheetAutofill(context)) {
+                            return ensureExtractContext(true);
+                        }
+                        return context;
+                    })
                     .catch(() => {
                         setLiveExtractContext(null);
                     })
