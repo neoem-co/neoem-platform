@@ -50,6 +50,7 @@ interface AILegalWorkspaceProps {
     chatHistory?: ChatMessagePayload[];
     factoryInfo?: FactoryInfoPayload;
     initialExtractContext?: ExtractContextResponse | null;
+    managedExtractContext?: boolean;
     onDraftComplete?: () => void;
     onRiskAnalysisComplete?: (result: {
         overallRisk: RiskCheckResponse["overall_risk"];
@@ -284,6 +285,7 @@ export function AILegalWorkspace({
     chatHistory = [],
     factoryInfo,
     initialExtractContext = null,
+    managedExtractContext = false,
     onDraftComplete,
     onRiskAnalysisComplete,
 }: AILegalWorkspaceProps) {
@@ -341,6 +343,7 @@ export function AILegalWorkspace({
                             chatHistory={chatHistory}
                             factoryInfo={factoryInfo}
                             initialExtractContext={initialExtractContext}
+                            managedExtractContext={managedExtractContext}
                             onDraftComplete={onDraftComplete}
                         />
                     )}
@@ -539,12 +542,14 @@ function DraftPanel({
     chatHistory,
     factoryInfo,
     initialExtractContext,
+    managedExtractContext,
     onDraftComplete,
 }: {
     factoryName: string;
     chatHistory: ChatMessagePayload[];
     factoryInfo?: FactoryInfoPayload;
     initialExtractContext?: ExtractContextResponse | null;
+    managedExtractContext?: boolean;
     onDraftComplete?: () => void;
 }) {
     const locale = useLocale();
@@ -601,6 +606,11 @@ function DraftPanel({
         const seedFromChat = async () => {
             if (initialExtractContext) {
                 applyContext(initialExtractContext);
+                setRecommendationLoading(false);
+                return;
+            }
+            if (managedExtractContext) {
+                setRecommendationLoading(true);
                 return;
             }
             if (chatHistory.length === 0) return;
@@ -621,7 +631,7 @@ function DraftPanel({
         return () => {
             active = false;
         };
-    }, [chatHistory, factoryInfo?.factory_id, factoryName, initialExtractContext]);
+    }, [chatHistory, factoryInfo?.factory_id, factoryName, initialExtractContext, managedExtractContext]);
 
     useEffect(() => {
         if (!extractedContext) return;
