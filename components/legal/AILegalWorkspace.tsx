@@ -405,6 +405,49 @@ function summarizeAdditionalClauses(dealSheet?: DealSheet | null) {
     return parts.join("\n");
 }
 
+function applyDealSheetToForm(
+    previous: ContractData,
+    ctx: ExtractContextResponse | null,
+    templateId: string,
+    factoryName: string,
+): ContractData {
+    if (!ctx) {
+        return {
+            ...previous,
+            template: templateId,
+            sellerName: previous.sellerName || factoryName,
+        };
+    }
+
+    return {
+        ...previous,
+        template: templateId,
+        buyerName: ctx.deal_sheet.client?.name || previous.buyerName,
+        buyerCompany: ctx.deal_sheet.client?.company || previous.buyerCompany,
+        buyerAddress: ctx.deal_sheet.client?.address || previous.buyerAddress,
+        buyerTaxId: ctx.deal_sheet.client?.tax_id || previous.buyerTaxId,
+        sellerName: ctx.deal_sheet.vendor?.name || previous.sellerName || factoryName,
+        sellerCompany: ctx.deal_sheet.vendor?.company || previous.sellerCompany,
+        sellerAddress: ctx.deal_sheet.vendor?.address || previous.sellerAddress,
+        sellerTaxId: ctx.deal_sheet.vendor?.tax_id || previous.sellerTaxId,
+        productType: ctx.deal_sheet.product?.name || previous.productType,
+        productSpec: ctx.deal_sheet.product?.specs || previous.productSpec,
+        packaging: ctx.deal_sheet.product?.packaging || previous.packaging,
+        targetMarket: ctx.deal_sheet.product?.target_market || ctx.deal_sheet.regulatory_terms?.target_market || previous.targetMarket,
+        quantity: ctx.deal_sheet.product?.quantity?.toString() || previous.quantity,
+        totalPrice: ctx.deal_sheet.total_price?.toString() || previous.totalPrice,
+        deliveryDate: ctx.deal_sheet.delivery_date || previous.deliveryDate,
+        deliveryAddress: ctx.deal_sheet.delivery_address || previous.deliveryAddress,
+        paymentTerms: summarizePaymentTerms(ctx.deal_sheet) || previous.paymentTerms,
+        qualityStandards: summarizeQualityStandards(ctx.deal_sheet) || previous.qualityStandards,
+        qcBasis: ctx.deal_sheet.quality_terms?.qc_basis || previous.qcBasis,
+        regulatoryResponsibility: ctx.deal_sheet.regulatory_terms?.registration_owner || previous.regulatoryResponsibility,
+        warrantyPeriod: ctx.deal_sheet.quality_terms?.warranty_period_days?.toString() || previous.warrantyPeriod,
+        ipOwnership: normalizeIpOwnershipForUi(ctx.deal_sheet.commercial_terms?.ip_ownership) || previous.ipOwnership,
+        additionalClauses: summarizeAdditionalClauses(ctx.deal_sheet) || previous.additionalClauses,
+    };
+}
+
 function mergeDealSheetWithForm(formData: ContractData, factoryName: string, extractedDealSheet?: DealSheet | null): DealSheet {
     const baseVendor = extractedDealSheet?.vendor;
     const baseClient = extractedDealSheet?.client;
@@ -492,12 +535,12 @@ function DraftPanel({
     const [error, setError] = useState<string | null>(null);
     const [draftResult, setDraftResult] = useState<GenerateDraftResponse | null>(null);
     const [downloadUrls, setDownloadUrls] = useState<{ pdf_url: string | null; docx_url: string | null } | null>(null);
-    const [recommendedTemplateId, setRecommendedTemplateId] = useState<string | null>(null);
+    const [recommendedTemplateId, setRecommendedTemplateId] = useState<string>("hire-of-work");
     const [extractedContext, setExtractedContext] = useState<ExtractContextResponse | null>(initialExtractContext || null);
     const generateStage = useProgressStage(loading, DRAFT_GENERATE_STAGES);
     const finalizeStage = useProgressStage(finalizing, DRAFT_FINALIZE_STAGES);
     const [formData, setFormData] = useState<ContractData>({
-        template: "",
+        template: "hire-of-work",
         buyerName: "Your Company",
         buyerCompany: "",
         buyerAddress: "",
@@ -530,33 +573,7 @@ function DraftPanel({
             const suggested = API_TO_TEMPLATE[ctx.suggested_template] || "hire-of-work";
             setExtractedContext(ctx);
             setRecommendedTemplateId(suggested);
-            setFormData((prev) => ({
-                ...prev,
-                template: prev.template || suggested,
-                buyerName: ctx.deal_sheet.client?.name || prev.buyerName,
-                buyerCompany: ctx.deal_sheet.client?.company || prev.buyerCompany,
-                buyerAddress: ctx.deal_sheet.client?.address || prev.buyerAddress,
-                buyerTaxId: ctx.deal_sheet.client?.tax_id || prev.buyerTaxId,
-                sellerName: ctx.deal_sheet.vendor?.name || prev.sellerName,
-                sellerCompany: ctx.deal_sheet.vendor?.company || prev.sellerCompany,
-                sellerAddress: ctx.deal_sheet.vendor?.address || prev.sellerAddress,
-                sellerTaxId: ctx.deal_sheet.vendor?.tax_id || prev.sellerTaxId,
-                productType: ctx.deal_sheet.product?.name || prev.productType,
-                productSpec: ctx.deal_sheet.product?.specs || prev.productSpec,
-                packaging: ctx.deal_sheet.product?.packaging || prev.packaging,
-                targetMarket: ctx.deal_sheet.product?.target_market || ctx.deal_sheet.regulatory_terms?.target_market || prev.targetMarket,
-                quantity: ctx.deal_sheet.product?.quantity?.toString() || prev.quantity,
-                totalPrice: ctx.deal_sheet.total_price?.toString() || prev.totalPrice,
-                deliveryDate: ctx.deal_sheet.delivery_date || prev.deliveryDate,
-                deliveryAddress: ctx.deal_sheet.delivery_address || prev.deliveryAddress,
-                paymentTerms: summarizePaymentTerms(ctx.deal_sheet) || prev.paymentTerms,
-                qualityStandards: summarizeQualityStandards(ctx.deal_sheet) || prev.qualityStandards,
-                qcBasis: ctx.deal_sheet.quality_terms?.qc_basis || prev.qcBasis,
-                regulatoryResponsibility: ctx.deal_sheet.regulatory_terms?.registration_owner || prev.regulatoryResponsibility,
-                warrantyPeriod: ctx.deal_sheet.quality_terms?.warranty_period_days?.toString() || prev.warrantyPeriod,
-                ipOwnership: normalizeIpOwnershipForUi(ctx.deal_sheet.commercial_terms?.ip_ownership) || prev.ipOwnership,
-                additionalClauses: summarizeAdditionalClauses(ctx.deal_sheet) || prev.additionalClauses,
-            }));
+            setFormData((prev) => applyDealSheetToForm(prev, ctx, suggested, factoryName));
         };
 
         const seedFromChat = async () => {
@@ -584,34 +601,14 @@ function DraftPanel({
         };
     }, [chatHistory, factoryInfo?.factory_id, factoryName, initialExtractContext]);
 
+    useEffect(() => {
+        if (!extractedContext) return;
+        const selectedTemplate = recommendedTemplateId || "hire-of-work";
+        setFormData((prev) => applyDealSheetToForm(prev, extractedContext, selectedTemplate, factoryName));
+    }, [extractedContext, factoryName, recommendedTemplateId]);
+
     const handleTemplateSelect = (templateId: string) => {
-        setFormData((prev) => ({
-            ...prev,
-            template: templateId,
-            buyerName: extractedContext?.deal_sheet.client?.name || prev.buyerName,
-            buyerCompany: extractedContext?.deal_sheet.client?.company || prev.buyerCompany,
-            buyerAddress: extractedContext?.deal_sheet.client?.address || prev.buyerAddress,
-            buyerTaxId: extractedContext?.deal_sheet.client?.tax_id || prev.buyerTaxId,
-            sellerName: extractedContext?.deal_sheet.vendor?.name || prev.sellerName,
-            sellerCompany: extractedContext?.deal_sheet.vendor?.company || prev.sellerCompany,
-            sellerAddress: extractedContext?.deal_sheet.vendor?.address || prev.sellerAddress,
-            sellerTaxId: extractedContext?.deal_sheet.vendor?.tax_id || prev.sellerTaxId,
-            productType: extractedContext?.deal_sheet.product?.name || prev.productType,
-            productSpec: extractedContext?.deal_sheet.product?.specs || prev.productSpec,
-            packaging: extractedContext?.deal_sheet.product?.packaging || prev.packaging,
-            targetMarket: extractedContext?.deal_sheet.product?.target_market || extractedContext?.deal_sheet.regulatory_terms?.target_market || prev.targetMarket,
-            quantity: extractedContext?.deal_sheet.product?.quantity?.toString() || prev.quantity,
-            totalPrice: extractedContext?.deal_sheet.total_price?.toString() || prev.totalPrice,
-            deliveryDate: extractedContext?.deal_sheet.delivery_date || prev.deliveryDate,
-            deliveryAddress: extractedContext?.deal_sheet.delivery_address || prev.deliveryAddress,
-            paymentTerms: extractedContext ? summarizePaymentTerms(extractedContext.deal_sheet) || prev.paymentTerms : prev.paymentTerms,
-            qualityStandards: extractedContext ? summarizeQualityStandards(extractedContext.deal_sheet) || prev.qualityStandards : prev.qualityStandards,
-            qcBasis: extractedContext?.deal_sheet.quality_terms?.qc_basis || prev.qcBasis,
-            regulatoryResponsibility: extractedContext?.deal_sheet.regulatory_terms?.registration_owner || prev.regulatoryResponsibility,
-            warrantyPeriod: extractedContext?.deal_sheet.quality_terms?.warranty_period_days?.toString() || prev.warrantyPeriod,
-            ipOwnership: extractedContext ? normalizeIpOwnershipForUi(extractedContext.deal_sheet.commercial_terms?.ip_ownership) || prev.ipOwnership : prev.ipOwnership,
-            additionalClauses: extractedContext ? summarizeAdditionalClauses(extractedContext.deal_sheet) || prev.additionalClauses : prev.additionalClauses,
-        }));
+        setFormData((prev) => applyDealSheetToForm(prev, extractedContext, templateId, factoryName));
     };
 
     const handleGenerate = async () => {
@@ -700,6 +697,7 @@ function DraftPanel({
     };
 
     const autoFillClass = "border-primary/30 bg-primary/5";
+    const displayedTemplateId = recommendedTemplateId || formData.template || "hire-of-work";
 
     return (
         <div className="max-w-3xl mx-auto p-6 space-y-6">
@@ -712,12 +710,12 @@ function DraftPanel({
                 )}
                 <p className="text-sm text-foreground">
                     {recommendationLoading
-                        ? "กำลังวิเคราะห์บทสนทนาเพื่อแนะนำประเภทสัญญาที่เหมาะสม..."
-                        : recommendedTemplateId
-                            ? isThai
-                                ? <>จากบทสนทนาของคุณ เราแนะนำ: <span className="font-semibold text-primary">{getTemplateDisplayLabel(recommendedTemplateId, true)}</span></>
-                                : <>Based on your chat, we recommend: <span className="font-semibold text-primary">{getTemplateDisplayLabel(recommendedTemplateId, false)}</span></>
-                            : "เลือกประเภทสัญญาเพื่อเริ่มสร้างร่างสัญญาที่เป็นระบบ"}
+                        ? (isThai
+                            ? "กำลังวิเคราะห์บทสนทนาเพื่อยืนยันประเภทสัญญาที่เหมาะสม..."
+                            : "Analyzing your chat to confirm the best-fit contract type...")
+                        : isThai
+                            ? <>จากบทสนทนาของคุณ เราแนะนำ: <span className="font-semibold text-primary">{getTemplateDisplayLabel(displayedTemplateId, true)}</span></>
+                            : <>Based on your chat, we recommend: <span className="font-semibold text-primary">{getTemplateDisplayLabel(displayedTemplateId, false)}</span></>}
                 </p>
             </div>
 

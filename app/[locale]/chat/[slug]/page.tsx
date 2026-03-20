@@ -429,7 +429,7 @@ const DealRoom = () => {
                     <Sheet open={mobileAiOpen} onOpenChange={setMobileAiOpen}>
                         <SheetTrigger asChild><Button variant="outline" size="sm"><Bot className="h-4 w-4 mr-1" /> {isThai ? "ไทม์ไลน์" : "Timeline"}</Button></SheetTrigger>
                         <SheetContent side="bottom" className="h-[85vh] flex flex-col">
-                            <SheetHeader><SheetTitle className="flex items-center gap-2"><Bot className="h-5 w-5 text-primary" /> {isThai ? "ฮับ AI Middleman" : "AI Middleman Hub"}</SheetTitle></SheetHeader>
+                            <SheetHeader><SheetTitle className="flex items-center gap-2"><Bot className="h-5 w-5 text-primary" /> {isThai ? "AI Middleman" : "AI Middleman"}</SheetTitle></SheetHeader>
                             {sidePanelContent}
                         </SheetContent>
                     </Sheet>
@@ -515,7 +515,7 @@ const DealRoom = () => {
                         <div className="p-4 border-b">
                             <div className="flex items-center gap-2">
                                 <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center"><Bot className="h-5 w-5 text-primary" /></div>
-                                <h3 className="font-semibold text-foreground text-sm">{isThai ? "ฮับ AI Middleman" : "AI Middleman Hub"}</h3>
+                                <h3 className="font-semibold text-foreground text-sm">{isThai ? "AI Middleman" : "AI Middleman"}</h3>
                             </div>
                         </div>
                         {sidePanelContent}
