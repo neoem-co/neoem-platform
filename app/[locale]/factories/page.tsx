@@ -20,6 +20,7 @@ const FactoriesContent = () => {
     const t = useTranslations("Factories");
     const commonT = useTranslations("Common");
     const locale = useLocale();
+    const isThai = locale.startsWith("th");
     const searchParams = useSearchParams();
     const router = useRouter();
     const pathname = usePathname();
@@ -416,18 +417,36 @@ const FactoriesContent = () => {
                                             <Sparkles className="h-5 w-5" />
                                         </div>
                                         <div>
-                                            <h2 className="text-lg font-bold text-foreground">{t("smartMatchTitle")}</h2>
-                                            <p className="text-sm text-muted-foreground">{t("smartMatchDescription")}</p>
+                                            <h2 className="text-lg font-bold text-foreground">
+                                                {isThai ? "3 โรงงานที่ AI มองว่าเหมาะกับโปรไฟล์ของคุณ" : t("smartMatchTitle")}
+                                            </h2>
+                                            <p className="text-sm text-muted-foreground">
+                                                {isThai
+                                                    ? "เราจัดกลุ่มผลลัพธ์ 3 อันดับแรกที่สอดคล้องกับความต้องการและโปรไฟล์ของคุณไว้ให้เห็นชัดก่อน"
+                                                    : "The first 3 results are highlighted as AI matches from your profile."}
+                                            </p>
                                         </div>
                                     </div>
                                     <div className="grid gap-4 md:grid-cols-1">
-                                        {recommendedFactories.map((factory) => (
-                                            <FactoryCard
+                                        {recommendedFactories.map((factory, index) => (
+                                            <div
                                                 key={factory.id}
-                                                factory={factory}
-                                                variant="horizontal"
-                                                isRecommended={true}
-                                            />
+                                                className="relative rounded-2xl border-2 border-[#FF7A00]/70 bg-gradient-to-r from-[#FF7A00]/8 via-card to-card p-2 shadow-[0_0_0_1px_rgba(255,122,0,0.08)]"
+                                            >
+                                                <div className="absolute -top-3 left-4 inline-flex items-center gap-2 rounded-full border border-[#FF7A00]/20 bg-[#FFFAF5] px-3 py-1 text-[11px] font-semibold text-[#C25500] shadow-sm">
+                                                    <div className="flex h-5 w-5 items-center justify-center rounded-full bg-[#FF7A00] text-white">
+                                                        <Sparkles className="h-3 w-3" />
+                                                    </div>
+                                                    <span>
+                                                        {isThai ? `Match จากโปรไฟล์ของคุณ #${index + 1}` : `AI Match From Your Profile #${index + 1}`}
+                                                    </span>
+                                                </div>
+                                                <FactoryCard
+                                                    factory={factory}
+                                                    variant="horizontal"
+                                                    isRecommended={true}
+                                                />
+                                            </div>
                                         ))}
                                     </div>
                                 </section>
