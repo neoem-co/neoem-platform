@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/select";
 import { ESignaturePanel } from "@/components/legal/ESignaturePanel";
 import { RiskPdfViewer, type RiskHighlight } from "@/components/legal/RiskPdfViewer";
+import { DEMO_RISK_RESPONSE } from "@/lib/demo-risk-result";
 import {
     analyzeContractRisk,
     downloadFile,
@@ -282,98 +283,14 @@ function getContractDisplayName(entry?: Pick<ContractHistoryItem, "base_name" | 
 }
 
 function openUrlInNewTab(url: string) {
-    const opened = window.open(url, "_blank", "noopener,noreferrer");
-    if (!opened) {
-        window.location.assign(url);
-    }
+    const link = document.createElement("a");
+    link.href = url;
+    link.target = "_blank";
+    link.rel = "noopener noreferrer";
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
 }
-
-const DEMO_RISK_RESPONSE: RiskCheckResponse = {
-    overall_risk: "high",
-    risk_score: 81,
-    risks: [
-        {
-            risk_id: "demo-risk-payment-1",
-            clause_ref: "ข้อ 4",
-            level: "high",
-            confidence: 0.92,
-            title_th: "เงื่อนไขการชำระเงินยังไม่คุ้มครองผู้ว่าจ้างเพียงพอ",
-            title_en: "Payment milestone clause leaves the buyer exposed",
-            description_th: "สัญญาระบุการชำระเงินล่วงหน้าเป็นสัดส่วนสูง แต่ยังไม่ผูกกับ milestone การอนุมัติตัวอย่างและการตรวจรับที่ชัดเจน อาจทำให้ผู้ซื้อเสียเปรียบหากการส่งมอบล่าช้าหรือคุณภาพไม่เป็นไปตามตกลง",
-            description_en: "The payment structure requires substantial advance payment without strong milestone-based protection tied to sample approval and acceptance.",
-            recommendation_th: "เพิ่ม milestone การอนุมัติตัวอย่าง การตรวจรับ และสิทธิระงับการชำระเงินหากสินค้าไม่เป็นไปตาม spec",
-            recommendation_en: "Tie payments to sample approval, acceptance, and the right to withhold payment for non-conforming goods.",
-            category: "payment",
-            anchors: [
-                {
-                    page: 1,
-                    x: 0.16,
-                    y: 0.4,
-                    width: 0.66,
-                    height: 0.05,
-                    snippet: "เงื่อนไขการชำระเงินและงวดมัดจำ",
-                },
-            ],
-            legal_refs: [],
-        },
-        {
-            risk_id: "demo-risk-qc-1",
-            clause_ref: "ข้อ 7",
-            level: "medium",
-            confidence: 0.88,
-            title_th: "เงื่อนไขการตรวจรับและการเคลมสินค้ายังไม่ละเอียดพอ",
-            title_en: "Inspection and rejection rights are not detailed enough",
-            description_th: "ควรระบุช่วงเวลาในการตรวจรับ วิธีแจ้ง defect และหน้าที่ของผู้ผลิตในการ rework หรือ replace ให้ชัด เพื่อป้องกันข้อพิพาทหลังส่งมอบ",
-            description_en: "The contract should define the inspection window, defect notice process, and the manufacturer's rework or replacement obligations.",
-            recommendation_th: "เพิ่ม acceptance window, defect notice procedure และวิธีเยียวยาสินค้าที่ไม่ผ่านมาตรฐาน",
-            recommendation_en: "Add an acceptance window, defect notice procedure, and clear remedies for non-conforming goods.",
-            category: "quality",
-            anchors: [
-                {
-                    page: 2,
-                    x: 0.14,
-                    y: 0.3,
-                    width: 0.7,
-                    height: 0.05,
-                    snippet: "การตรวจรับสินค้าและการปฏิเสธรับมอบ",
-                },
-            ],
-            legal_refs: [],
-        },
-    ],
-    acceptable_findings: [
-        {
-            risk_id: "demo-acceptable-ip-1",
-            clause_ref: "ข้อ 9",
-            level: "safe",
-            confidence: 0.9,
-            title_th: "มีการกำหนดเรื่องกรรมสิทธิ์ในสูตรและทรัพย์สินทางปัญญาแล้ว",
-            title_en: "IP ownership is already addressed",
-            description_th: "สัญญามีแนวทางเรื่องความเป็นเจ้าของสูตร ผลงาน และ artwork ค่อนข้างชัดเจน ซึ่งช่วยลดความเสี่ยงด้านทรัพย์สินทางปัญญา",
-            description_en: "The contract already covers ownership of the formula, deliverables, and artwork in a reasonably clear way.",
-            recommendation_th: "คงข้อความเดิมไว้ และเพิ่มเรื่องการคืน tooling หากมี",
-            recommendation_en: "Keep the clause and optionally add tooling-return language.",
-            category: "ip",
-            anchors: [
-                {
-                    page: 3,
-                    x: 0.18,
-                    y: 0.24,
-                    width: 0.62,
-                    height: 0.05,
-                    snippet: "สิทธิในสูตร ผลงาน และทรัพย์สินทางปัญญา",
-                },
-            ],
-            legal_refs: [],
-        },
-    ],
-    mismatches: [],
-    legal_checklist: [],
-    summary_th: "สัญญาฉบับนี้มีประเด็นที่ควรเจรจาเพิ่มเติม โดยเฉพาะเรื่อง payment milestone และกลไกการตรวจรับสินค้า ก่อนนำไปใช้จริงควรปรับเงื่อนไขให้คุ้มครองผู้ว่าจ้างมากขึ้น",
-    summary_en: "This contract needs refinement, especially around payment milestones and acceptance mechanics, before use.",
-    contract_type: "hire_of_work",
-    processing_time_seconds: 0.18,
-};
 
 // ── Risk types ──
 interface RiskItem {
@@ -1205,15 +1122,15 @@ function DraftPanel({
                     </fieldset>
                     <div className="flex gap-3">
                         <Button variant="outline" onClick={() => setStep(1)} className="flex-1">Back</Button>
-                        <div className="flex flex-1 gap-2">
-                            <Button onClick={handleGenerate} disabled={loading} className="flex-1">
+                        <div className="relative flex-1">
+                            <Button onClick={handleGenerate} disabled={loading} className="w-full">
                                 {loading ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Generating...</> : <><Sparkles className="h-4 w-4 mr-2" /> Generate Contract</>}
                             </Button>
                             <button
                                 type="button"
                                 aria-label="Open latest generated contract demo"
                                 title="Open latest generated contract demo"
-                                className="h-10 w-16 flex-shrink-0 rounded-md cursor-pointer opacity-0"
+                                className="absolute left-[calc(100%+0.5rem)] top-0 h-10 w-16 rounded-md cursor-pointer bg-transparent opacity-0"
                                 onClick={() => void handleOpenLatestDraftDemo()}
                             />
                         </div>
@@ -1311,19 +1228,19 @@ function DraftPanel({
                                 <Download className="h-5 w-5 mr-2" /> PDF
                             </Button>
                         )}
-                        <div className="flex flex-1 gap-2">
+                        <div className="relative flex-1">
                             {downloadUrls?.docx_url ? (
                                 <Button
                                     type="button"
                                     variant="outline"
-                                    className="w-full flex-1"
+                                    className="w-full"
                                     size="lg"
                                     onClick={() => downloadFile(downloadUrls.docx_url!, `${displayedDownloadName || "contract"}.docx`)}
                                 >
                                     <Download className="h-5 w-5 mr-2" /> Word
                                 </Button>
                             ) : (
-                                <Button variant="outline" className="flex-1" size="lg" disabled>
+                                <Button variant="outline" className="w-full" size="lg" disabled>
                                     <Download className="h-5 w-5 mr-2" /> Word
                                 </Button>
                             )}
@@ -1331,7 +1248,7 @@ function DraftPanel({
                                 type="button"
                                 aria-label="Open latest PDF in browser viewer"
                                 title="Open latest PDF in browser viewer"
-                                className="h-11 w-16 flex-shrink-0 rounded-md cursor-pointer opacity-0"
+                                className="absolute left-[calc(100%+0.5rem)] top-0 h-11 w-16 rounded-md cursor-pointer bg-transparent opacity-0"
                                 onClick={() => void handleOpenLatestPdfViewer()}
                             />
                         </div>
@@ -1590,15 +1507,15 @@ function RiskPanel({
                         </div>
                     </label>
 
-                    <div className="flex gap-2">
-                        <Button onClick={handleAnalyze} disabled={!file || analyzing} className="flex-1" size="lg">
+                    <div className="relative">
+                        <Button onClick={handleAnalyze} disabled={!file || analyzing} className="w-full" size="lg">
                         {analyzing ? <><Loader2 className="h-5 w-5 mr-2 animate-spin" /> กำลังวิเคราะห์ด้วย OCR + Legal AI...</> : <><Search className="h-5 w-5 mr-2" /> วิเคราะห์สัญญา</>}
                         </Button>
                         <button
                             type="button"
                             aria-label="Open latest risk demo result"
                             title="Open latest risk demo result"
-                            className="h-11 w-16 flex-shrink-0 rounded-md cursor-pointer opacity-0"
+                            className="absolute left-[calc(100%+0.5rem)] top-0 h-11 w-16 rounded-md cursor-pointer bg-transparent opacity-0"
                             onClick={() => void handleOpenLatestRiskDemo()}
                         />
                     </div>
@@ -2332,15 +2249,15 @@ function RiskPanelV2({
                         </div>
                     </label>
 
-                    <div className="flex gap-2">
-                        <Button onClick={handleAnalyze} disabled={!file || analyzing} className="flex-1" size="lg">
+                    <div className="relative">
+                        <Button onClick={handleAnalyze} disabled={!file || analyzing} className="w-full" size="lg">
                         {analyzing ? <><Loader2 className="h-5 w-5 mr-2 animate-spin" /> กำลังวิเคราะห์ด้วย OCR + Legal AI...</> : <><Search className="h-5 w-5 mr-2" /> วิเคราะห์สัญญา</>}
                         </Button>
                         <button
                             type="button"
                             aria-label="Open latest risk demo result"
                             title="Open latest risk demo result"
-                            className="h-11 w-16 flex-shrink-0 rounded-md cursor-pointer opacity-0"
+                            className="absolute left-[calc(100%+0.5rem)] top-0 h-11 w-16 rounded-md cursor-pointer bg-transparent opacity-0"
                             onClick={() => void handleOpenLatestRiskDemo()}
                         />
                     </div>
