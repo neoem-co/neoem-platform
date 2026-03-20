@@ -58,7 +58,8 @@ export function getFactoryChatHistory(slug?: string, locale?: string): FactoryCh
         return dataset.chatHistory as FactoryChatMessage[];
     }
 
-    const englishSlugHistory = slug ? enFactoriesData.chatHistoryBySlug?.[slug] : undefined;
+    const englishSlugHistoryMap = enFactoriesData.chatHistoryBySlug as Record<string, FactoryChatMessage[]> | undefined;
+    const englishSlugHistory = slug ? englishSlugHistoryMap?.[slug] : undefined;
     if (englishSlugHistory && englishSlugHistory.length > 0) {
         return englishSlugHistory as FactoryChatMessage[];
     }
