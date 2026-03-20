@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import Link from "next/link";
 import type { StaticImageData } from "next/image";
 import { useLocale } from "next-intl";
@@ -8,7 +8,7 @@ import { useParams, useRouter } from "next/navigation";
 import {
     Send, Paperclip, FileText, Download, Bot,
     Sparkles, FileCheck, AlertTriangle, ChevronRight,
-    ArrowLeft, PanelRightClose, PanelRight,
+    ArrowLeft, PanelRightClose, PanelRight, Loader2,
 } from "lucide-react";
 import { Navbar } from "@/components/layout/Navbar";
 import { Button } from "@/components/ui/button";
@@ -100,8 +100,10 @@ const DealRoom = () => {
     const [legalWorkspaceTab, setLegalWorkspaceTab] = useState<"draft" | "risk" | "history" | "esign">("draft");
     const [liveExtractContext, setLiveExtractContext] = useState<ExtractContextResponse | null>(null);
     const [summaryRefreshing, setSummaryRefreshing] = useState(false);
+    const [draftPreparing, setDraftPreparing] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const extractContextPromiseRef = useRef<Promise<ExtractContextResponse> | null>(null);
 
     const hasContractInChat = messages.some((m) => m.attachment?.type === "application/pdf");
     const depositAmount = 36000;
@@ -145,40 +147,55 @@ const DealRoom = () => {
         }));
     }, [completedActions, depositPaid, riskAlert, slug, tosAccepted]);
 
+    const ensureExtractContext = useCallback(async (forceRefresh = false) => {
+        if (!factory) {
+            throw new Error("Factory not found");
+        }
+        if (extractContextPromiseRef.current && !forceRefresh) {
+            return extractContextPromiseRef.current;
+        }
+
+        setSummaryRefreshing(true);
+        const promise = extractContext(
+            messages.map((m) => ({
+                sender: m.sender,
+                message: m.message,
+                timestamp: m.timestamp,
+            })),
+            factory.name,
+            factory.id,
+            { forceRefresh },
+        );
+        extractContextPromiseRef.current = promise;
+
+        try {
+            const context = await promise;
+            setLiveExtractContext(context);
+            return context;
+        } finally {
+            if (extractContextPromiseRef.current === promise) {
+                extractContextPromiseRef.current = null;
+            }
+            setSummaryRefreshing(false);
+        }
+    }, [factory, messages]);
+
     useEffect(() => {
         if (!factory) return;
         let active = true;
-        const timer = window.setTimeout(async () => {
-            setSummaryRefreshing(true);
-            try {
-                const context = await extractContext(
-                    messages.map((m) => ({
-                        sender: m.sender,
-                        message: m.message,
-                        timestamp: m.timestamp,
-                    })),
-                    factory.name,
-                    factory.id,
-                );
-                if (active) {
-                    setLiveExtractContext(context);
-                }
-            } catch {
+        const timer = window.setTimeout(() => {
+            ensureExtractContext().catch(() => {
                 if (active) {
                     setLiveExtractContext(null);
                 }
-            } finally {
-                if (active) {
-                    setSummaryRefreshing(false);
-                }
-            }
-        }, 500);
+            });
+        }, 150);
 
         return () => {
             active = false;
             window.clearTimeout(timer);
         };
-    }, [factory, messages]);
+    }, [factory, ensureExtractContext]);
 
     const markActionCompleted = (action: string) => {
         setCompletedActions((prev) => (prev.includes(action) ? prev : [...prev, action]));
@@ -235,6 +252,18 @@ const DealRoom = () => {
     };
 
     const openLegalWorkspace = (tab: "draft" | "risk" | "history" | "esign") => {
+        if (tab === "draft") {
+            if (!liveExtractContext) {
+                setDraftPreparing(true);
+                void ensureExtractContext()
+                    .catch(() => {
+                        setLiveExtractContext(null);
+                    })
+                    .finally(() => {
+                        setDraftPreparing(false);
+                    });
+            }
+        }
         setLegalWorkspaceTab(tab);
         setShowLegalWorkspace(true);
     };
@@ -313,6 +342,12 @@ const DealRoom = () => {
                         <p className="mt-3 text-[11px] uppercase tracking-wider text-muted-foreground/80">{isThai ? "ขั้นตอนถัดไปที่แนะนำ" : "Next Best Action"}</p>
                         <p className="mt-1 font-medium text-foreground">{supervisor.nextAction}</p>
                         {summaryRefreshing && <p className="mt-2 text-xs text-primary">{isThai ? "กำลังอัปเดตสรุป..." : "Updating summary..."}</p>}
+                        {draftPreparing && (
+                            <div className="mt-3 flex items-center gap-2 rounded-md border border-primary/20 bg-primary/5 px-3 py-2 text-xs text-primary">
+                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                <span>{isThai ? "กำลังดึง DealSheet จากบทสนทนาเพื่อเตรียมร่างสัญญา..." : "Extracting the DealSheet from chat to prepare the draft..."}</span>
+                            </div>
+                        )}
                     </CardContent>
                 </Card>
 
@@ -529,6 +564,7 @@ const DealRoom = () => {
                 factoryName={factory.name}
                 initialTab={legalWorkspaceTab}
                 initialExtractContext={liveExtractContext}
+                requireExtractContext={legalWorkspaceTab === "draft"}
                 chatHistory={messages.map((m) => ({
                     sender: m.sender,
                     message: m.message,
