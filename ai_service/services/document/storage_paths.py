@@ -22,3 +22,13 @@ def get_contracts_dir() -> Path:
         return Path(tempfile.gettempdir()) / "neoem_ai" / "contracts"
     return Path("./data/contracts")
 
+
+def get_risk_results_dir() -> Path:
+    """
+    Return a writable directory for stored risk-analysis artifacts.
+
+    Local dev keeps using ./data/contracts/risk-results.
+    Serverless environments use /tmp because the deployment bundle is read-only.
+    """
+    return get_contracts_dir() / "risk-results"
+

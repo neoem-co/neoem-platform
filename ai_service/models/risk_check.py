@@ -7,7 +7,7 @@ from __future__ import annotations
 from enum import Enum
 from typing import Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 
 # ─── Enums ───────────────────────────────────────────────────────────────────
@@ -102,6 +102,25 @@ class DealContext(BaseModel):
     factory_name: Optional[str] = None
     factory_certifications: list[str] = Field(default_factory=list)
 
+    @field_validator("agreed_price", mode="before")
+    @classmethod
+    def _normalize_agreed_price(cls, value):
+        if value in (None, ""):
+            return None
+        if isinstance(value, (int, float)):
+            return float(value)
+        if isinstance(value, str):
+            import re
+
+            match = re.search(r"(\d[\d,]*(?:\.\d+)?)", value.replace(" ", ""))
+            if match:
+                try:
+                    return float(match.group(1).replace(",", ""))
+                except ValueError:
+                    return None
+            return None
+        return None
+
 
 class LegalReference(BaseModel):
     """A Thai legal article/section relevant to the contract."""
@@ -163,6 +182,7 @@ class RiskCheckResponse(BaseModel):
     overall_risk: RiskLevel
     risk_score: float = Field(ge=0, le=100)
     risks: list[RiskItem] = Field(default_factory=list)
+    acceptable_findings: list[RiskItem] = Field(default_factory=list)
     mismatches: list[ChatContractMismatch] = Field(default_factory=list)
     legal_checklist: list[LegalReference] = Field(default_factory=list)
     summary_th: str = ""
@@ -170,3 +190,13 @@ class RiskCheckResponse(BaseModel):
     contract_type: ContractType = ContractType.UNKNOWN
     structured_contract: Optional[StructuredContract] = None
     processing_time_seconds: float = 0.0
+
+
+class StoredRiskCheckResult(BaseModel):
+    """Stored risk analysis artifact metadata plus the full result payload."""
+    analysis_id: str
+    created_at: str
+    source_filename: str
+    source_content_type: str = "application/pdf"
+    source_file_url: str
+    result: RiskCheckResponse

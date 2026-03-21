@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import Link from "next/link";
 import type { StaticImageData } from "next/image";
 import { useLocale } from "next-intl";
@@ -8,7 +8,7 @@ import { useParams, useRouter } from "next/navigation";
 import {
     Send, Paperclip, FileText, Download, Bot,
     Sparkles, FileCheck, AlertTriangle, ChevronRight,
-    ArrowLeft, PanelRightClose, PanelRight,
+    ArrowLeft, PanelRightClose, PanelRight, Loader2,
 } from "lucide-react";
 import { Navbar } from "@/components/layout/Navbar";
 import { Button } from "@/components/ui/button";
@@ -20,7 +20,8 @@ import { AILegalWorkspace } from "@/components/legal/AILegalWorkspace";
 import { TOSModal } from "@/components/chat/TOSModal";
 import { MilestoneTracker } from "@/components/deal/MilestoneTracker";
 import { StickyPaymentWidget } from "@/components/deal/StickyPaymentWidget";
-import { extractContext, type DealSheet } from "@/lib/ai-api";
+import { extractContext, type ExtractContextResponse } from "@/lib/ai-api";
+import { deriveDealSupervisorState } from "@/lib/deal-supervisor";
 import { getFactoryBySlug, getFactoryChatHistory } from "@/lib/factory-data";
 import factory1 from "@/public/assets/factory-1.jpg";
 import factory2 from "@/public/assets/factory-2.jpg";
@@ -56,6 +57,21 @@ interface DealRoomState {
     completedActions: string[];
 }
 
+function hasCoreDealSheetAutofill(context: ExtractContextResponse | null) {
+    const dealSheet = context?.deal_sheet;
+    if (!dealSheet) return false;
+    return Boolean(
+        dealSheet.client?.company &&
+        dealSheet.client?.address &&
+        dealSheet.vendor?.company &&
+        dealSheet.vendor?.address &&
+        dealSheet.product?.specs &&
+        dealSheet.product?.packaging &&
+        dealSheet.delivery_address &&
+        (dealSheet.regulatory_terms?.registration_owner || dealSheet.regulatory_terms?.document_support_by),
+    );
+}
+
 function loadDealRoomState(slug: string): DealRoomState {
     if (typeof window === "undefined") {
         return { tosAccepted: false, depositPaid: false, riskAlert: null, completedActions: [] };
@@ -85,7 +101,7 @@ const DealRoom = () => {
     const factory = getFactoryBySlug(slug, locale);
     const [showTOS, setShowTOS] = useState(() => !loadDealRoomState(slug).tosAccepted);
     const [tosAccepted, setTosAccepted] = useState(() => loadDealRoomState(slug).tosAccepted);
-    const [messages, setMessages] = useState<Message[]>([...getFactoryChatHistory(locale) as Message[]]);
+    const [messages, setMessages] = useState<Message[]>([...getFactoryChatHistory(slug, locale) as Message[]]);
     const [inputValue, setInputValue] = useState("");
     const [showPaymentModal, setShowPaymentModal] = useState(false);
     const [showContractWarning, setShowContractWarning] = useState(false);
@@ -97,17 +113,44 @@ const DealRoom = () => {
     const [trackerResetKey, setTrackerResetKey] = useState(0);
     const [showLegalWorkspace, setShowLegalWorkspace] = useState(false);
     const [legalWorkspaceTab, setLegalWorkspaceTab] = useState<"draft" | "risk" | "history" | "esign">("draft");
-    const [liveDealSheet, setLiveDealSheet] = useState<DealSheet | null>(null);
+    const [liveExtractContext, setLiveExtractContext] = useState<ExtractContextResponse | null>(null);
+    const [summaryRefreshing, setSummaryRefreshing] = useState(false);
+    const [draftPreparing, setDraftPreparing] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const extractContextPromiseRef = useRef<Promise<ExtractContextResponse> | null>(null);
 
     const hasContractInChat = messages.some((m) => m.attachment?.type === "application/pdf");
     const depositAmount = 36000;
     const totalDealValue = 120000;
+    const liveDealSheet = liveExtractContext?.deal_sheet || null;
+    const supervisor = deriveDealSupervisorState({
+        extractContext: liveExtractContext,
+        riskAlert,
+        depositPaid,
+        completedActions,
+        hasContractInChat,
+        isThai,
+    });
 
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }, [messages]);
+
+    useEffect(() => {
+        const nextState = loadDealRoomState(slug);
+        setShowTOS(!nextState.tosAccepted);
+        setTosAccepted(nextState.tosAccepted);
+        setMessages([...getFactoryChatHistory(slug, locale) as Message[]]);
+        setDepositPaid(nextState.depositPaid);
+        setRiskAlert(nextState.riskAlert);
+        setCompletedActions(nextState.completedActions);
+        setShowLegalWorkspace(false);
+        setLegalWorkspaceTab("draft");
+        setLiveExtractContext(null);
+        setSummaryRefreshing(false);
+        setTrackerResetKey((prev) => prev + 1);
+    }, [locale, slug]);
 
     useEffect(() => {
         if (typeof window === "undefined") return;
@@ -119,35 +162,73 @@ const DealRoom = () => {
         }));
     }, [completedActions, depositPaid, riskAlert, slug, tosAccepted]);
 
+    const ensureExtractContext = useCallback(async (forceRefresh = false) => {
+        if (!factory) {
+            throw new Error("Factory not found");
+        }
+        if (extractContextPromiseRef.current && !forceRefresh) {
+            return extractContextPromiseRef.current;
+        }
+
+        setSummaryRefreshing(true);
+        const promise = extractContext(
+            messages.map((m) => ({
+                sender: m.sender,
+                message: m.message,
+                timestamp: m.timestamp,
+            })),
+            factory.name,
+            factory.id,
+            { forceRefresh },
+        );
+        extractContextPromiseRef.current = promise;
+
+        try {
+            const context = await promise;
+            setLiveExtractContext(context);
+            return context;
+        } finally {
+            if (extractContextPromiseRef.current === promise) {
+                extractContextPromiseRef.current = null;
+            }
+            setSummaryRefreshing(false);
+        }
+    }, [factory, messages]);
+
     useEffect(() => {
         if (!factory) return;
         let active = true;
-        const timer = window.setTimeout(async () => {
-            try {
-                const context = await extractContext(
-                    messages.map((m) => ({
-                        sender: m.sender,
-                        message: m.message,
-                        timestamp: m.timestamp,
-                    })),
-                    factory.name,
-                    factory.id,
-                );
+        const timer = window.setTimeout(() => {
+            ensureExtractContext().catch(() => {
                 if (active) {
-                    setLiveDealSheet(context.deal_sheet);
+                    setLiveExtractContext(null);
                 }
-            } catch {
-                if (active) {
-                    setLiveDealSheet(null);
-                }
-            }
-        }, 500);
+            });
+        }, 150);
 
         return () => {
             active = false;
             window.clearTimeout(timer);
         };
-    }, [factory?.id, factory?.name, messages]);
+    }, [factory, ensureExtractContext]);
+
+    useEffect(() => {
+        if (typeof window === "undefined") return;
+        const debugPayload = {
+            suggested_template: liveExtractContext?.suggested_template || null,
+            client_company: liveExtractContext?.deal_sheet?.client?.company || null,
+            client_address: liveExtractContext?.deal_sheet?.client?.address || null,
+            vendor_company: liveExtractContext?.deal_sheet?.vendor?.company || null,
+            vendor_address: liveExtractContext?.deal_sheet?.vendor?.address || null,
+            product_specs: liveExtractContext?.deal_sheet?.product?.specs || null,
+            product_packaging: liveExtractContext?.deal_sheet?.product?.packaging || null,
+            regulatory_registration_owner: liveExtractContext?.deal_sheet?.regulatory_terms?.registration_owner || null,
+            regulatory_document_support_by: liveExtractContext?.deal_sheet?.regulatory_terms?.document_support_by || null,
+            delivery_address: liveExtractContext?.deal_sheet?.delivery_address || null,
+        };
+        (window as typeof window & { __neoem_extract_context?: unknown }).__neoem_extract_context = liveExtractContext;
+        console.debug("[neoem][extract-context]", debugPayload);
+    }, [liveExtractContext]);
 
     const markActionCompleted = (action: string) => {
         setCompletedActions((prev) => (prev.includes(action) ? prev : [...prev, action]));
@@ -204,6 +285,24 @@ const DealRoom = () => {
     };
 
     const openLegalWorkspace = (tab: "draft" | "risk" | "history" | "esign") => {
+        if (tab === "draft") {
+            if (!hasCoreDealSheetAutofill(liveExtractContext)) {
+                setDraftPreparing(true);
+                void ensureExtractContext()
+                    .then((context) => {
+                        if (!hasCoreDealSheetAutofill(context)) {
+                            return ensureExtractContext(true);
+                        }
+                        return context;
+                    })
+                    .catch(() => {
+                        setLiveExtractContext(null);
+                    })
+                    .finally(() => {
+                        setDraftPreparing(false);
+                    });
+            }
+        }
         setLegalWorkspaceTab(tab);
         setShowLegalWorkspace(true);
     };
@@ -270,37 +369,98 @@ const DealRoom = () => {
                     </Card>
                 )}
 
+                {false && (
                 <Card>
                     <CardHeader className="py-3">
                         <CardTitle className="text-sm flex items-center gap-2">
-                            <Sparkles className="h-4 w-4 text-primary" /> Live Summary
+                            <Sparkles className="h-4 w-4 text-primary" /> {isThai ? "AI Middleman" : "AI Middleman"}
                         </CardTitle>
                     </CardHeader>
                     <CardContent className="py-3 text-sm text-muted-foreground">
-                        <p><strong className="text-foreground">Product:</strong> {liveDealSheet?.product?.name || "-"}</p>
-                        <p><strong className="text-foreground">Quantity:</strong> {liveDealSheet?.product?.quantity ? liveDealSheet.product.quantity.toLocaleString() : "-"} {liveDealSheet?.product?.unit || ""}</p>
-                        <p><strong className="text-foreground">Total:</strong> {typeof liveDealSheet?.total_price === "number" ? `฿${liveDealSheet.total_price.toLocaleString()}` : "-"}</p>
-                        <p><strong className="text-foreground">Delivery:</strong> {liveDealSheet?.delivery_date || liveDealSheet?.delivery_weeks || "-"}</p>
+                        <p className="text-[11px] uppercase tracking-wider text-muted-foreground/80">{isThai ? "สถานะดีลปัจจุบัน" : "Current Deal State"}</p>
+                        <p className="mt-1 font-medium text-foreground">{supervisor.currentState}</p>
+                        <p className="mt-3 text-[11px] uppercase tracking-wider text-muted-foreground/80">{isThai ? "ขั้นตอนถัดไปที่แนะนำ" : "Next Best Action"}</p>
+                        <p className="mt-1 font-medium text-foreground">{supervisor.nextAction}</p>
+                        {summaryRefreshing && <p className="mt-2 text-xs text-primary">{isThai ? "กำลังอัปเดตสรุป..." : "Updating summary..."}</p>}
+                        {draftPreparing && (
+                            <div className="mt-3 flex items-center gap-2 rounded-md border border-primary/20 bg-primary/5 px-3 py-2 text-xs text-primary">
+                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                <span>{isThai ? "กำลังดึง DealSheet จากบทสนทนาเพื่อเตรียมร่างสัญญา..." : "Extracting the DealSheet from chat to prepare the draft..."}</span>
+                            </div>
+                        )}
+                    </CardContent>
+                </Card>
+                )}
+
+                <div className="flex items-center gap-2 px-1">
+                    <Sparkles className="h-4 w-4 text-primary" />
+                    <p className="text-sm font-semibold text-foreground">{isThai ? "AI Middleman" : "AI Middleman"}</p>
+                </div>
+
+                <Card>
+                    <CardHeader className="py-3">
+                        <CardTitle className="text-sm">{isThai ? "สรุปดีล" : "Deal Summary"}</CardTitle>
+                    </CardHeader>
+                    <CardContent className="py-3 text-sm text-muted-foreground space-y-2">
+                        {supervisor.summaryItems.length > 0 ? supervisor.summaryItems.map((item) => (
+                            <p key={item.label}>
+                                <strong className="text-foreground">{item.label}:</strong> {item.value}
+                            </p>
+                        )) : (
+                            <p>{isThai ? "กำลังรอบริบทจากบทสนทนาเพิ่มเติมเพื่อสร้างสรุปดีล" : "Waiting for enough chat context to build the live summary."}</p>
+                        )}
+                        <p><strong className="text-foreground">{isThai ? "จำนวน:" : "Quantity:"}</strong> {liveDealSheet?.product?.quantity ? liveDealSheet.product.quantity.toLocaleString() : "-"} {liveDealSheet?.product?.unit || ""}</p>
+                        <p><strong className="text-foreground">{isThai ? "มูลค่ารวม:" : "Total:"}</strong> {typeof liveDealSheet?.total_price === "number" ? `฿${liveDealSheet.total_price.toLocaleString()}` : "-"}</p>
+                    </CardContent>
+                </Card>
+
+                {false && (
+                <Card>
+                    <CardHeader className="py-3">
+                        <CardTitle className="text-sm">{isThai ? "เอกสาร / การอนุมัติที่ค้างอยู่" : "Pending Documents / Approvals"}</CardTitle>
+                    </CardHeader>
+                    <CardContent className="py-3 text-sm text-muted-foreground space-y-2">
+                        {supervisor.pendingItems.length > 0 ? supervisor.pendingItems.map((item) => (
+                            <p key={item}>• {item}</p>
+                        )) : (
+                            <p>{isThai ? "ข้อมูลหลักของดีลถูกจับได้ค่อนข้างครบแล้ว" : "Core deal information looks captured."}</p>
+                        )}
+                    </CardContent>
+                </Card>
+                )}
+
+                <Card className={supervisor.blockers.length > 0 ? "border-warning/30 bg-warning/5" : ""}>
+                    <CardHeader className="py-3">
+                        <CardTitle className="text-sm">{isThai ? "ความเสี่ยง / สิ่งที่ติดค้าง" : "Risks / Blockers"}</CardTitle>
+                    </CardHeader>
+                    <CardContent className="py-3 text-sm text-muted-foreground space-y-2">
+                        {supervisor.blockers.length > 0 ? supervisor.blockers.map((item) => (
+                            <p key={item}>• {item}</p>
+                        )) : (
+                            <p>{isThai ? "ยังไม่พบประเด็นที่บล็อกดีลในตอนนี้" : "No active blockers detected right now."}</p>
+                        )}
                     </CardContent>
                 </Card>
 
                 <div className="space-y-2">
-                    <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Quick Actions</p>
+                    <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">{isThai ? "คำสั่งด่วน" : "Quick Actions"}</p>
                     <Button className="w-full justify-start text-xs h-8" onClick={() => openLegalWorkspace("draft")}>
-                        <FileCheck className="h-3.5 w-3.5 mr-2" /> Draft Contract
+                        <FileCheck className="h-3.5 w-3.5 mr-2" /> {isThai ? "ร่างสัญญา" : "Draft Contract"}
                     </Button>
                     <Button variant="outline" className="w-full justify-start text-xs h-8" onClick={() => openLegalWorkspace("risk")}>
-                        <AlertTriangle className="h-3.5 w-3.5 mr-2 text-warning" /> Check Risks
+                        <AlertTriangle className="h-3.5 w-3.5 mr-2 text-warning" /> {isThai ? "ตรวจความเสี่ยง" : "Check Risks"}
                     </Button>
                     <Button variant="ghost" className="w-full justify-start text-xs h-8 text-muted-foreground" onClick={() => openLegalWorkspace("history")}>
-                        <FileText className="h-3.5 w-3.5 mr-2" /> Legal Hub
+                        <FileText className="h-3.5 w-3.5 mr-2" /> {isThai ? "ศูนย์เอกสารกฎหมาย" : "Legal Hub"}
                     </Button>
                 </div>
 
                 <Card className="bg-secondary/30 border-dashed">
                     <CardContent className="py-3 space-y-3">
                         <p className="text-xs text-muted-foreground">
-                            💡 <strong>Tip:</strong> Both you and the factory see the same milestone status in real-time — full transparency.
+                            {isThai
+                                ? "💡 ทั้งคุณและโรงงานจะเห็นสถานะ milestone เดียวกันแบบเรียลไทม์ เพื่อให้ทุกขั้นตอนโปร่งใส"
+                                : "💡 Both you and the factory see the same milestone status in real-time for full transparency."}
                         </p>
                         <Button
                             type="button"
@@ -309,7 +469,7 @@ const DealRoom = () => {
                             className="w-full justify-center text-xs"
                             onClick={resetDealProgress}
                         >
-                            Reset Demo to Step 3
+                            {isThai ? "รีเซ็ตเดโมกลับไปขั้นที่ 3" : "Reset Demo to Step 3"}
                         </Button>
                     </CardContent>
                 </Card>
@@ -350,9 +510,9 @@ const DealRoom = () => {
                         </div>
                     </div>
                     <Sheet open={mobileAiOpen} onOpenChange={setMobileAiOpen}>
-                        <SheetTrigger asChild><Button variant="outline" size="sm"><Bot className="h-4 w-4 mr-1" /> Timeline</Button></SheetTrigger>
+                        <SheetTrigger asChild><Button variant="outline" size="sm"><Bot className="h-4 w-4 mr-1" /> {isThai ? "ไทม์ไลน์" : "Timeline"}</Button></SheetTrigger>
                         <SheetContent side="bottom" className="h-[85vh] flex flex-col">
-                            <SheetHeader><SheetTitle className="flex items-center gap-2"><Bot className="h-5 w-5 text-primary" /> AI Middleman Hub</SheetTitle></SheetHeader>
+                            <SheetHeader><SheetTitle className="flex items-center gap-2"><Bot className="h-5 w-5 text-primary" /> {isThai ? "AI Middleman" : "AI Middleman"}</SheetTitle></SheetHeader>
                             {sidePanelContent}
                         </SheetContent>
                     </Sheet>
@@ -384,7 +544,7 @@ const DealRoom = () => {
                             </div>
                         </div>
                         <Button variant="ghost" size="sm" onClick={() => setAiPanelOpen(!aiPanelOpen)} className="flex items-center gap-2">
-                            {aiPanelOpen ? <><PanelRightClose className="h-4 w-4" /> Hide Panel</> : <><PanelRight className="h-4 w-4" /><Bot className="h-4 w-4" /> Timeline</>}
+                            {aiPanelOpen ? <><PanelRightClose className="h-4 w-4" /> {isThai ? "ซ่อนพาเนล" : "Hide Panel"}</> : <><PanelRight className="h-4 w-4" /><Bot className="h-4 w-4" /> {isThai ? "ไทม์ไลน์" : "Timeline"}</>}
                         </Button>
                     </div>
 
@@ -438,7 +598,7 @@ const DealRoom = () => {
                         <div className="p-4 border-b">
                             <div className="flex items-center gap-2">
                                 <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center"><Bot className="h-5 w-5 text-primary" /></div>
-                                <h3 className="font-semibold text-foreground text-sm">AI Middleman Hub</h3>
+                                <h3 className="font-semibold text-foreground text-sm">{isThai ? "AI Middleman" : "AI Middleman"}</h3>
                             </div>
                         </div>
                         {sidePanelContent}
@@ -451,6 +611,8 @@ const DealRoom = () => {
                 onClose={() => setShowLegalWorkspace(false)}
                 factoryName={factory.name}
                 initialTab={legalWorkspaceTab}
+                initialExtractContext={liveExtractContext}
+                managedExtractContext
                 chatHistory={messages.map((m) => ({
                     sender: m.sender,
                     message: m.message,

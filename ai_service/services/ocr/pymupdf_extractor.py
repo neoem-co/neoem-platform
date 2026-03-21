@@ -71,6 +71,7 @@ class PyMuPDFExtractor:
         """
         Extract text blocks with bounding-box positions.
         Useful for understanding document structure (headings, paragraphs, tables).
+        Returns line-level components so highlight anchors are more precise.
         """
         try:
             doc = fitz.open(stream=pdf_bytes, filetype="pdf")
@@ -84,17 +85,24 @@ class PyMuPDFExtractor:
                 page_height = float(page.rect.height)
 
                 for block in blocks:
-                    if block.get("type") == 0:  # text block
-                        text = ""
-                        for line in block.get("lines", []):
-                            for span in line.get("spans", []):
-                                text += span.get("text", "")
-                            text += "\n"
+                    if block.get("type") != 0:
+                        continue
 
+                    for line in block.get("lines", []):
+                        spans = line.get("spans", [])
+                        text = "".join(span.get("text", "") for span in spans).strip()
+                        if not text:
+                            continue
+
+                        bbox = line.get("bbox") or _merge_span_bboxes(spans)
+                        if not bbox:
+                            continue
+
+                        avg_size = _average_span_size(spans)
                         components.append({
-                            "text": text.strip(),
-                            "bbox": block.get("bbox", []),
-                            "type": _classify_block(block),
+                            "text": text,
+                            "bbox": bbox,
+                            "type": _classify_text_size(avg_size),
                         })
 
                 pages_layout.append({
@@ -112,6 +120,31 @@ class PyMuPDFExtractor:
             return []
 
 
+def _average_span_size(spans: list[dict]) -> float:
+    sizes = [float(span.get("size", 12)) for span in spans if span.get("size")]
+    return sum(sizes) / len(sizes) if sizes else 12.0
+
+
+def _merge_span_bboxes(spans: list[dict]) -> list[float]:
+    boxes = [span.get("bbox") for span in spans if len(span.get("bbox") or []) == 4]
+    if not boxes:
+        return []
+
+    x0 = min(float(box[0]) for box in boxes)
+    y0 = min(float(box[1]) for box in boxes)
+    x1 = max(float(box[2]) for box in boxes)
+    y1 = max(float(box[3]) for box in boxes)
+    return [x0, y0, x1, y1]
+
+
+def _classify_text_size(avg_size: float) -> str:
+    if avg_size >= 16:
+        return "heading"
+    if avg_size >= 13:
+        return "subheading"
+    return "paragraph"
+
+
 def _classify_block(block: dict) -> str:
     """
     Heuristic classification of a text block.
@@ -127,9 +160,4 @@ def _classify_block(block: dict) -> str:
 
     avg_size = sum(sizes) / len(sizes) if sizes else 12
 
-    if avg_size >= 16:
-        return "heading"
-    elif avg_size >= 13:
-        return "subheading"
-    else:
-        return "paragraph"
+    return _classify_text_size(avg_size)

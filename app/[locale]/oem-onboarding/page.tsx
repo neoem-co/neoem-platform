@@ -16,6 +16,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 
 const categories = ["Skincare", "Cosmetics", "Supplements", "Food & Beverage", "Clothing", "Packaging"];
 const moqRanges = ["100-500", "500-1000", "1000-5000", "5000+"];
+const basicInfoDemoData = {
+    factoryName: "Thai Cosmetics Pro Co., Ltd.",
+    taxId: "0105558099991",
+    location: "Samut Prakan",
+    categories: ["Cosmetics", "Skincare"],
+    moqRange: "1000-5000",
+};
 
 const steps = [
     { id: 1, label: "Basic Info", icon: Building2 },
@@ -58,6 +65,17 @@ const OEMOnboarding = () => {
         } else {
             setFormData({ ...formData, categories: [...formData.categories, category] });
         }
+    };
+
+    const applyBasicInfoDemoData = () => {
+        setFormData((prev) => ({
+            ...prev,
+            factoryName: basicInfoDemoData.factoryName,
+            taxId: basicInfoDemoData.taxId,
+            location: basicInfoDemoData.location,
+            categories: [...basicInfoDemoData.categories],
+            moqRange: basicInfoDemoData.moqRange,
+        }));
     };
 
     const handleDBDCheck = async () => {
@@ -153,6 +171,15 @@ const OEMOnboarding = () => {
                         {/* Step 1: Basic Info */}
                         {currentStep === 1 && (
                             <>
+                                <div className="flex items-center justify-between gap-3 rounded-lg border border-primary/20 bg-primary/5 px-4 py-3">
+                                    <div>
+                                        <p className="text-sm font-medium text-foreground">Demo shortcut</p>
+                                        <p className="text-xs text-muted-foreground">Fill only the Basic Info step with mock onboarding data for a faster demo.</p>
+                                    </div>
+                                    <Button type="button" variant="outline" size="sm" onClick={applyBasicInfoDemoData}>
+                                        Use Demo Data
+                                    </Button>
+                                </div>
                                 <div className="space-y-2">
                                     <Label htmlFor="factory-name">Factory Name <span className="text-destructive">*</span></Label>
                                     <Input id="factory-name" placeholder="Enter your factory name" value={formData.factoryName} onChange={(e) => setFormData({ ...formData, factoryName: e.target.value })} />
@@ -213,7 +240,7 @@ const OEMOnboarding = () => {
                                         </div>
                                         {dbdStatus === "active" && <Badge variant="outline" className="text-success border-success">✓ Active</Badge>}
                                     </div>
-                                    <p className="text-xs text-muted-foreground mb-3">ตรวจสอบสถานะนิติบุคคล — Must be "ยังดำเนินกิจการอยู่"</p>
+                                    <p className="text-xs text-muted-foreground mb-3">ตรวจสอบสถานะนิติบุคคล — Must be &quot;ยังดำเนินกิจการอยู่&quot;</p>
                                     {dbdStatus === "idle" && (
                                         <Button onClick={handleDBDCheck} disabled={dbdChecking} size="sm" className="w-full">
                                             {dbdChecking ? (<><Loader2 className="h-4 w-4 mr-2 animate-spin" />Checking DBD API...</>) : "Verify Corporate Status"}
@@ -235,7 +262,7 @@ const OEMOnboarding = () => {
                                         </div>
                                         {objectiveStatus === "manufacturer" && <Badge variant="outline" className="text-success border-success">✓ Manufacturer</Badge>}
                                     </div>
-                                    <p className="text-xs text-muted-foreground mb-3">ตรวจสอบวัตถุประสงค์ — Must be registered as "ผู้ผลิต" (Manufacturer)</p>
+                                    <p className="text-xs text-muted-foreground mb-3">ตรวจสอบวัตถุประสงค์ — Must be registered as &quot;ผู้ผลิต&quot; (Manufacturer)</p>
                                     {objectiveStatus === "idle" && (
                                         <Button onClick={handleObjectiveCheck} disabled={objectiveChecking || dbdStatus !== "active"} size="sm" variant="outline" className="w-full">
                                             {objectiveChecking ? (<><Loader2 className="h-4 w-4 mr-2 animate-spin" />Checking Objective...</>) : "Verify Business Objective"}
@@ -257,7 +284,7 @@ const OEMOnboarding = () => {
                                 <div className="p-4 bg-primary/5 rounded-lg border border-primary/20">
                                     <p className="text-sm text-foreground font-medium mb-1">Know Your Business (KYB)</p>
                                     <p className="text-xs text-muted-foreground">
-                                        Optional: Verify the authorized director's identity. Complete this to earn a <strong>Verified Badge</strong>.
+                                        Optional: Verify the authorized director&apos;s identity. Complete this to earn a <strong>Verified Badge</strong>.
                                     </p>
                                 </div>
                                 <div className="p-3 bg-warning/5 border border-warning/20 rounded-lg">

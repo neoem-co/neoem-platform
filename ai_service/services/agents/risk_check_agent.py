@@ -12,8 +12,10 @@ Pipeline stages:
 
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
+import re
 import time
 import uuid
 from typing import Optional
@@ -49,6 +51,8 @@ from services.rag.vector_store import similarity_search
 logger = logging.getLogger(__name__)
 
 thanoy = ThanoyClient()
+_NON_WORD_RE = re.compile(r"[^0-9A-Za-z\u0E00-\u0E7F]+")
+_CLAUSE_REF_RE = re.compile(r"(\d+(?:\.\d+)*)")
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -268,6 +272,7 @@ async def analyse_risks(
             "overall_risk": "medium",
             "risk_score": 50,
             "risks": [],
+            "acceptable_findings": [],
             "mismatches": [],
             "summary_th": response_text[:500],
             "summary_en": "Risk analysis produced non-JSON output.",
@@ -300,6 +305,7 @@ async def run_risk_check_pipeline(
     """
     start = time.time()
     raw_text = ocr_result.get("text", "")
+    clean_chat_history = _sanitize_chat_messages(chat_history)
 
     if not raw_text.strip():
         return RiskCheckResponse(
@@ -311,23 +317,31 @@ async def run_risk_check_pipeline(
         )
 
     # Stage 2: Structure contract
+    stage_started_at = time.perf_counter()
     structured = await structure_contract(raw_text)
     structured.ocr_method = ocr_result.get("method", "unknown")
+    logger.info("Stage 2 complete in %.2fs", time.perf_counter() - stage_started_at)
 
     # Stage 3: Aggregate context
-    context = await aggregate_context(chat_history, factory_info)
-
-    # Stage 4: Legal compliance
-    legal_refs, thanoy_analysis = await get_legal_compliance(
-        structured, structured.contract_type
+    stage_started_at = time.perf_counter()
+    context_task = asyncio.create_task(aggregate_context(clean_chat_history, factory_info))
+    legal_task = asyncio.create_task(get_legal_compliance(structured, structured.contract_type))
+    context, (legal_refs, thanoy_analysis) = await asyncio.gather(
+        context_task,
+        legal_task,
     )
+    logger.info("Stage 3+4 complete in %.2fs", time.perf_counter() - stage_started_at)
 
     # Stage 5: Risk analysis
+    stage_started_at = time.perf_counter()
     risk_data = await analyse_risks(structured, context, legal_refs, thanoy_analysis)
+    logger.info("Stage 5 complete in %.2fs", time.perf_counter() - stage_started_at)
 
     # Stage 6: Format response
     risks = _parse_risk_items(risk_data.get("risks", []))
-    _attach_risk_anchors(risks, ocr_layout)
+    acceptable_findings = _parse_risk_items(risk_data.get("acceptable_findings", []))
+    _attach_risk_anchors(risks, structured, ocr_layout)
+    _attach_risk_anchors(acceptable_findings, structured, ocr_layout)
     mismatches = _parse_mismatches(risk_data.get("mismatches", []))
 
     overall_str = risk_data.get("overall_risk", "medium")
@@ -340,6 +354,7 @@ async def run_risk_check_pipeline(
         overall_risk=overall_risk,
         risk_score=float(risk_data.get("risk_score", 50)),
         risks=risks,
+        acceptable_findings=acceptable_findings,
         mismatches=mismatches,
         legal_checklist=legal_refs,
         summary_th=risk_data.get("summary_th", ""),
@@ -515,7 +530,117 @@ def _parse_mismatches(items: list[dict]) -> list[ChatContractMismatch]:
     return results
 
 
-def _attach_risk_anchors(risks: list[RiskItem], ocr_layout: Optional[dict]) -> None:
+def _sanitize_chat_messages(
+    chat_history: list[ChatMessage],
+    *,
+    max_messages: int = 18,
+    max_chars: int = 4000,
+) -> list[ChatMessage]:
+    cleaned: list[ChatMessage] = []
+    for message in chat_history:
+        text = (message.message or "").strip()
+        if not text:
+            continue
+        if (message.sender or "").lower() == "system":
+            continue
+        if text.lower().startswith("uploaded:"):
+            continue
+        cleaned.append(message)
+
+    cleaned = cleaned[-max_messages:]
+    bounded: list[ChatMessage] = []
+    total_chars = 0
+    for message in reversed(cleaned):
+        text_len = len(message.message)
+        if bounded and total_chars + text_len > max_chars:
+            break
+        bounded.append(message)
+        total_chars += text_len
+
+    return list(reversed(bounded))
+
+
+def _normalize_match_text(text: str) -> str:
+    lowered = (text or "").casefold()
+    return _NON_WORD_RE.sub("", lowered)
+
+
+def _unique_components(components: list[dict]) -> list[dict]:
+    seen: set[tuple] = set()
+    unique: list[dict] = []
+    for comp in components:
+        key = (
+            comp.get("page"),
+            *(round(float(v), 4) for v in comp.get("bbox", [])),
+        )
+        if key in seen:
+            continue
+        seen.add(key)
+        unique.append(comp)
+    return unique
+
+
+def _match_components(flattened: list[dict], query_terms: list[str], limit: int = 3) -> list[dict]:
+    normalized_terms = []
+    for term in query_terms:
+        normalized = _normalize_match_text(term)
+        if len(normalized) >= 4:
+            normalized_terms.append(normalized)
+
+    if not normalized_terms:
+        return []
+
+    scored: list[tuple[float, dict]] = []
+    for comp in flattened:
+        comp_text = comp["match_text"]
+        score = 0.0
+        for term in normalized_terms:
+            if term in comp_text:
+                score += max(1.0, min(8.0, len(term) / 10))
+        if score > 0:
+            scored.append((score, comp))
+
+    scored.sort(key=lambda pair: pair[0], reverse=True)
+    return _unique_components([comp for _, comp in scored[:limit]])
+
+
+def _extract_clause_candidates(clause_ref: Optional[str]) -> list[str]:
+    if not clause_ref:
+        return []
+
+    candidates: list[str] = []
+    for match in _CLAUSE_REF_RE.findall(clause_ref):
+        candidates.append(match)
+        if "." in match:
+            candidates.append(match.split(".", 1)[0])
+    return list(dict.fromkeys(candidates))
+
+
+def _build_clause_component_map(
+    structured_contract: StructuredContract,
+    flattened: list[dict],
+) -> dict[str, list[dict]]:
+    clause_map: dict[str, list[dict]] = {}
+    for clause in structured_contract.clauses:
+        title = clause.title or ""
+        body = clause.body or ""
+        query_terms = [
+            f"ข้อ {clause.clause_id}",
+            title,
+            body[:120],
+            body[:220],
+        ]
+        matches = _match_components(flattened, query_terms, limit=3)
+        if matches:
+            clause_map[str(clause.clause_id)] = matches
+    return clause_map
+
+
+def _attach_risk_anchors(
+    risks: list[RiskItem],
+    structured_contract: StructuredContract,
+    ocr_layout: Optional[dict],
+) -> None:
     """
     Best-effort mapping from risk text to OCR layout components.
 
@@ -551,40 +676,35 @@ def _attach_risk_anchors(risks: list[RiskItem], ocr_layout: Optional[dict]) -> N
                     "bbox": [x0, y0, width, height],
                     "page_width": page_width,
                     "page_height": page_height,
-                    "match_text": text.lower(),
+                    "match_text": _normalize_match_text(text),
                 }
             )
 
     if not flattened:
         return
 
+    clause_component_map = _build_clause_component_map(structured_contract, flattened)
+
     for risk in risks:
-        q_parts = [
-            (risk.title_en or "").strip(),
-            (risk.title_th or "").strip(),
-            (risk.clause_ref or "").strip(),
-            (risk.description_en or "").strip()[:120],
-            (risk.description_th or "").strip()[:120],
-        ]
-        query_terms = [q.lower() for q in q_parts if q]
+        matched_components: list[dict] = []
+        for clause_id in _extract_clause_candidates(risk.clause_ref):
+            matched_components.extend(clause_component_map.get(clause_id, []))
 
-        scored: list[tuple[int, dict]] = []
-        for comp in flattened:
-            score = 0
-            comp_text = comp["match_text"]
-            for term in query_terms:
-                if term and term in comp_text:
-                    score += min(8, len(term.split()))
-            if score > 0:
-                scored.append((score, comp))
+        if not matched_components:
+            query_terms = [
+                (risk.title_en or "").strip(),
+                (risk.title_th or "").strip(),
+                (risk.clause_ref or "").strip(),
+                (risk.description_en or "").strip()[:120],
+                (risk.description_th or "").strip()[:120],
+            ]
+            matched_components = _match_components(flattened, query_terms, limit=3)
 
-        if not scored:
+        if not matched_components:
             continue
 
-        scored.sort(key=lambda pair: pair[0], reverse=True)
-        top = scored[:3]
         anchors: list[RiskAnchor] = []
-        for _, comp in top:
+        for comp in _unique_components(matched_components)[:3]:
             x0, y0, w, h = comp["bbox"]
             page_w = max(comp["page_width"], 1.0)
             page_h = max(comp["page_height"], 1.0)

@@ -9,7 +9,10 @@ API reference:
 
 from __future__ import annotations
 
+import copy
+import hashlib
 import logging
+from collections import OrderedDict
 from typing import Optional
 
 import httpx
@@ -18,6 +21,31 @@ from tenacity import retry, stop_after_attempt, wait_exponential
 from config import settings
 
 logger = logging.getLogger(__name__)
+
+_CACHE_LIMIT = 8
+_TEXT_CACHE: OrderedDict[str, dict] = OrderedDict()
+_LAYOUT_CACHE: OrderedDict[str, dict] = OrderedDict()
+
+
+def _cache_key(prefix: str, file_bytes: bytes, filename: str) -> str:
+    digest = hashlib.sha1(file_bytes).hexdigest()
+    return f"{prefix}:{filename.lower()}:{digest}"
+
+
+def _cache_get(cache: OrderedDict[str, dict], key: str) -> Optional[dict]:
+    cached = cache.get(key)
+    if cached is None:
+        return None
+    cache.move_to_end(key)
+    return copy.deepcopy(cached)
+
+
+def _cache_set(cache: OrderedDict[str, dict], key: str, value: dict) -> dict:
+    cache[key] = copy.deepcopy(value)
+    cache.move_to_end(key)
+    while len(cache) > _CACHE_LIMIT:
+        cache.popitem(last=False)
+    return value
 
 
 class IAppOCR:
@@ -127,6 +155,11 @@ class OCRService:
         2. If result has < threshold chars → call iApp OCR
         """
         logger.info("Starting OCR extraction for: %s", filename)
+        key = _cache_key("text", file_bytes, filename)
+        cached = _cache_get(_TEXT_CACHE, key)
+        if cached is not None:
+            logger.info("OCR text cache hit for: %s", filename)
+            return cached
 
         # Step 1: PyMuPDF
         result = self._pymupdf.extract_text(file_bytes)
@@ -135,7 +168,7 @@ class OCRService:
             logger.info(
                 "PyMuPDF succeeded: %d chars extracted", result["char_count"]
             )
-            return result
+            return _cache_set(_TEXT_CACHE, key, result)
 
         # Step 2: Fallback to iApp OCR
         logger.info(
@@ -149,11 +182,11 @@ class OCRService:
             logger.info(
                 "iApp OCR succeeded: %d chars extracted", iapp_result.get("char_count", 0)
             )
-            return iapp_result
+            return _cache_set(_TEXT_CACHE, key, iapp_result)
         except Exception as e:
             logger.error("iApp OCR also failed: %s — returning PyMuPDF result", str(e))
             result["fallback_error"] = str(e)
-            return result
+            return _cache_set(_TEXT_CACHE, key, result)
 
     async def extract_layout(self, file_bytes: bytes, filename: str = "document.pdf") -> dict:
         """
@@ -163,28 +196,34 @@ class OCRService:
         1. For PDFs: use PyMuPDF block extraction first (fast, local)
         2. Fallback to iApp layout endpoint when local extraction fails/empty
         """
+        key = _cache_key("layout", file_bytes, filename)
+        cached = _cache_get(_LAYOUT_CACHE, key)
+        if cached is not None:
+            logger.info("OCR layout cache hit for: %s", filename)
+            return cached
+
         layout_pages = []
         try:
             if filename.lower().endswith(".pdf"):
                 layout_pages = self._pymupdf.extract_with_layout(file_bytes)
             if layout_pages:
-                return {
+                return _cache_set(_LAYOUT_CACHE, key, {
                     "pages": layout_pages,
                     "method": "pymupdf_layout",
-                }
+                })
         except Exception as e:
             logger.warning("PyMuPDF layout extraction failed: %s", str(e))
 
         try:
             iapp_layout = await self._iapp.extract_layout(file_bytes, filename)
-            return {
+            return _cache_set(_LAYOUT_CACHE, key, {
                 "pages": iapp_layout.get("pages", []),
                 "method": iapp_layout.get("method", "iapp_ocr_layout"),
-            }
+            })
         except Exception as e:
             logger.warning("iApp layout extraction failed: %s", str(e))
 
-        return {
+        return _cache_set(_LAYOUT_CACHE, key, {
             "pages": [],
             "method": "none",
-        }
+        })

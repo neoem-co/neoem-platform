@@ -92,6 +92,7 @@ export function ContractDraftingForm({ factoryName, onGenerate, onClose, initial
                 product: { name: formData.productType, quantity: parseInt(formData.quantity) || undefined },
                 total_price: parseFloat(formData.totalPrice) || undefined,
                 delivery_date: formData.deliveryDate || undefined,
+                skip_polish: true,
             });
             // Finalize immediately for this simpler form
             const result = await finalizeContract({
@@ -103,6 +104,8 @@ export function ContractDraftingForm({ factoryName, onGenerate, onClose, initial
                     { name: "Your Company", role: "buyer" },
                     { name: factoryName, role: "seller" },
                 ],
+                deal_sheet: dealSheet,
+                polish_before_export: true,
             });
             setFinalizeResult(result);
             setGenerated(true);
