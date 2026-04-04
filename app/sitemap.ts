@@ -4,7 +4,16 @@ import { getAbsoluteUrl, getLocalizedPath } from "@/lib/seo";
 
 export const revalidate = 86400;
 
-const publicRouteSuffixes = ["", "factories", "pricing", "brand-launchpad", "find-oem-factory"];
+const publicRouteSuffixes = [
+  "",
+  "factories",
+  "pricing",
+  "brand-launchpad",
+  "find-oem-factory",
+  "oem-cosmetics-factory",
+  "oem-skincare-factory",
+  "oem-supplement-factory",
+];
 const locales = ["en", "th"] as const;
 type SitemapEntry = MetadataRoute.Sitemap[number];
 

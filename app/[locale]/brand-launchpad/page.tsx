@@ -110,6 +110,7 @@ const knowledgeBaseItems = [
 const BrandLaunchpad = () => {
     const t = useTranslations("BrandLaunchpad");
     const locale = useLocale();
+    const isThai = locale === "th";
     const [category, setCategory] = useState<"all" | "cosmetics" | "supplements">("all");
     const [completedItems, setCompletedItems] = useState<string[]>([]);
     const [selectedPartner, setSelectedPartner] = useState<LaunchpadItem | null>(null);
@@ -126,6 +127,88 @@ const BrandLaunchpad = () => {
         { number: 2, title: "Compliance", titleTh: "การปฏิบัติตามกฎหมาย" },
         { number: 3, title: "Growth", titleTh: "เติบโต" },
     ];
+
+    const disputeImmediateActions = [
+        {
+            icon: Shield,
+            title: isThai ? "หยุดความเสี่ยงทันที" : "Stop the exposure immediately",
+            description: isThai
+                ? "ชะลอการจ่ายเงินงวดถัดไป ระงับการส่งมอบที่ยังไม่จำเป็น และอย่าแก้ไขหลักฐานในแชต อีเมล หรือใบเสนอราคา"
+                : "Pause the next payment, hold any non-essential shipment, and avoid altering evidence in chats, emails, or quotations.",
+        },
+        {
+            icon: FileCheck,
+            title: isThai ? "รวบรวมหลักฐานให้ครบ" : "Collect evidence while it is fresh",
+            description: isThai
+                ? "รวมสัญญา ใบเสนอราคา PO สลิปโอนเงิน แชต รูปสินค้า และไทม์ไลน์เหตุการณ์ไว้ในโฟลเดอร์เดียว"
+                : "Bring contracts, quotations, PO, payment slips, chats, product photos, and the timeline into one folder.",
+        },
+        {
+            icon: Scale,
+            title: isThai ? "แจ้งข้อเรียกร้องเป็นลายลักษณ์อักษร" : "Send a written demand",
+            description: isThai
+                ? "สรุปปัญหา สิ่งที่อีกฝ่ายผิดกำหนดเส้นตาย และทางเลือกที่คุณยอมรับได้ เช่น คืนเงิน ส่งของใหม่ หรือแก้ไขงาน"
+                : "Summarize the issue, state the breach, set a deadline, and list acceptable outcomes such as refund, remake, or correction.",
+        },
+        {
+            icon: Gavel,
+            title: isThai ? "ยกระดับเมื่อเริ่มเงียบหรือปฏิเสธ" : "Escalate if they go silent or deny it",
+            description: isThai
+                ? "เมื่ออีกฝ่ายไม่ตอบ ไม่ทำตาม หรือมีสัญญาณหลบเลี่ยง ควรให้ทนายช่วยประเมินสัญญาและทางดำเนินการต่อ"
+                : "If the other side stops responding, refuses to perform, or starts avoiding you, have counsel assess the contract and next move.",
+        },
+    ];
+
+    const disputeEvidenceChecklist = isThai
+        ? [
+            "สัญญา ฉบับแก้ไข ใบเสนอราคา และ PO ที่ยืนยันขอบเขตงาน",
+            "หลักฐานการชำระเงิน เช่น สลิป โอน บิล ใบเสร็จ และรอบการจ่าย",
+            "แชต อีเมล ไลน์ หรือข้อความที่มีการรับปาก ระบุเวลา หรือยืนยันคุณภาพสินค้า",
+            "ภาพถ่าย วิดีโอ ตัวอย่างสินค้า เลขล็อต และหลักฐานความเสียหายที่เกิดขึ้นจริง",
+            "บันทึกไทม์ไลน์ว่าเกิดอะไร เมื่อไร ใครเป็นคนพูด และคุณแจ้งทวงไปแล้วเมื่อใด",
+        ]
+        : [
+            "The contract, amendments, quotations, and PO that define scope and commitments.",
+            "Payment proof such as transfer slips, invoices, receipts, and installment history.",
+            "Chats, email, Line, or messages that confirm promises, delivery dates, or product quality.",
+            "Photos, videos, samples, lot numbers, and proof of the actual damage or defect.",
+            "A dated timeline of what happened, who said what, and when you already followed up.",
+        ];
+
+    const disputeEscalationSteps = [
+        {
+            title: isThai ? "ขั้นที่ 1: เคลียร์ข้อเท็จจริงกับคู่สัญญา" : "Step 1: Clarify the facts with the counterparty",
+            description: isThai
+                ? "เริ่มจากหนังสือหรือข้อความอย่างเป็นทางการ เพื่อให้ข้อเรียกร้องและกำหนดเวลาชัดเจนที่สุด"
+                : "Start with a formal written notice so the issue, requested remedy, and deadline are unmistakably clear.",
+        },
+        {
+            title: isThai ? "ขั้นที่ 2: ให้ทนายช่วยประเมินสัญญา" : "Step 2: Have counsel review the contract",
+            description: isThai
+                ? "ดูเรื่องเงื่อนไขผิดสัญญา การคืนเงิน ค่าปรับ เขตอำนาจศาล และความเสี่ยงหากดำเนินคดี"
+                : "Review breach terms, refund rights, penalties, jurisdiction, and litigation risk before taking the next step.",
+        },
+        {
+            title: isThai ? "ขั้นที่ 3: ส่งหนังสือทวงถามหรือเริ่มดำเนินการ" : "Step 3: Issue a formal demand or proceed",
+            description: isThai
+                ? "ถ้ายังไม่ได้รับการแก้ไข อาจต้องส่งหนังสือทวงถามอย่างเป็นทางการหรือดำเนินการตามกระบวนการที่เหมาะสม"
+                : "If the issue remains unresolved, move to a formal demand letter or the appropriate legal or regulatory channel.",
+        },
+    ];
+
+    const disputeRiskSignals = isThai
+        ? [
+            "ถูกเร่งให้โอนเงินเพิ่มก่อนแก้ปัญหาเดิม",
+            "หลีกเลี่ยงการคุยเป็นลายลักษณ์อักษรหรือเปลี่ยนคนคุยตลอด",
+            "เลื่อนส่งของซ้ำโดยไม่มีหลักฐานหรือแผนชดเชยชัดเจน",
+            "เอกสารไม่ตรงกันระหว่างสัญญา ใบเสนอราคา และงานจริง",
+        ]
+        : [
+            "They pressure you for more payment before fixing the original issue.",
+            "They avoid written communication or keep changing who speaks for them.",
+            "Delivery is repeatedly delayed without proof or a credible remedy plan.",
+            "The contract, quotation, and delivered work no longer line up.",
+        ];
 
     const progress = Math.round((completedItems.length / filteredItems.length) * 100);
     const currentActiveStep = 4;
@@ -223,6 +306,9 @@ const BrandLaunchpad = () => {
                             <TabsTrigger value="marketplace">{t("agencyMarketplace")}</TabsTrigger>
                             <TabsTrigger value="knowledge">
                                 <BookOpen className="h-4 w-4 mr-1" /> {t("knowledgeBase")}
+                            </TabsTrigger>
+                            <TabsTrigger value="dispute">
+                                <Gavel className="h-4 w-4 mr-1" /> {t("disputeSupport")}
                             </TabsTrigger>
                         </TabsList>
 
@@ -426,6 +512,158 @@ const BrandLaunchpad = () => {
                                     </div>
                                 </CardContent>
                             </Card>
+                        </TabsContent>
+
+                        <TabsContent value="dispute" className="space-y-8">
+                            <div className="grid gap-6 xl:grid-cols-[1.25fr_0.75fr]">
+                                <Card className="relative overflow-hidden border-primary/25 bg-gradient-to-br from-primary/10 via-background to-background">
+                                    <div className="absolute inset-y-0 right-0 w-48 bg-[radial-gradient(circle_at_center,rgba(249,115,22,0.16),transparent_70%)]" />
+                                    <CardHeader className="relative space-y-4">
+                                        <Badge variant="secondary" className="w-fit">{t("disputeBadge")}</Badge>
+                                        <div className="space-y-2">
+                                            <CardTitle className="text-2xl md:text-3xl leading-tight">{t("disputeTitle")}</CardTitle>
+                                            <p className="text-sm md:text-base text-muted-foreground max-w-2xl">{t("disputeDesc")}</p>
+                                        </div>
+                                        <div className="grid gap-3 sm:grid-cols-3">
+                                            {disputeImmediateActions.slice(0, 3).map((action) => (
+                                                <div key={action.title} className="rounded-xl border border-border/70 bg-background/90 p-4">
+                                                    <action.icon className="h-5 w-5 text-primary mb-3" />
+                                                    <p className="text-sm font-semibold text-foreground">{action.title}</p>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </CardHeader>
+                                    <CardContent className="relative flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                                        <p className="text-sm text-muted-foreground max-w-2xl">{t("disputeDisclaimer")}</p>
+                                        <Button onClick={() => setShowLawyerModal(true)} className="shrink-0">
+                                            <Gavel className="h-4 w-4 mr-2" /> {t("contactLawyer")}
+                                        </Button>
+                                    </CardContent>
+                                </Card>
+
+                                <Card className="border-destructive/20 bg-destructive/5">
+                                    <CardHeader>
+                                        <CardTitle className="flex items-center gap-2 text-lg">
+                                            <Shield className="h-5 w-5 text-destructive" />
+                                            {t("disputeTodayTitle")}
+                                        </CardTitle>
+                                        <p className="text-sm text-muted-foreground">{t("disputeTodayDesc")}</p>
+                                    </CardHeader>
+                                    <CardContent className="space-y-3">
+                                        {disputeRiskSignals.map((signal) => (
+                                            <div key={signal} className="flex items-start gap-3 rounded-lg border border-destructive/15 bg-background/70 p-3">
+                                                <div className="mt-0.5 h-2.5 w-2.5 rounded-full bg-destructive shrink-0" />
+                                                <p className="text-sm text-foreground">{signal}</p>
+                                            </div>
+                                        ))}
+                                    </CardContent>
+                                </Card>
+                            </div>
+
+                            <div className="grid gap-6 lg:grid-cols-2">
+                                <Card>
+                                    <CardHeader>
+                                        <CardTitle className="flex items-center gap-2">
+                                            <FileCheck className="h-5 w-5 text-primary" />
+                                            {t("urgentActions")}
+                                        </CardTitle>
+                                        <p className="text-sm text-muted-foreground">{t("urgentActionsDesc")}</p>
+                                    </CardHeader>
+                                    <CardContent className="space-y-4">
+                                        {disputeImmediateActions.map((action, index) => (
+                                            <div key={action.title} className="flex gap-4 rounded-xl border p-4">
+                                                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary font-semibold">
+                                                    {index + 1}
+                                                </div>
+                                                <div>
+                                                    <div className="flex items-center gap-2">
+                                                        <action.icon className="h-4 w-4 text-primary" />
+                                                        <p className="font-semibold text-foreground">{action.title}</p>
+                                                    </div>
+                                                    <p className="mt-2 text-sm text-muted-foreground">{action.description}</p>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </CardContent>
+                                </Card>
+
+                                <Card>
+                                    <CardHeader>
+                                        <CardTitle className="flex items-center gap-2">
+                                            <BookOpen className="h-5 w-5 text-primary" />
+                                            {t("evidenceChecklist")}
+                                        </CardTitle>
+                                        <p className="text-sm text-muted-foreground">{t("evidenceChecklistDesc")}</p>
+                                    </CardHeader>
+                                    <CardContent className="space-y-3">
+                                        {disputeEvidenceChecklist.map((item, index) => (
+                                            <div key={item} className="flex items-start gap-3 rounded-xl bg-secondary/35 px-4 py-3">
+                                                <div className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-background text-xs font-bold text-primary">
+                                                    {index + 1}
+                                                </div>
+                                                <p className="text-sm text-foreground">{item}</p>
+                                            </div>
+                                        ))}
+                                    </CardContent>
+                                </Card>
+                            </div>
+
+                            <div className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
+                                <Card>
+                                    <CardHeader>
+                                        <CardTitle className="flex items-center gap-2">
+                                            <Scale className="h-5 w-5 text-primary" />
+                                            {t("escalationPath")}
+                                        </CardTitle>
+                                        <p className="text-sm text-muted-foreground">{t("escalationPathDesc")}</p>
+                                    </CardHeader>
+                                    <CardContent className="space-y-4">
+                                        {disputeEscalationSteps.map((step, index) => (
+                                            <div key={step.title} className="flex gap-4">
+                                                <div className="flex flex-col items-center">
+                                                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground font-semibold">
+                                                        {index + 1}
+                                                    </div>
+                                                    {index < disputeEscalationSteps.length - 1 && (
+                                                        <div className="mt-2 h-full w-px bg-border" />
+                                                    )}
+                                                </div>
+                                                <div className="pb-6">
+                                                    <p className="font-semibold text-foreground">{step.title}</p>
+                                                    <p className="mt-2 text-sm text-muted-foreground">{step.description}</p>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </CardContent>
+                                </Card>
+
+                                <Card className="border-primary/20 bg-primary/5">
+                                    <CardHeader>
+                                        <CardTitle className="flex items-center gap-2">
+                                            <Lightbulb className="h-5 w-5 text-primary" />
+                                            {t("disputeBestPractices")}
+                                        </CardTitle>
+                                        <p className="text-sm text-muted-foreground">{t("disputeBestPracticesDesc")}</p>
+                                    </CardHeader>
+                                    <CardContent className="space-y-4">
+                                        <div className="rounded-xl border bg-background p-4">
+                                            <p className="text-sm font-semibold text-foreground">{t("disputeProTipTitle")}</p>
+                                            <p className="mt-2 text-sm text-muted-foreground">{t("disputeProTipDesc")}</p>
+                                        </div>
+                                        <div className="space-y-3">
+                                            {disputeRiskSignals.map((signal) => (
+                                                <div key={`practice-${signal}`} className="flex items-start gap-3">
+                                                    <ArrowRight className="mt-0.5 h-4 w-4 text-primary shrink-0" />
+                                                    <p className="text-sm text-foreground">{signal}</p>
+                                                </div>
+                                            ))}
+                                        </div>
+                                        <Button variant="outline" className="w-full" onClick={() => setShowLawyerModal(true)}>
+                                            <Gavel className="h-4 w-4 mr-2" /> {t("contactLawyer")}
+                                        </Button>
+                                    </CardContent>
+                                </Card>
+                            </div>
                         </TabsContent>
                     </Tabs>
 

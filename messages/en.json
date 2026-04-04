@@ -59,6 +59,13 @@
                 "launchTitle": "Launch with legal support",
                 "launchDesc": "Use built-in contract, compliance, and launch tools while sourcing the right manufacturer."
             },
+            "editorialQuote": "The fastest way to reduce sourcing risk is to compare real factory fit before you start talking price.",
+            "takeawaysTitle": "Key Takeaways",
+            "takeaways": {
+                "one": "Start with verified OEM factories, not random directories.",
+                "two": "Compare MOQ, specialties, and trust signals before outreach.",
+                "three": "Use category-specific pages to narrow your shortlist faster."
+            },
             "guideCta": "Read the OEM factory guide",
             "faqTitle": "Questions brands ask before choosing an OEM factory",
             "faq": {
@@ -125,12 +132,30 @@
         "complianceChecklist": "Compliance Checklist",
         "agencyMarketplace": "Agency Marketplace",
         "knowledgeBase": "Knowledge Base",
+        "disputeSupport": "Disputes & Scam Help",
         "keyConsiderations": "Key Considerations",
         "keyConsiderationsDesc": "Essential factors to consider before starting your brand",
         "productCategory": "Product Category",
         "selectCategory": "Select category",
         "knowledgeBaseTitle": "Knowledge Base",
-        "knowledgeBaseDesc": "Everything you need to know before starting your brand"
+        "knowledgeBaseDesc": "Everything you need to know before starting your brand",
+        "disputeBadge": "Contract dispute response",
+        "disputeTitle": "What to do when a contract dispute starts or you think you were scammed",
+        "disputeDesc": "If a factory, vendor, or agency breaches the deal, goes silent, or delivers something far from what was promised, this section helps you contain the damage, preserve evidence, and escalate in the right order.",
+        "disputeDisclaimer": "This section is practical guidance to help you respond in an organized way. It is not case-specific legal advice.",
+        "contactLawyer": "Talk to a Lawyer",
+        "disputeTodayTitle": "Signals that deserve action today",
+        "disputeTodayDesc": "If any of these are happening, start preserving evidence and send a formal written message right away.",
+        "urgentActions": "What to do first",
+        "urgentActionsDesc": "The first moves matter. A clean sequence helps reduce losses and gives you a stronger position in negotiations.",
+        "evidenceChecklist": "Evidence checklist",
+        "evidenceChecklistDesc": "Capture this before chats disappear, files change, or the other side rewrites the story.",
+        "escalationPath": "Escalation path",
+        "escalationPathDesc": "Start with a clear written record, then move into legal review and formal action when necessary.",
+        "disputeBestPractices": "Short-term risk controls",
+        "disputeBestPracticesDesc": "Use this checklist before paying more, signing a new amendment, or continuing the relationship.",
+        "disputeProTipTitle": "NEOEM tip",
+        "disputeProTipDesc": "A dated timeline plus clean payment evidence usually makes both negotiation and legal review much faster."
     },
     "Pricing": {
         "badge": "Pricing Plans",

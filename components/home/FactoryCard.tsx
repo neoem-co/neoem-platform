@@ -35,6 +35,7 @@ interface FactoryCardProps {
         priceLevel: number;
         moq: number;
         specialties: string[];
+        certifications?: string[];
     };
     variant?: "horizontal" | "vertical";
     isRecommended?: boolean;
@@ -43,8 +44,14 @@ interface FactoryCardProps {
 export function FactoryCard({ factory, variant = "vertical", isRecommended = false }: FactoryCardProps) {
     const t = useTranslations("Factories");
     const locale = useLocale();
+    const isThai = locale.toLowerCase().startsWith("th");
     const imageUrl = factoryImages[factory.image] || factory1;
     const imageSrc = typeof imageUrl === "string" ? imageUrl : imageUrl.src;
+    const topSpecialties = factory.specialties.slice(0, 2).join(", ");
+    const topCertification = factory.certifications?.[0];
+    const quickSummary = isThai
+        ? `โรงงาน ${factory.category} ใน ${factory.location} เหมาะกับแบรนด์ที่มองหา MOQ ${factory.moq.toLocaleString()} ชิ้น${topSpecialties ? ` พร้อมความเชี่ยวชาญด้าน ${topSpecialties}` : ""}${topCertification ? ` และใบรับรอง ${topCertification}` : ""}`
+        : `${factory.category} factory in ${factory.location} with MOQ from ${factory.moq.toLocaleString()} pcs${topSpecialties ? `, suited for ${topSpecialties}` : ""}${topCertification ? ` and ${topCertification} certification` : ""}.`;
     const priceIndicator = (
         <span className="flex items-center text-muted-foreground">
             {Array.from({ length: 3 }).map((_, i) => (
@@ -90,6 +97,7 @@ export function FactoryCard({ factory, variant = "vertical", isRecommended = fal
                     </div>
 
                     <p className="text-sm text-muted-foreground">{factory.location}</p>
+                    <p className="text-sm text-muted-foreground line-clamp-2">{quickSummary}</p>
 
                     <div className="flex flex-wrap gap-1.5">
                         {factory.tags.slice(0, 4).map((tag) => (
@@ -141,6 +149,10 @@ export function FactoryCard({ factory, variant = "vertical", isRecommended = fal
                     <h3 className="font-semibold text-foreground">{factory.name}</h3>
                     <p className="text-sm text-muted-foreground">{factory.location}</p>
                 </div>
+
+                <p className="text-sm text-muted-foreground line-clamp-3">
+                    {quickSummary}
+                </p>
 
                 <div className="flex flex-wrap gap-1.5">
                     {factory.tags.slice(0, 3).map((tag) => (
